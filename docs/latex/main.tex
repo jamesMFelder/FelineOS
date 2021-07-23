@@ -1,0 +1,59 @@
+\documentclass[12pt]{article}
+\usepackage[T1]{fontenc}
+
+\title{Feline OS Documentation}
+
+\begin{document}
+
+\begin{center}
+\fontsize{25}{35}
+\selectfont
+\textbf{Feline OS Documentation}
+\end{center}
+
+\section{Overview}
+\begin{list}{}{}
+\item This is my hobby OS, don't expect anything professional.
+\item I don't have a cross compiler with this because that would lock it to my type of machine.
+\begin{tiny} The real reason is my distribution has one as a package.\end{tiny}
+
+\begin{list}{}{\begin{bf}Structure\end{bf}}
+\item docs/ : Documentation
+\subitem docs/latex/ : Original latex documentation.
+\subitem docs/\{html,pdf\}/ : Generated documentation.
+\item kernel/ : The kernel.
+\subitem kernel/arch/ : Architecture dependent stuff in the kernel.
+\subsubitem kernel/arch/i386/ : 32-bit PC stuff
+\subitem kernel/include/ : Kernel headers
+\subsubitem kernel/include/kernel/ : <kernel/header.h> instead of <header.h>
+\subitem kernel/kernel/ : Generic kernel files.
+\item libc/ : A minimal C library
+\subitem libc/arch/ : Architecture dependent libc stuff (macros, ...)
+\subsubitem libc/arch/i386/ : 32-bit PC stuff
+\subitem libc/include/ : Header files.
+\subsubitem libc/include/sys/ : System header files.
+\subitem libc/stdio/ : I/O programs.
+\subitem libc/stdlib/ : Other C library programs.
+\subitem libc/string/ : C String handling programs.
+\end{list}
+
+\begin{list}{}{\begin{bf}Documentation\end{bf}}
+\item docs/latex contains the latex documentation
+\item Running ./docs.sh creates documentation in docs/{pdf,html} if you have pdflatex and latex2html installed.
+\item I try to comment in the code, but I often forget.
+\end{list}
+
+\begin{list}{}{\begin{bf}Usefull commands\end{bf}}
+\item ./default-host.sh : Echo the architecture we are building for.
+\item ./config.sh : Define a bunch of variables.
+\item ./headers.sh : Copy headers into their correct places.
+\item ./build.sh : Compile FelineOS.
+\item ./iso.sh : Create an ISO.
+\item ./qemu.sh : Run the iso in qemu.
+\item ./docs.sh : Create the pdf and html documentation.
+\item ./clean.sh : Clean up everything.
+\end{list}
+
+\end{list}
+
+\end{document}

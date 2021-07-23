@@ -9,3 +9,5 @@ done
 rm -rf sysroot
 rm -rf isodir
 rm -rf FelineOS.iso
+rm -rf docs/pdf
+rm -rf docs/html

@@ -7,7 +7,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif
+#endif //__cplusplus
 
 int printf(const char* __restrict, ...);
 int putchar(int);
@@ -15,6 +15,6 @@ int puts(const char*);
 
 #ifdef __cplusplus
 }
-#endif
+#endif //__cplusplus
 
-#endif
+#endif //_STDIO_H

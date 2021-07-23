@@ -29,6 +29,7 @@ int printf(const char* restrict format, ...) {
 				amount++;
 			if (maxrem < amount) {
 				// TODO: Set errno to EOVERFLOW.
+				va_end(parameters);
 				return -1;
 			}
 			if (!print(format, amount))
