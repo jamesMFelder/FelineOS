@@ -40,6 +40,30 @@ void terminal_putentryat(unsigned char c, uint8_t color, size_t x, size_t y) {
 
 void terminal_putchar(char c) {
 	unsigned char uc = c;
+	//newlines and tabs
+	//if it is a newline, put ourselves first char of next line
+	if(uc=='\n'){
+		terminal_column=0;
+		terminal_row++;
+		return;
+	}
+	//If it is a carridge return, put ourselves first char of this line
+	else if(uc=='\r'){
+		terminal_column=0;
+		return;
+	}
+	//If it is a tab, put ourselves TABSTOP chars foreward unless we hit
+	//the edge of the screen, in which case just go to the next line.
+	else if(uc=='\t'){
+		do{
+			if(++terminal_column==VGA_WIDTH){
+				terminal_column=0;
+				terminal_row++;
+				return;
+			}
+		}while(terminal_column%TABSTOP!=0);
+		return;
+	}
 	terminal_putentryat(uc, terminal_color, terminal_column, terminal_row);
 	if (++terminal_column == VGA_WIDTH) {
 		terminal_column = 0;
