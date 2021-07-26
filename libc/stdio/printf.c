@@ -61,6 +61,50 @@ int printf(const char* restrict format, ...) {
 			}
 			if (!print(str, len))
 				return -1;
+		} else if (*format == 'd') {
+			format++;
+			const int num = (int) va_arg(parameters, const int);
+			char str[19];
+			str[0]='0';
+			str[1]='x';
+			itostr(num, str+2);
+			size_t len = strlen(str);
+			if (maxrem < len) {
+				// TODO: Set errno to EOVERFLOW.
+				return -1;
+			}
+			if (!print(str, len))
+				return -1;
+			written += len;
+		} else if (*format == 'x') {
+			format++;
+			const int num = (int) va_arg(parameters, const int);
+			char str[19];
+			str[0]='0';
+			str[1]='x';
+			xtostr(num, str+2);
+			size_t len = strlen(str);
+			if (maxrem < len) {
+				// TODO: Set errno to EOVERFLOW.
+				return -1;
+			}
+			if (!print(str, len))
+				return -1;
+			written += len;
+		} else if (*format == 'X') {
+			format++;
+			const int num = (int) va_arg(parameters, const int);
+			char str[19];
+			str[0]='0';
+			str[1]='x';
+			Xtostr(num, str+2);
+			size_t len = strlen(str);
+			if (maxrem < len) {
+				// TODO: Set errno to EOVERFLOW.
+				return -1;
+			}
+			if (!print(str, len))
+				return -1;
 			written += len;
 		} else {
 			format = format_begun_at;
