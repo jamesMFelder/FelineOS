@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
+//Writes length bytes or until putchar returns EOF
 static bool print(const char* data, size_t length) {
 	const unsigned char* bytes = (const unsigned char*) data;
 	for (size_t i = 0; i < length; i++)
@@ -12,9 +13,17 @@ static bool print(const char* data, size_t length) {
 	return true;
 }
 
-int printf(const char* restrict format, ...) {
-	va_list parameters;
-	va_start(parameters, format);
+//Minimal wrapper around vprintf to reduce code duplication
+int printf(const char *restrict format, ...){
+	int retval;
+	va_list data;
+	va_start(data, format);
+	retval=vprintf(format, data);
+	va_end(data);
+	return retval;
+}
+
+int vprintf(const char* restrict format, va_list parameters){
 
 	int written = 0;
 
@@ -29,7 +38,6 @@ int printf(const char* restrict format, ...) {
 				amount++;
 			if (maxrem < amount) {
 				// TODO: Set errno to EOVERFLOW.
-				va_end(parameters);
 				return -1;
 			}
 			if (!print(format, amount))
@@ -64,10 +72,8 @@ int printf(const char* restrict format, ...) {
 		} else if (*format == 'd') {
 			format++;
 			const int num = (int) va_arg(parameters, const int);
-			char str[19];
-			str[0]='0';
-			str[1]='x';
-			itostr(num, str+2);
+			char str[17];
+			itostr(num, str);
 			size_t len = strlen(str);
 			if (maxrem < len) {
 				// TODO: Set errno to EOVERFLOW.
@@ -120,6 +126,5 @@ int printf(const char* restrict format, ...) {
 		}
 	}
 
-	va_end(parameters);
 	return written;
 }

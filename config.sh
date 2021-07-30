@@ -8,13 +8,16 @@ export AR=${HOST}-ar
 export AS=${HOST}-as
 export CC=${HOST}-gcc
 
+export NASM=nasm
+export NASM_ARGS=-felf32
+
 export PREFIX=/usr
 export EXEC_PREFIX=$PREFIX
 export BOOTDIR=/boot
 export LIBDIR=$EXEC_PREFIX/lib
 export INCLUDEDIR=$PREFIX/include
 
-export CFLAGS='-O2 -g'
+export CFLAGS='-O0 -g -Wall -Werror -fstack-protector -mno-red-zone'
 export CPPFLAGS=''
 
 # Configure the cross-compiler to use the desired system root.
