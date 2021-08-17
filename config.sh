@@ -17,7 +17,7 @@ export BOOTDIR=/boot
 export LIBDIR=$EXEC_PREFIX/lib
 export INCLUDEDIR=$PREFIX/include
 
-export CFLAGS='-O0 -g -Wall -Werror -fstack-protector -mno-red-zone'
+export CFLAGS='-O0 -g -Wall -Wextra -Werror -fstack-protector -mno-red-zone'
 export CPPFLAGS=''
 
 # Configure the cross-compiler to use the desired system root.

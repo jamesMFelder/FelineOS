@@ -18,7 +18,7 @@ void __internal_log(const int level, const char *fmt, va_list data){
 }
 
 //For the moment, just write to terminal.
-void kerrorf(const char* format, ...){
+__attribute__ ((format (printf, 1, 2))) void kerrorf(const char* format, ...){
 	va_list data;
 	va_start(data, format);
 	__internal_log(1, format, data);
@@ -26,7 +26,7 @@ void kerrorf(const char* format, ...){
 	return;
 }
 
-void kwarnf(const char* format, ...){
+__attribute__ ((format (printf, 1, 2))) void kwarnf(const char* format, ...){
 	va_list data;
 	va_start(data, format);
 	__internal_log(2, format, data);
@@ -34,7 +34,7 @@ void kwarnf(const char* format, ...){
 	return;
 }
 
-void klogf(const char* format, ...){
+__attribute__ ((format (printf, 1, 2))) void klogf(const char* format, ...){
 	va_list data;
 	va_start(data, format);
 	__internal_log(3, format, data);
@@ -42,7 +42,7 @@ void klogf(const char* format, ...){
 	return;
 }
 
-void kcriticalf(const char* format, ...){
+__attribute__ ((format (printf, 1, 2))) void kcriticalf(const char* format, ...){
 	va_list data;
 	va_start(data, format);
 	__internal_log(0, format, data);

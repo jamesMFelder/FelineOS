@@ -2,7 +2,7 @@ global setGdt
 
 gdtr DW 0 ; For limit storage
      DD 0 ; For base storage
- 
+
 setGdt:
    CLI ;Disable interrupts
    MOV   EAX, [esp + 4]

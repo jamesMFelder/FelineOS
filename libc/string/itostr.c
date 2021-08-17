@@ -2,7 +2,7 @@
 
 //Convert a number to a string
 //By assuming that base<=10, we force the caller to deal with higher bases with
-// `if(c>'9') c+=39` for lowercase or `c=7` for uppercase
+// `if(c>'9') c+=39` for lowercase or `c+=7` for uppercase
 //TODO: dynamic str length
 int ntostr(long long unsigned num, char str[17], short int base){
 	//Start with the 1s digits
@@ -20,7 +20,8 @@ int ntostr(long long unsigned num, char str[17], short int base){
 	return 0;
 }
 
-int lltostr(long long unsigned num, char str[17]){
+int lltostr(const long long unsigned int num, char str[17])
+{
 	int retval=ntostr(num, str, 10);
 	return retval;
 }

@@ -17,18 +17,18 @@ void encodeGdtEntry(uint8_t *target, struct GDT source)
     } else {
         target[6] = 0x40;
     }
- 
+
     // Encode the limit
     target[0] = source.limit & 0xFF;
     target[1] = (source.limit >> 8) & 0xFF;
     target[6] |= (source.limit >> 16) & 0xF;
- 
-    // Encode the base 
+
+    // Encode the base
     target[2] = source.base & 0xFF;
     target[3] = (source.base >> 8) & 0xFF;
     target[4] = (source.base >> 16) & 0xFF;
     target[7] = (source.base >> 24) & 0xFF;
- 
+
     // And... Type
     target[5] = source.type;
 }

@@ -5,11 +5,11 @@ extern exception_handler ;The C function for handling interrupts
 isr_stub_%+%1:
     cli ;Disable interrupts
     pusha ;Save registers
-  
+
     push dword %1 ;Add the exeption number to the stack
     call exception_handler ;Call the generic exception handler (written in C)
     pop eax ;Take the exception number off the stack
-    
+
     hlt ;Halt the computer until we know how to safely continue
 
     popa ;Restore registers
@@ -28,7 +28,7 @@ isr_stub_%+%1:
     call exception_handler ;Call the generic exception handler (written in C)
     pop eax ;Take the exception number off the stack
     pop eax ;Take the dummy exception off the stack
-    
+
     hlt ;Halt the computer until we know how to safely continue
 
     popa ;Restore registers
@@ -73,8 +73,8 @@ isr_no_err_stub 31
 ;Used for the lidt instruction
 global isr_stub_table
 isr_stub_table:
-%assign i 0 
-%rep    32 
+%assign i 0
+%rep    32
     dd isr_stub_%+i ; use DQ instead if targeting 64-bit
-%assign i i+1 
+%assign i i+1
 %endrep

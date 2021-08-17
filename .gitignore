@@ -1,3 +1,11 @@
+#The final iso
 *.iso
+#The binaries+GRUB conf
 isodir
+#The compiled programs+headers
 sysroot
+#Bochs logging
+bochslog.txt
+serial.txt
+#Anything you compiled from the utils/ directory
+utils/a.out

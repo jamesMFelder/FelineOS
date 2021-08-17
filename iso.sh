@@ -1,5 +1,6 @@
 #!/bin/sh
 set -e
+#shellcheck disable=SC1091
 . ./build.sh
 
 mkdir -p isodir

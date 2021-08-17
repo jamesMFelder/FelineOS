@@ -26,6 +26,10 @@ stack_top:
 _start:
 	movl $stack_top, %esp
 
+	#Save the arguments from GRUB
+	push %eax
+	push %ebx
+
 	# Call the global constructors.
 	call _init
 

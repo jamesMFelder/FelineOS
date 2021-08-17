@@ -20,11 +20,11 @@
 #define kcritical(data) kcriticalf("%s", data)
 
 //printf()-style logging functions
-void klogf(const char *format, ...);
-void kwarnf(const char *format, ...);
-void kerrorf(const char *format, ...);
+__attribute__ ((format (printf, 1, 2))) void klogf(const char *format, ...);
+__attribute__ ((format (printf, 1, 2))) void kwarnf(const char *format, ...);
+__attribute__ ((format (printf, 1, 2))) void kerrorf(const char *format, ...);
 //ONLY USE FOR WHEN THE OS IS ABOUT TO CRASH
 //TODO: Restrict access to kernel?
-void kcriticalf(const char *format, ...);
+__attribute__ ((format (printf, 1, 2))) void kcriticalf(const char *format, ...);
 
 #endif //_KERNEL_LOG_H
