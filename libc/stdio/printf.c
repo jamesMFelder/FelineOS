@@ -92,12 +92,22 @@ int vprintf(const char* restrict format, va_list parameters){
 						break;
 					case 'l':
 					case 'z':
-						if(*(++format)=='u'){
-							lltostr(num, str);
-							break;
+						switch(*(++format)){
+								case 'd':
+								case 'u':
+									lltostr(num, str);
+									break;
+								case 'x':
+									xlltostr(num, str);
+									break;
+								case 'X':
+									Xlltostr(num, str);
+									break;
+								default:
+								format--;
+								goto invl_format_spec;
 						}
-						format--;
-						goto invl_format_spec;
+						break;
 					case 'x':
 						xtostr(num, str);
 						break;
@@ -113,6 +123,21 @@ int vprintf(const char* restrict format, va_list parameters){
 				if (puts_no_nl(str))
 					return -1;
 				written += len;
+				break;
+			}
+			case 'p':
+			{
+				const void *num = va_arg(parameters, const void*);
+				char str[19]="0x";
+				Xlltostr((size_t)&num, str+2);
+				size_t len=strlen(str);
+				if (maxrem < len){
+						// TODO: Set errno to EOVERFLOW.
+						return -1;
+				}
+				if(puts_no_nl(str))
+						return -1;
+				written+=len;
 				break;
 			}
 			default:
