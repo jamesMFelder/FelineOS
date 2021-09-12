@@ -1,3 +1,5 @@
+; SPDX-License-Identifier: MIT
+; Copyright (c) 2021 James McNaughton Felder
 extern exception_handler ;The C function for handling interrupts
 
 %macro isr_err_stub 1

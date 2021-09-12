@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
 #ifndef _KERN_DRIVER_SERIAL_H
 #define _KERN_DRIVER_SERIAL_H
 

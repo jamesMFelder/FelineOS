@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
 #include <string.h>
 
 char *strcpy(char *dest, const char *src){

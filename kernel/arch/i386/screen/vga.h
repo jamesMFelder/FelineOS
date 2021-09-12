@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
 #ifndef ARCH_I386_VGA_H
 #define ARCH_I386_VGA_H
 

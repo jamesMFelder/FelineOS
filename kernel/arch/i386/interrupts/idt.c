@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
 #include <kernel/idt.h>
 
 //This is a basic stub to be called by any Interrupt Service Routine

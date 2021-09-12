@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
 #ifndef _STDLIB_H
 #define _STDLIB_H 1
 

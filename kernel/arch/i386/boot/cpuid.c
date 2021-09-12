@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
 #include <kernel/cpuid.h>
 
 static bool __cpuid_supported=false;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
 #include <string.h>
 
 void* memcpy(void* restrict dstptr, const void* restrict srcptr, size_t size) {

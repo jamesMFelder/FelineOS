@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
 #include <limits.h>
 #include <stdbool.h>
 #include <stdarg.h>

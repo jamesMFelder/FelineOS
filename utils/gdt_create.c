@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
 // Used for creating GDT segment descriptors in 64-bit integer form.
 
 #include <stdio.h>

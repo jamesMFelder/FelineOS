@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
 #include <string.h>
 
 void* memmove(void* dstptr, const void* srcptr, size_t size) {

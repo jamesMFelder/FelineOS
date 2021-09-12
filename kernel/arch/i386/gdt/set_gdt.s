@@ -1,3 +1,5 @@
+; SPDX-License-Identifier: MIT
+; Copyright (c) 2021 James McNaughton Felder
 global setGdt
 
 gdtr DW 0 ; For limit storage

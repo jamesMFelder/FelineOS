@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
 #include <kernel/log.h>
 
 //Add a log. Logging functions should always use this so I can change the backend

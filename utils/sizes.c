@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
 #define PRINT_SIZE(size) printf("\"%s\": \"%zu\"%c\n", #size, sizeof(size), eolc)
 #define NL printf("\n")
 #include <stdio.h>

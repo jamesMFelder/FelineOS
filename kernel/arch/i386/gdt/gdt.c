@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
 #include "gdt.h"
 
 // target is a pointer to the 8-byte GDT entry

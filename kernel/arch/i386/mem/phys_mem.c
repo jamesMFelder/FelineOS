@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
 #include "mem.h"
 #include <drivers/serial.h>
 #include <string.h>

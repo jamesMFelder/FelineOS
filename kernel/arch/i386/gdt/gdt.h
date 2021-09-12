@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
 #ifndef _KERN_GDT_H
 #define _KERN_GDT_H
 
