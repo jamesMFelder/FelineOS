@@ -27,6 +27,7 @@ int cpuid_vendor(char regs[13]){
 	__get_cpuid(0, &eax, &ebx, &ecx, &edx);
 	regs[0]=(ebx & 255); regs[1]=((ebx & (255<<8))>>8); regs[2]=((ebx & (255<<16))>>16); regs[3]=((ebx & (255ull<<24))>>24);
 	regs[4]=(edx & 255); regs[5]=((edx & (255<<8))>>8); regs[6]=((edx & (255<<16))>>16); regs[7]=((edx & (255ull<<24))>>24);
-	regs[8]=(ecx & 255); regs[9]=((ecx & (255<<8))>>8); regs[10]=((ecx & (255<<16))>>16); regs[11]=((ecx & (255ull<<24))>>24); regs[12]='\0';
+	regs[8]=(ecx & 255); regs[9]=((ecx & (255<<8))>>8); regs[10]=((ecx & (255<<16))>>16); regs[11]=((ecx & (255ull<<24))>>24);
+	regs[12]='\0';
 	return eax;
 }

@@ -2,11 +2,14 @@
 #define _KERN_DRIVER_SERIAL_H
 
 #include <kernel/asm.h>
+#include <stddef.h>
 
 #define PORT 0x3f8 //COM1
 
 int init_serial();
 char read_serial();
-void write_serial(char a);
+void put_serial(char a);
+void write_serial(const char *str, const size_t len;);
+void writestr_serial(const char *str;);
 
 #endif //_KERN_DRIVER_SERIAL_H

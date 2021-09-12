@@ -1,7 +1,6 @@
 #ifndef _KERNEL_LOG_H
 #define _KERNEL_LOG_H
 
-#include <kernel/tty.h>
 #include <stdio.h>
 #include <stdarg.h>
 

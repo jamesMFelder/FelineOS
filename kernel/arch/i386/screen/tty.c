@@ -41,17 +41,12 @@ void terminal_putentryat(unsigned char c, uint8_t color, size_t x, size_t y) {
 //Scrolls the terminal 1 line down
 //TODO: scroll multiple lines? (would be much faster if needed)
 void terminal_scroll(){
-	size_t x, y;
-	//Shift evertthing a line down
-	for(y=0;y<VGA_HEIGHT-1;y++){
-		for(x=0;x<VGA_WIDTH;x++){
-			terminal_buffer[y*VGA_WIDTH+x]=terminal_buffer[(y+1)*VGA_WIDTH+x];
-		}
-	}
+	//Shift everything a line down
+	memmove(terminal_buffer, terminal_buffer+VGA_WIDTH, VGA_HEIGHT*VGA_WIDTH*2);
 	//Add a new line of spaces
-	for(x=0;x<VGA_WIDTH;x++){
-		terminal_putentryat(' ', terminal_color, x, VGA_HEIGHT-1);
-	}
+	memset(&terminal_buffer[(VGA_HEIGHT-1)*VGA_WIDTH], 0, VGA_WIDTH);
+	//Don't continue writing beyond the screen
+	terminal_row--;
 }
 
 //Add a new line, scroll if needed
@@ -64,6 +59,7 @@ void terminal_newline(){
 	}
 }
 
+//Add a new character
 void terminal_putchar(char c) {
 	unsigned char uc = c;
 	//newlines and tabs
@@ -97,11 +93,30 @@ void terminal_putchar(char c) {
 	}
 }
 
+//Write a string size bytes long
 void terminal_write(const char* data, size_t size) {
 	for (size_t i = 0; i < size; i++)
 		terminal_putchar(data[i]);
 }
 
+//Write a null-terminated string
 void terminal_writestring(const char* data) {
 	terminal_write(data, strlen(data));
+}
+
+//Move the text output location
+int terminal_move(size_t x, size_t y){
+	int retVal=0;
+	if(x>VGA_WIDTH){
+		retVal|=0x1;
+	}
+	if(y>VGA_HEIGHT){
+		retVal|=0x2;
+	}
+	if(retVal!=0){
+		return retVal;
+	}
+	terminal_column=x;
+	terminal_row=y;
+	return retVal;
 }

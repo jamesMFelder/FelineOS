@@ -82,6 +82,7 @@ install: install-headers install-kernel
 install-headers:
 	mkdir -p $(DESTDIR)$(INCLUDEDIR)
 	cp -R --preserve=timestamps include/. $(DESTDIR)$(INCLUDEDIR)/.
+	cp -R --preserve=timestamps drivers/include/. $(DESTDIR)$(INCLUDEDIR)/.
 
 install-kernel: FelineOS.kernel
 	mkdir -p $(DESTDIR)$(BOOTDIR)

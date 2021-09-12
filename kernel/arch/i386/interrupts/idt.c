@@ -4,7 +4,7 @@
 __attribute__((noreturn))
 void exception_handler(unsigned int excep_num, unsigned int error) {
 	//klogf("Interrupt %X called.", excep_num);
-	klogf("Interrupt %X called with error %X.", excep_num, error);
+	klogf("Interrupt 0x%X called with error 0x%X.", excep_num, error);
 	__asm__ volatile ("hlt"); // Completely hangs the computer
 	__builtin_unreachable();
 	//__asm__ volatile ("sti"); //Reenable interrupts
@@ -29,6 +29,9 @@ void idt_init() {
 		//vectors[vector] = true; //This is probably important (copied from wiki.osdev.org), but I can't figure out what it means
 	}
 
+	__asm__ volatile ("mov $0xff, %al"); //Disable the pic
+	__asm__ volatile ("out %al, $0xa1"); //Disable the pic
+	__asm__ volatile ("out %al, $0x21"); //Disable the pic
 	__asm__ volatile ("lidt %0" : : "memory"(idtr)); // load the new IDT
 	__asm__ volatile ("sti"); // set the interrupt flag
 }

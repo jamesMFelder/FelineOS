@@ -14,14 +14,16 @@
 
 #include <drivers/serial.h>
 
+#include <kernel/mem.h>
+
 //Setup by the linker to be at the start and end of the kernel.
-extern unsigned int kernel_start;
-extern unsigned int kernel_end;
+extern const void kernel_start;
+extern const void kernel_end;
 
 void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 	char vendor[13];
 	init_serial();
-	boot_setup();
+	boot_setup(mbp);
 
 	//TODO: can we avoid relying on multiboot
 	if(magic!=MULTIBOOT_BOOTLOADER_MAGIC){
@@ -40,9 +42,29 @@ void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 		printf("Your cpu is %s.\n", vendor);
 	}
 
-	printf("%s\n", "Sizes:");
-	printf("%s: 0x%zu\n", "void *", sizeof(void*));
-	printf("%s: 0x%zu\n", "unsigned int", sizeof(unsigned int));
+	printf("Kernel starts at %p\n", &kernel_start);
+	printf("Kernel ends at %p\n", &kernel_end);
+
+	if(mbp->flags >> 0x2){
+		klogf("Command line=%s", (char*)(unsigned long)mbp->cmdline);
+	}
+
+	printf("Testing memory allocation.\n");
+	void *old_mem_ptr=get_mem_area();
+	printf("Got a page at %p.\n", old_mem_ptr);
+	printf("Freeing an allocated area returns %d.\n", free_mem_area(old_mem_ptr));
+	void *mem_ptr=get_mem_area();
+	printf("Got another page at %p.\n", mem_ptr);
+	if(mem_ptr==old_mem_ptr){
+		terminal_setcolor(color_ok_dark);
+		printf("Addresses match!\n");
+		terminal_setcolor(color_normal_light);
+	}
+	else{
+		terminal_setcolor(color_bad_dark);
+		printf("Addresses do not match!\n");
+		terminal_setcolor(color_normal_light);
+	}
 
 	if(!(mbp->flags >> 6 & 0x1)){
 		kcritical("No valid memory map.");
