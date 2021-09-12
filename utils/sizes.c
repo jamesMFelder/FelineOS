@@ -10,8 +10,21 @@
 
 int main(int argc, char **argv){
 	char eolc='\0';
-	if(argc>1){if(!strcmp(argv[1], "--json")){eolc=',';}}
-	if(argc>1){if(!strcmp(argv[1], "--json")){printf("{\n");}}
+	//If we have an argument
+	if(argc>1){
+		//strcmp returns 0 when they are the same and 0 is false
+		if(!strcmp(argv[1], "--json")){
+			eolc=',';
+			printf("{\n");
+		}
+		else if(!strcmp(argv[1], "--help")){
+			printf("%s: print the sizes of various types.\n", argv[0]);
+			puts("\t--json: output the results in json.");
+			puts("\t--help: show this help.");
+			return 0;
+		}
+	}
+	//if(argc>1){if(!strcmp(argv[1], "--json")){printf("{\n");}}
 	PRINT_SIZE(void);
 	NL;
 	PRINT_SIZE(char);
