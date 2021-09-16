@@ -50,6 +50,7 @@ int main(int argc, char **argv){
 	NL;
 	PRINT_SIZE(bool);
 	PRINT_SIZE(size_t);
+	PRINT_SIZE(intmax_t);
 	NL;
 	PRINT_SIZE(FILE);
 	NL;
