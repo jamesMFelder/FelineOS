@@ -9,7 +9,7 @@ export AS=${HOST}-as
 export CC=${HOST}-gcc
 
 export NASM=nasm
-export NASM_ARGS=-felf32
+export NASM_ARGS="-felf32 -w+all"
 
 export PREFIX=/usr
 export EXEC_PREFIX=$PREFIX
