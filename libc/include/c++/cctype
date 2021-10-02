@@ -1,0 +1,16 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
+#ifndef _CCTYPE
+#define _CCTYPE
+
+//Just dump the definitions in the global namespace
+#include "ctype.h"
+
+//Including a c++ header means functions are in the std namespace
+namespace std {
+
+	using ::isdigit;
+
+} //namespace std
+
+#endif //_CCTYPE

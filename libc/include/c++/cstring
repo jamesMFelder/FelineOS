@@ -1,0 +1,30 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
+#ifndef _CSTRING
+#define _CSTRING
+
+//Just dump the definitions in the global namespace
+#include "string.h"
+
+//Including a c++ header means functions are in the std namespace
+namespace std {
+
+	using ::memcmp;
+
+	using ::memcpy;
+	using ::memmove;
+	using ::memset;
+
+	using ::strlen;
+
+	using ::strcpy;
+	using ::strncpy;
+	using ::strlcpy;
+
+	using ::strcat;
+	using ::strncat;
+	using ::strlcat;
+
+} //namespace std
+
+#endif //_CSTRING

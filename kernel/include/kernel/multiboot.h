@@ -143,6 +143,21 @@ struct multiboot_elf_section_header_table
 };
 typedef struct multiboot_elf_section_header_table multiboot_elf_section_header_table_t;
 
+struct fb_palette_struct
+{
+	multiboot_uint32_t framebuffer_palette_addr;
+	multiboot_uint16_t framebuffer_palette_num_colors;
+};
+struct fb_rgb_struct
+{
+	multiboot_uint8_t framebuffer_red_field_position;
+	multiboot_uint8_t framebuffer_red_mask_size;
+	multiboot_uint8_t framebuffer_green_field_position;
+	multiboot_uint8_t framebuffer_green_mask_size;
+	multiboot_uint8_t framebuffer_blue_field_position;
+	multiboot_uint8_t framebuffer_blue_mask_size;
+};
+
 struct multiboot_info
 {
 	/* Multiboot info version number */
@@ -204,20 +219,8 @@ struct multiboot_info
 	multiboot_uint8_t framebuffer_type;
 	union
 	{
-		struct
-		{
-			multiboot_uint32_t framebuffer_palette_addr;
-			multiboot_uint16_t framebuffer_palette_num_colors;
-		};
-		struct
-		{
-			multiboot_uint8_t framebuffer_red_field_position;
-			multiboot_uint8_t framebuffer_red_mask_size;
-			multiboot_uint8_t framebuffer_green_field_position;
-			multiboot_uint8_t framebuffer_green_mask_size;
-			multiboot_uint8_t framebuffer_blue_field_position;
-			multiboot_uint8_t framebuffer_blue_mask_size;
-		};
+		struct fb_palette_struct fb_palette;
+		struct fb_rgb_struct fb_rgb;
 	};
 };
 typedef struct multiboot_info multiboot_info_t;

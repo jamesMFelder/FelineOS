@@ -15,6 +15,7 @@
 //       backfiring on a transition to anything else)
 //GRUB stores pointers as long long, so I have to cast to long before casting to void*
 #define GRUBPTR2VOID (void*)(unsigned long)
+#define GRUBPTR2CHAR (char*)(unsigned long)
 
 //An array of strings for all types of memory
 //The subscript should be the type field from GRUB's memory map
@@ -38,8 +39,8 @@ static phys_mem_area_t *mem_stack_bottom;
 static phys_mem_area_t *mem_stack;
 
 //Setup by the linker to be at the start and end of the kernel.
-extern const void kernel_start;
-extern const void kernel_end;
+extern const char kernel_start;
+extern const char kernel_end;
 ptrdiff_t size;
 
 //Fill the memory map
@@ -57,7 +58,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 	size_t mem_stack_size=0;
 
 	klog("Starting bootstrap_phys_mem_manager.");
-	size=(ptrdiff_t)(&kernel_end-&kernel_start)*sizeof(void*);
+	size=(ptrdiff_t)((char*)&kernel_end-(char*)&kernel_start)*sizeof(void*);
 
 	//Print debugging information
 	klogf("Kernel starts at %p", (void*)&kernel_start);
@@ -69,7 +70,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 	for(unsigned int i=0;i<mbmp_len/sizeof(multiboot_memory_map_t);i++){
 		if((mbmp+i)->type==MULTIBOOT_MEMORY_AVAILABLE){
 			mem_stack_size+=(mbmp+i)->len/PHYS_MEM_CHUNK_SIZE;
-			klogf("Memory at %p for %llx with type %s.", GRUBPTR2VOID(mbmp+i)->addr, (mbmp+i)->len, mem_types[(mbmp+i)->type]);
+			klogf("Memory at %p for %llx with type %s.", GRUBPTR2CHAR(mbmp+i)->addr, (mbmp+i)->len, mem_types[(mbmp+i)->type]);
 		}
 	}
 
@@ -82,22 +83,22 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 				(mbmp+i)->len>(mem_stack_size*sizeof(phys_mem_area_t)))
 		{
 			//If the area starts before the kernel
-			if(GRUBPTR2VOID(mbmp+i)->addr<=&kernel_start){
+			if(GRUBPTR2CHAR(mbmp+i)->addr<=(char*)&kernel_start){
 				//And has enough space
-				if(GRUBPTR2VOID((mbmp+i)->addr+
+				if(GRUBPTR2CHAR((mbmp+i)->addr+
 							//(mem_stack_size*sizeof(phys_mem_area_t)))<
-							//GRUBPTR2VOID((mbmp+i)->addr+(mbmp+i)->len))
+							//GRUBPTR2CHAR((mbmp+i)->addr+(mbmp+i)->len))
 					((phys_mem_area_t*)mem_stack_size<
 					 (phys_mem_area_t*)(unsigned long)((mbmp+i)->addr+(mbmp+i)->len))))
 					 {
 						 //And has enough space before the kernel
-						 if(GRUBPTR2VOID((mbmp+i)->addr+(mem_stack_size*sizeof(phys_mem_area_t)))<&kernel_start){
-							 klogf("Found memory at %p.", GRUBPTR2VOID((mbmp+i)->addr));
-							 mem_stack_bottom=GRUBPTR2VOID((mbmp+i)->addr);
-							 mem_stack=GRUBPTR2VOID((mbmp+i)->addr)+mem_stack_size;
+						 if(GRUBPTR2CHAR((mbmp+i)->addr+(mem_stack_size*sizeof(phys_mem_area_t)))<(char*)&kernel_start){
+							 klogf("Found memory at %p.", GRUBPTR2CHAR((mbmp+i)->addr));
+							 mem_stack_bottom=(phys_mem_area_t*)(unsigned long)((mbmp+i)->addr);
+							 mem_stack=(phys_mem_area_t*)(unsigned long)((mbmp+i)->addr)+mem_stack_size;
 						 }
 						 //Or enough space after it
-						 else if(GRUBPTR2VOID((mbmp+i)->addr+(mbmp+i)->len)-&kernel_end>=(ptrdiff_t)(mem_stack_size*sizeof(phys_mem_area_t))){
+						 else if(GRUBPTR2CHAR((mbmp+i)->addr+(mbmp+i)->len)-(char*)&kernel_end>=(ptrdiff_t)(mem_stack_size*sizeof(phys_mem_area_t))){
 							 klogf("Found memory at %p.", &kernel_end);
 							 mem_stack_bottom=(phys_mem_area_t*)&kernel_end;
 							 mem_stack=(phys_mem_area_t*)&kernel_end+mem_stack_size;
@@ -111,13 +112,13 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 				}
 			}
 			//If it is after the kernel
-			else if(GRUBPTR2VOID(mbmp+i)->addr>&kernel_end){
+			else if(GRUBPTR2CHAR(mbmp+i)->addr>(char*)&kernel_end){
 				//And has enough space
-				if(GRUBPTR2VOID((mbmp+i)->addr+
+				if(GRUBPTR2CHAR((mbmp+i)->addr+
 							(mem_stack_size*sizeof(phys_mem_area_t)))<
-						GRUBPTR2VOID((mbmp+i)->addr+(mbmp+i)->len))
+						GRUBPTR2CHAR((mbmp+i)->addr+(mbmp+i)->len))
 				{
-					klogf("Found memory at %p.", GRUBPTR2VOID((mbmp+i)->addr));
+					klogf("Found memory at %p.", GRUBPTR2CHAR((mbmp+i)->addr));
 					mem_stack_bottom=(phys_mem_area_t*)(unsigned long)((mbmp+i)->addr);
 					mem_stack=(phys_mem_area_t*)(unsigned long)((mbmp+i)->addr)+mem_stack_size;
 				}
@@ -127,12 +128,12 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 			}
 			//It starts in the middle of the kernel?
 			else{
-				kwarnf("Memory starts at %p: in the middle of the kernel!", GRUBPTR2VOID(mbmp+i)->addr);
+				kwarnf("Memory starts at %p: in the middle of the kernel!", GRUBPTR2CHAR(mbmp+i)->addr);
 			}
 			//Note where we found the memory and stop searching
 			klog("");
-			klogf("Stack at %p.", mem_stack_bottom);
-			klogf("Reaches up to %p.", mem_stack);
+			klogf("Stack at %p.", (void*)mem_stack_bottom);
+			klogf("Reaches up to %p.", (void*)mem_stack);
 			klogf("It has %zx entries.", mem_stack_size);
 			klogf("Each item in the stack needs %zx bytes.", sizeof(phys_mem_area_t));
 			klog("");
@@ -141,13 +142,13 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 	}
 
 	//Keep track of where we are
-	void *where;
+	char *where;
 	//And keep track of where we are keeping track of this
 	phys_mem_area_t *ptr=mem_stack_bottom;
 	//Discard used pages
 	for(unsigned int i=0;i<mbmp_len/sizeof(multiboot_memory_map_t);i++){
 		if((mbmp+i)->type==MULTIBOOT_MEMORY_AVAILABLE){
-			for(where=GRUBPTR2VOID(mbmp+i)->addr; where<GRUBPTR2VOID((mbmp+i)->addr+(mbmp+i)->len); where+=PHYS_MEM_CHUNK_SIZE){
+			for(where=GRUBPTR2CHAR(mbmp+i)->addr; where<GRUBPTR2CHAR((mbmp+i)->addr+(mbmp+i)->len); where+=PHYS_MEM_CHUNK_SIZE){
 				//If the page has part of the kernel, discard it
 				//If it starts before the kernel ends and ends after it starts
 				if(where<&kernel_end && where+PHYS_MEM_CHUNK_SIZE>&kernel_start){
@@ -159,8 +160,8 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 				if(mbp->flags >> 2 & 0x1){
 					//If it starts before the command line ends and ends after it starts
 					if(
-							where<GRUBPTR2VOID mbp->cmdline &&
-							where+PHYS_MEM_CHUNK_SIZE>(GRUBPTR2VOID mbp->cmdline+strlen(GRUBPTR2VOID mbp->cmdline))
+							where<GRUBPTR2CHAR mbp->cmdline &&
+							where+PHYS_MEM_CHUNK_SIZE>(GRUBPTR2CHAR mbp->cmdline+strlen(GRUBPTR2CHAR mbp->cmdline))
 					  ){
 						//If we would be marking it as useable, don't
 						ptr--;
@@ -170,13 +171,13 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 				}
 				ptr->begin=where;
 			}
-			klogf("Memory at %p for %llx with type %s.", GRUBPTR2VOID(mbmp+i)->addr, (mbmp+i)->len, mem_types[(mbmp+i)->type]);
+			klogf("Memory at %p for %llx with type %s.", GRUBPTR2CHAR(mbmp+i)->addr, (mbmp+i)->len, mem_types[(mbmp+i)->type]);
 		}
 	}
 	for(phys_mem_area_t *ptr=mem_stack_bottom; ptr<mem_stack; ptr++){
 		//If the page has part of the kernel, discard it
 		//If it starts before the kernel ends and ends after it starts
-		if(ptr->begin<&kernel_end && ptr->begin+PHYS_MEM_CHUNK_SIZE>&kernel_start){
+		if((char*)ptr->begin<&kernel_end && (char*)ptr->begin+PHYS_MEM_CHUNK_SIZE>&kernel_start){
 			ptr--;
 			mem_stack--;
 			continue;
@@ -186,7 +187,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 			//If it starts before the command line ends and ends after it starts
 			if(
 					ptr->begin<GRUBPTR2VOID mbp->cmdline &&
-					ptr->begin+PHYS_MEM_CHUNK_SIZE>(GRUBPTR2VOID mbp->cmdline+strlen(GRUBPTR2VOID mbp->cmdline))
+					(char*)ptr->begin+PHYS_MEM_CHUNK_SIZE>(GRUBPTR2CHAR mbp->cmdline+strlen(GRUBPTR2CHAR mbp->cmdline))
 			  ){
 				ptr--;
 				mem_stack--;

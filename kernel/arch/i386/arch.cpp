@@ -3,7 +3,7 @@
 #include <kernel/arch.h>
 
 #include "gdt/gdt.h"
-#include <kernel/idt.h>
+#include <kernel/interrupts.h>
 #include "mem/mem.h"
 #include <kernel/tty.h>
 

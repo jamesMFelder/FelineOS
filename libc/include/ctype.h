@@ -5,6 +5,11 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C"{
+#endif
 int isdigit(int c);
-
+#ifdef __cplusplus
+}
+#endif
 #endif //_CTYPE_H

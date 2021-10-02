@@ -3,11 +3,6 @@
 #ifndef _KERN_IDT_H
 #define _KERN_IDT_H
 
-#include <stdint.h>
-#include <stdbool.h>
-
-#include <kernel/log.h>
-
 //TODO: get as much stuff out of here as possible now that it is public
 #define IDT_MAX_DESCRIPTORS 32
 
@@ -29,14 +24,6 @@ typedef struct {
 
 static idtr_t idtr __attribute__((used)); //For use with the lidt instruction
 
-void exception_handler(unsigned int excep_num, unsigned int error);//A stub that prints the error
-void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags);
-
 extern void* isr_stub_table[];
-
-//Setup the IDT
-void idt_init(void);
-
-int add_isr(unsigned int num, void *func);
 
 #endif //_KERN_IDT_H

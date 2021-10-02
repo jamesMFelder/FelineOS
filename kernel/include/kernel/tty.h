@@ -15,6 +15,9 @@
 #define color_bad_dark 0x04
 #define color_bad_light 0xF4
 
+#ifdef __cplusplus
+extern "C"{
+#endif
 //Setup the hardware
 void terminal_initialize(void);
 //Write a character at the next location
@@ -30,5 +33,8 @@ int terminal_move(size_t x, size_t y);
 
 //Set the default output color
 void terminal_setcolor(uint8_t color);
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _KERNEL_TTY_H

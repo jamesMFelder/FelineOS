@@ -1,0 +1,19 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
+#ifndef _CSTDLIB
+#define _CSTDLIB
+
+//Just dump the definitions in the global namespace
+#include "stdlib.h"
+
+//Including a c++ header means functions are in the std namespace
+namespace std {
+
+	using ::abort;
+	using ::abs;
+	using ::labs;
+	using ::llabs;
+
+} //namespace std
+
+#endif // _CSTDLIB

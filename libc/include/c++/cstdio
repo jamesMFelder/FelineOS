@@ -1,0 +1,19 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
+#ifndef _CSTDIO
+#define _CSTDIO
+
+//Just dump the definitions in the global namespace
+#include <stdio.h>
+
+//Including a c++ header means functions are in the std namespace
+namespace std {
+
+	using ::printf;
+	using ::vprintf;
+	using ::putchar;
+	using ::puts;
+
+} //namespace std
+
+#endif //_CSTDIO

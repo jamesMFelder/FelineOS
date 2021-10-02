@@ -11,6 +11,9 @@
 #define FELINE_WARN 2
 #define FELINE_LOG 3
 
+#ifdef __cplusplus
+extern "C"{
+#endif
 //Basic logging functions
 //TODO: should I make these functions if we can optomize having no % stuff
 #define kerror(data) kerrorf("%s", data)
@@ -27,5 +30,8 @@ __attribute__ ((format (printf, 1, 2))) void kerrorf(const char *format, ...);
 //ONLY USE FOR WHEN THE OS IS ABOUT TO CRASH
 //TODO: Restrict access to kernel?
 __attribute__ ((format (printf, 1, 2))) void kcriticalf(const char *format, ...);
+#ifdef __cplusplus
+}
+#endif
 
 #endif //_KERNEL_LOG_H

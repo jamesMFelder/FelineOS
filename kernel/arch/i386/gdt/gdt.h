@@ -12,6 +12,9 @@ struct GDT{
 	int type;
 };
 
+#ifdef __cplusplus
+extern "C"{
+#endif
 // target is a pointer to the 8-byte GDT entry
 // source is an arbitrary structure describing the GDT entry
 void encodeGdtEntry(uint8_t *target, struct GDT source);
@@ -21,5 +24,8 @@ void setGdt(uint64_t *GDT, unsigned int gdt_size);
 
 //Creates segments spanning the entire memory for everything.
 void disable_gdt();
+#ifdef __cplusplus
+}
+#endif
 
 #endif //_KERN_GDT_H

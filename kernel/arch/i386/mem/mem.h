@@ -13,8 +13,14 @@
 
 extern char *mem_types[];
 
+#ifdef __cplusplus
+extern "C"{
+#endif
 //Start the memory manager
 int bootstrap_phys_mem_manager(multiboot_info_t *mbp);
+#ifdef __cplusplus
+}
+#endif
 
 //Used for a stack of pages
 typedef struct phys_mem_area{

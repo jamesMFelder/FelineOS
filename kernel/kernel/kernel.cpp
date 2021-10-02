@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021 James McNaughton Felder
-#include <stdio.h>
+#include <cstdio>
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include <kernel/arch.h>
 
@@ -19,9 +19,10 @@
 #include <kernel/mem.h>
 
 //Setup by the linker to be at the start and end of the kernel.
-extern const void kernel_start;
-extern const void kernel_end;
+extern const char kernel_start;
+extern const char kernel_end;
 
+extern "C"{
 void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 	char vendor[13];
 	init_serial();
@@ -77,4 +78,5 @@ void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 	terminal_setcolor(color_bad_dark);
 	kcritical("Nothing to do... Pausing now."); //boot.S should hang if we return
 	terminal_setcolor(color_normal_light);
+}
 }
