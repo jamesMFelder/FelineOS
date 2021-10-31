@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021 James McNaughton Felder
 #ifndef _KERNEL_LOG_H
-#define _KERNEL_LOG_H
+#define _KERNEL_LOG_H 1
 
 #include <stdio.h>
 #include <stdarg.h>

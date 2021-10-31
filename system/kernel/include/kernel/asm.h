@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021 James McNaughton Felder
 #ifndef _KERN_ASM_H
-#define _KERN_ASM_H
+#define _KERN_ASM_H 1
 
 #include <stdint.h>
 

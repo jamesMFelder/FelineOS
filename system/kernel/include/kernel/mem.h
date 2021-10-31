@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021 James McNaughton Felder
 #ifndef _KERN_MEM_H
-#define _KERN_MEM_H
+#define _KERN_MEM_H 1
 
 //4 Kilobytes
 #define PHYS_MEM_CHUNK_SIZE 4096

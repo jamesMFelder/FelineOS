@@ -14,5 +14,6 @@ cat > isodir/boot/grub/grub.cfg << EOF
 menuentry "myos" {
 	multiboot /boot/FelineOS.kernel
 }
+set timeout=1
 EOF
 grub-mkrescue -o FelineOS.iso isodir -d /usr/lib/grub/i386-pc

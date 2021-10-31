@@ -1,5 +1,5 @@
 #ifndef _ICXXABI_H
-#define _ICXXABI_H
+#define _ICXXABI_H 1
 
 #define ATEXIT_MAX_FUNCS 128
 

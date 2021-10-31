@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021 James McNaughton Felder
 #ifndef _KERN_ARCH_MEM_H
-#define _KERN_ARCH_MEM_H
+#define _KERN_ARCH_MEM_H 1
 
 #include <stddef.h>
 #include <stdbool.h>

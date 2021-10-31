@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021 James McNaughton Felder
 #ifndef _KERN_CPUID_H
-#define _KERN_CPUID_H
+#define _KERN_CPUID_H 1
 
 #include <cpuid.h>
 #include <stddef.h>
