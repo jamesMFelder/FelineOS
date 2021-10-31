@@ -1,10 +1,19 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021 James McNaughton Felder
 #ifndef _KERN_IDT_H
-#define _KERN_IDT_H
+#define _KERN_IDT_H 1
 
-//TODO: get as much stuff out of here as possible now that it is public
+#include <stdint.h>
+
 #define IDT_MAX_DESCRIPTORS 32
+
+//Disable interrupts
+//Save current instruction
+#define IDT_INTERRUPT_GATE 0x8E
+
+//Leave interrupts on
+//Save next instruction
+#define IDT_TRAP_GATE 0x8F
 
 typedef struct {
 	uint16_t    isr_low;      // The lower 16 bits of the ISR's address
@@ -25,5 +34,8 @@ typedef struct {
 static idtr_t idtr __attribute__((used)); //For use with the lidt instruction
 
 extern void* isr_stub_table[];
+
+//Jump to the entry here for each interrupt (if it exists)
+void *isr_handler_table[IDT_MAX_DESCRIPTORS];
 
 #endif //_KERN_IDT_H

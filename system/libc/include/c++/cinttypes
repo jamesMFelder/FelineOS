@@ -1,0 +1,9 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
+#ifndef _CINTTYPES
+#define _CINTTYPES 1
+
+//Just dump the definitions in the global namespace
+#include "inttypes.h"
+
+#endif // _CINTTYPES

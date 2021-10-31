@@ -35,6 +35,7 @@ int main(int argc, char **argv){
 	PRINT_SIZE(long int);
 	PRINT_SIZE(long long int);
 	NL;
+	PRINT_SIZE(uint8_t);
 	PRINT_SIZE(uint16_t);
 	PRINT_SIZE(uint32_t);
 	PRINT_SIZE(uint64_t);

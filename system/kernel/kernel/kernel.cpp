@@ -55,14 +55,10 @@ void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 	void *mem_ptr=get_mem_area();
 	printf("Got another page at %p.\n", mem_ptr);
 	if(mem_ptr==old_mem_ptr){
-		//terminal_setcolor(color_ok_dark);
 		printf("Addresses match!\n");
-		//terminal_setcolor(color_normal_light);
 	}
 	else{
-		//terminal_setcolor(color_bad_dark);
 		printf("Addresses do not match!\n");
-		//terminal_setcolor(color_normal_light);
 	}
 
 	if(!(mbp->flags >> 6 & 0x1)){
@@ -71,6 +67,8 @@ void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 		abort();
 	}
 
+	printf("Testing an syscall...\n");
+	asm volatile("int $31");
 	kcritical("Nothing to do... Pausing now."); //boot.S should hang if we return
 }
 }

@@ -25,7 +25,9 @@ section .bss
 section .text
 global _start:function (_start.end - _start)
 _start:
+	;Setup the stack and clear ebp so debuggers don't trace further back from here
 	mov esp, stack_top
+	xor ebp, ebp
 
 	;Save the arguments from GRUB
 	push eax
