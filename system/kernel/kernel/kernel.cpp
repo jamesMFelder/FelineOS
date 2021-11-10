@@ -16,6 +16,10 @@
 
 #include <kernel/mem.h>
 
+#include <feline/syscall.h>
+
+#include <kernel/backtrace.h>
+
 //Setup by the linker to be at the start and end of the kernel.
 extern const char kernel_start;
 extern const char kernel_end;
@@ -24,7 +28,6 @@ extern "C"{
 void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 	char vendor[13];
 	init_serial();
-	boot_setup(mbp);
 
 	//TODO: can we avoid relying on multiboot
 	if(magic!=MULTIBOOT_BOOTLOADER_MAGIC){
@@ -32,6 +35,14 @@ void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 		kerror("Not booted by a multiboot bootloader.");
 		abort();
 	}
+
+	if(!(mbp->flags >> 6 & 0x1)){
+		kcritical("No valid memory map.");
+		kcritical("In grub, type 'c' for a command line and then type 'displaysmem' or 'lsmmap' to see the memory it thinks exists.");
+		abort();
+	}
+
+	boot_setup(mbp);
 
 	//Announce that we are loaded
 	klog("Hello kernel world!");
@@ -61,14 +72,9 @@ void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 		printf("Addresses do not match!\n");
 	}
 
-	if(!(mbp->flags >> 6 & 0x1)){
-		kcritical("No valid memory map.");
-		kcritical("In grub, type 'c' for a command line and then type 'displaysmem' or 'lsmmap' to see the memory it thinks exists.");
-		abort();
-	}
-
 	printf("Testing an syscall...\n");
-	asm volatile("int $31");
-	kcritical("Nothing to do... Pausing now."); //boot.S should hang if we return
+	printf("It returned %ld.\n", syscall(0));
+	kcritical("Nothing to do... Aborting now."); //boot.S should hang if we return
+	abort(); //But we're just going to crash (and print a backtrace) for now.
 }
 }

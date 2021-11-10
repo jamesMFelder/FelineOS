@@ -24,7 +24,7 @@ size_t strlcpy(char*, const char*, size_t);
 
 char *strcat(char*, const char*);
 char *strncat(char*, const char*, size_t);
-__attribute__((deprecated("Not implemented correctly."))) size_t strlcat(char*, const char*, size_t);
+size_t strlcat(char*, const char*, size_t);
 
 //Turn ints to strings
 int ttostr(const ptrdiff_t num, char str[20]);

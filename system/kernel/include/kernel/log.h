@@ -4,7 +4,6 @@
 #define _KERNEL_LOG_H 1
 
 #include <stdio.h>
-#include <stdarg.h>
 
 #define FELINE_CRIT 0
 #define FELINE_ERR 1

@@ -28,6 +28,8 @@ _start:
 	;Setup the stack and clear ebp so debuggers don't trace further back from here
 	mov esp, stack_top
 	xor ebp, ebp
+	push ebp
+	mov ebp, esp
 
 	;Save the arguments from GRUB
 	push eax

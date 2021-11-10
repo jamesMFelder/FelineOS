@@ -22,5 +22,7 @@ void __stack_chk_fail(void)
 	kcritical("Stack smashing detected");
 	__asm__ ("hlt");
 	__builtin_unreachable();
+#else
+#error "If you aren't building hosted, build as part of libk."
 #endif
 }

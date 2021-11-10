@@ -23,6 +23,7 @@ CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -D__is_kernel -Iinclude -Idrivers/include
 LDFLAGS:=$(LDFLAGS)
 LIBS:=$(LIBS) -nostdlib -Wl,-\( -lVGA_text -lk -Wl,-\) -lgcc
 
+include kernel/make.config
 include $(ARCHDIR)/make.config
 include $(DRIVERDIR)/make.config
 
@@ -34,9 +35,7 @@ LIBS:=$(LIBS) $(KERNEL_ARCH_LIBS) $(KERNEL_DRIVER_LIBS)
 KERNEL_OBJS=\
 $(KERNEL_ARCH_OBJS) \
 $(KERNEL_DRIVER_OBJS) \
-kernel/kernel.o \
-kernel/log.o \
-kernel/cpp.o \
+$(KERNEL_CORE_OBJS) \
 
 OBJS=\
 $(ARCHDIR)/boot/crti.o \

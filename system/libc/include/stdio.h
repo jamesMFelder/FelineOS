@@ -4,9 +4,11 @@
 #define _STDIO_H 1
 
 #include <sys/cdefs.h>
-#include <stdarg.h>
 
 #define EOF (-1)
+
+//Get __FelineOS_va_list (for vprintf) without dragging the whole <stdargs.h> header in.
+#include <bits/va_list.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -14,7 +16,7 @@ extern "C" {
 
 __attribute__ ((format (printf, 1, 2)))
 int printf(const char* __restrict, ...);
-int vprintf(const char* __restrict, va_list);
+int vprintf(const char* __restrict, __FelineOS_va_list);
 int putchar(int);
 int puts(const char*);
 //Not standard, but I want something to use in printf for %s

@@ -23,7 +23,7 @@ char *strncat(char *dest, const char *src, size_t n){
 }
 
 size_t strlcat(char *dest, const char *src, size_t n){
-	size_t max=n-strlen(dest);
+	size_t max=n-strlen(dest)-1;
 	size_t count;
 	//append, don't overwrite
 	char *dest_ptr=dest+strlen(dest);
@@ -35,7 +35,6 @@ size_t strlcat(char *dest, const char *src, size_t n){
 			return (dest_ptr+count)-dest;
 		}
 	}
-	//I don't think we append a null byte here, but I'm not sure
-	//Also, is this the correct return value
+	//Don't append a null (avoid buffer overflow)
 	return count;
 }

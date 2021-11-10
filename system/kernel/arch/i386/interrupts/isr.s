@@ -170,18 +170,21 @@ isr_stub_31:
 	push ebp ;Create a stack frame (for debugging)
 	mov ebp, esp
 
-	push eax ;Save registers
-	push ecx
+	push ecx ;Save registers
 	push edx
 	cld ;Reset string operation direction flag before calling C code
 
+	push eax ;Push the syscall number
 	push temp_syscall_error_msg ;The format string
-	call klogf
+	call klogf ;Error because we don't support anything yet
+
+	call abort ;Quit
+
+	mov eax, 0 ;Return sucess
 
 	add esp, 1 ;Remove local variables
 	pop edx ;Restore registers
 	pop ecx
-	pop eax
 
 	mov esp, ebp ;Remove the stack frame
 	pop ebp
@@ -197,12 +200,14 @@ isr_stub_table:
 %assign i i+1
 %endrep
 section .rodata
+
+%include "string.inc"
+
 ;Change %lX to %llX for 64-bit
-;Every string must end with `, 0` or our logger will print whatever random junk comes next!!!
-	temp_syscall_error_msg db "System call made.", 0
-	error_msg_generic_interrupt db "Unknown interrupt 0x%lX fired with error 0x%lX.", 0
-	noerror_msg_generic_interrupt db "Unknown interrupt 0x%lX fired", 0
-	error_msg_generic_eip db "The instruction was at %p.", 0
-    error_msg_division_by_zero db "Division by zero at %p.", 0
-	error_msg_GPF db "General protection fault at %p.", 0
-	error_msg_GPF_segment db "Segment selector index: 0x%lX.", 0
+	string temp_syscall_error_msg, "Unknown system call %ld made."
+	string error_msg_generic_interrupt, "Unknown interrupt 0x%lX fired with error 0x%lX."
+	string noerror_msg_generic_interrupt, "Unknown interrupt 0x%lX fired"
+	string error_msg_generic_eip, "The instruction was at %p."
+	string error_msg_division_by_zero, "Division by zero at %p."
+	string error_msg_GPF, "General protection fault at %p."
+	string error_msg_GPF_segment, "Segment selector index: 0x%lX."

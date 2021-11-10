@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021 James McNaughton Felder
-#ifndef _CTYPE_H
-#define _CTYPE_H 1
+#ifndef _KERN_SYSCALL_H
+#define _KERN_SYSCALL_H 1
 
 #ifdef __cplusplus
 extern "C"{
 #endif
-int isdigit(int c);
-int iscntrl(int c);
+long syscall(long which, ...);
 #ifdef __cplusplus
 }
 #endif
-#endif //_CTYPE_H
+
+#endif //_KERN_SYSCALL_H

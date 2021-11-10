@@ -1,5 +1,9 @@
 % SPDX-License-Identifier: MIT
 % Copyright (c) 2021 James McNaughton Felder
+
+% Hexadecimal numbers (0x1) are not multiplying by zero (0×1)
+% chktex-file 29
+
 \documentclass[12pt]{article}
 \usepackage[T1]{fontenc}
 \usepackage{xcolor}
@@ -29,32 +33,45 @@
 \item \code{docs/}: Documentation
 \item \code{docs/latex/}: Original latex documentation.
 \item \code{docs/\{html,pdf\}/}: Generated documentation.
-\item \code{kernel/}: The kernel.
-\item \code{kernel/arch/}: Architecture dependent stuff in the kernel.
-\item \code{kernel/arch/i386/}: 32-bit PC stuff
-\item \code{kernel/arch/\$(ARCH)/}:
-\item \code{kernel/arch/\$(ARCH)/boot/}: the early boot process
-\item \code{kernel/arch/\$(ARCH)/gdt/}: dealing with the Global Descriptor Table \begin{small}(mostly creating the illusion of disabling it)\end{small}
-\item \code{kernel/arch/\$(ARCH)/interrupts/}: handling interrupts
-\item \code{kernel/arch/\$(ARCH)/mem/}: managing physical memory
-\item \code{kernel/arch/\$(ARCH)/screen/}: hardware output
-\item \code{kernel/drivers/}: Stuff that one might or might not want
-\item \code{kernel/drivers/include/}: Header files for the drivers
-\item \code{kernel/drivers/include/drivers/}: \code{<drivers/header.h>} instead of \code{<header.h>}
-\item \code{kernel/drivers/serial/}: Code for the serial port
-\item \code{kernel/include/}: Kernel headers
-\item \code{kernel/include/kernel/}: \code{<kernel/header.h>} instead of \code{<header.h>}
-\item \code{kernel/kernel/}: Generic kernel files.
-\item \code{libc/}: A minimal C library
-\item \code{libc/arch/}: Architecture dependent libc stuff (macros, …)
-\item \code{libc/arch/i386/}: 32-bit PC stuff
-\item \code{libc/include/}: Header files.
-\item \code{libc/include/sys/}: System header files.
-\item \code{libc/ctype/}: Detecting character types.
-\item \code{libc/ssp/}: What gcc needs to detect stack smashing.
-\item \code{libc/stdio/}: I/O programs.
-\item \code{libc/stdlib/}: Other C library programs.
-\item \code{libc/string/}: C String handling programs.
+\item \code{system/kernel/}: The kernel.
+\item \code{system/kernel/arch/}: Architecture dependent stuff in the kernel.
+\item \code{system/kernel/arch/i386/}: 32-bit PC stuff
+\item \code{system/kernel/arch/\$(ARCH)/}:
+\item \code{system/kernel/arch/\$(ARCH)/boot/}: the early boot process
+\item \code{system/kernel/arch/\$(ARCH)/gdt/}: dealing with the Global Descriptor Table \begin{small}(mostly creating the illusion of disabling it)\end{small}
+\item \code{system/kernel/arch/\$(ARCH)/interrupts/}: handling interrupts
+\item \code{system/kernel/arch/\$(ARCH)/mem/}: managing physical memory
+\item \code{system/kernel/drivers/}: Stuff that one might or might not want
+\item \code{system/kernel/drivers/include/}: Header files for the drivers
+\item \code{system/kernel/drivers/include/drivers/}: \code{<drivers/header.h>} instead of \code{<header.h>}
+\item \code{system/kernel/drivers/serial/}: Code for the serial port.
+\item \code{system/kernel/include/}: Kernel headers.
+\item \code{system/kernel/include/kernel/}: \code{<kernel/header.h>} instead of \code{<header.h>}
+\item \code{system/kernel/kernel/}: Generic kernel files.
+\item \code{system/libc/}: A minimal C library
+\item \code{system/libc/arch/}: Architecture dependent libc stuff (macros, …)
+\item \code{system/libc/arch/i386/}: 32-bit PC stuff
+\item \code{system/libc/arch/\$(ARCH)/syscall/}: system call functions
+\item \code{system/libc/ctype/}: Character types
+\item \code{system/libc/include/}: Header files.
+\item \code{system/libc/include/bits/}: Internals
+\item \code{system/libc/include/c++/}: C++ header files
+\item \code{system/libc/include/sys/}: System header files.
+\item \code{system/libc/ctype/}: Detecting character types.
+\item \code{system/libc/ssp/}: What gcc needs to detect stack smashing.
+\item \code{system/libc/stdio/}: I/O programs.
+\item \code{system/libc/stdlib/}: Other C library programs.
+\item \code{system/libc/string/}: C String handling programs.
+\item \code{system/libFeline/}: Functions and headers that aren't part of the C standard or the kernel.
+\item \code{system/libFeline/arch}: Architecture-dependent functions
+\item \code{system/libFeline/arch/i386}: 32-bit PC functions
+\item \code{system/libFeline/include/feline}: \code{<feline/header.h>} instead of \code{header.h}
+\item \code{system/libFeline/include/feline/asm}: Assembly headers (NASM ones end in \code{.inc}, haven't decided for GAS)
+\item \code{system/terminals/}: Terminal classes.
+\item \code{system/terminals/common}: A base class everything else comes from.
+\item \code{system/vga/}: VGA terminals (only text-mode supported now).
+\item \code{system/include/terminals/}: \code{<terminals/header.h>} instead of \code{<header.h>}
+\item \code{system/include/terminals/vga}: VGA terminal header files.
 \item \code{utils/}: Programs to run outside the OS
 \end{list}
 
@@ -81,6 +98,7 @@
 \begin{list}{}{}
 \item \code{utils/gdt\_create.c}: The main function calls \code{create\_descriptor(base, limit, type)}. The only defined types (currently) are \code{\{code,data\}-ring\{0,3\}}.
 \item \code{utils/sizes.c}: Print the sizes of various types. Use \code{-{}-json} if wanted.
+\item \code{utils/sizes\_freestanding.c}: Print the sizes of various types. Only uses freestanding available types. Try \code{\$target-compiler -S} to get the assembly without linking if needed.
 \end{list}
 
 \section{Memory management}
@@ -102,6 +120,10 @@
 \section{Syscalls}
 \begin{list}{}{}
 \item Call using \code{int 31}/\code{int 0x1F} (NASM) or \code{int \$31}/\code{int \$0x1f} (GAS)
-\item Currently a noop.
+\item The syscall number is in \code{eax}.
+\item The arguments are in \code{ecx} and \code{edx} (any further are pushed onto the stack)
+\item If they don't fit in a register (\code{32} bits on \code{i686}), they are pointers.
+\item C(++) code can use the \code{syscall} wrapper function in \code{<sys/syscall.h>}
+\item Currently return \code{-1} because none are supported.
 \end{list}
 \end{document}

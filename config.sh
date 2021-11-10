@@ -1,4 +1,4 @@
-export SYSTEM_HEADER_PROJECTS="system/libc system/terminals system/kernel"
+export SYSTEM_HEADER_PROJECTS="system/libc system/libFeline system/terminals system/kernel"
 export PROJECTS="system/libc system/terminals system/kernel"
 
 export MAKE=${MAKE:-make}
@@ -10,7 +10,10 @@ export CC=${HOST}-gcc
 export CPP=${HOST}-g++
 
 export NASM=nasm
-export NASM_ARGS="-felf32 -w+all"
+# TODO: figure out how to set the sysroot for nasm or switch to gas
+#     this is just used to include my own assembly files that don't belong
+#     in the kernel (part of libFeline)
+export NASM_ARGS="-felf32 -w+all -i../../sysroot/usr/include/feline/asm/"
 
 export PREFIX=/usr
 export EXEC_PREFIX=$PREFIX
@@ -19,7 +22,7 @@ export LIBDIR=$EXEC_PREFIX/lib
 export INCLUDEDIR=$PREFIX/include
 export CPP_INCLUDEDIR=$PREFIX/include/c++
 
-export CFLAGS='-O0 -g -Wall -Wextra -Werror -pedantic -fstack-protector -mno-red-zone'
+export CFLAGS='-O0 -g -Wall -Wextra -Werror -pedantic -fstack-protector -mno-red-zone -fno-omit-frame-pointer'
 export CPPFLAGS="$CFLAGS -fno-rtti -fno-exceptions"
 
 # Configure the cross-compiler to use the desired system root.

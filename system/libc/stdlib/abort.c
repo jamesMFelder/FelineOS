@@ -5,13 +5,15 @@
 
 #if defined(__is_libk)
 #include <kernel/log.h>
+#include <kernel/backtrace.h>
 #endif //__is_libk
 
 __attribute__((__noreturn__))
 void abort(void) {
 #if defined(__is_libk)
 	// TODO: Add proper kernel panic.
-	kerror("abort()\n");
+	kerror("abort()");
+	backtrace();
 #else //__is_libk
 	// TODO: Abnormally terminate the process as if by SIGABRT.
 	printf("abort()\n");
