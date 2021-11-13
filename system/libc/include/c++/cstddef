@@ -1,0 +1,19 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
+#ifndef _CSTDDEF
+#define _CSTDDEF
+
+//Just dump the definitions in the global namespace
+#include "stddef.h"
+
+//Including a c++ header means functions are in the std namespace
+namespace std {
+
+	using ::size_t;
+	using ::ptrdiff_t;
+	using ::max_align_t;
+	using ::nullptr_t;
+
+} //namespace std
+
+#endif // _CSTDDEF

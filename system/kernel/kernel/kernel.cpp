@@ -4,6 +4,8 @@
 
 #include <cstdlib>
 
+#include <cinttypes>
+
 #include <kernel/arch.h>
 
 #include <kernel/log.h>
@@ -11,6 +13,8 @@
 #include <kernel/cpuid.h>
 
 #include <kernel/multiboot.h>
+
+#include <kernel/misc.h>
 
 #include <drivers/serial.h>
 
@@ -44,7 +48,7 @@ void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 	printf("Kernel starts at %p\n", &kernel_start);
 	printf("Kernel ends at %p\n", &kernel_end);
 
-	if(mbp->flags >> 0x2){
+	if(get_flag(mbp->flags, MULTIBOOT_INFO_CMDLINE)){
 		klogf("Command line=%s", (char*)(unsigned long)mbp->cmdline);
 	}
 
@@ -65,12 +69,37 @@ void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 		//terminal_setcolor(color_normal_light);
 	}
 
-	if(!(mbp->flags >> 6 & 0x1)){
+	if(!get_flag(mbp->flags, MULTIBOOT_INFO_MEM_MAP)){
 		kcritical("No valid memory map.");
 		kcritical("In grub, type 'c' for a command line and then type 'displaysmem' or 'lsmmap' to see the memory it thinks exists.");
 		abort();
 	}
 
+	if(get_flag(mbp->flags, MULTIBOOT_INFO_FRAMEBUFFER_INFO)){
+		klogf("Framebuffer at %p.", (void*)mbp->framebuffer_addr);
+		klogf("Frame buffer pitch (in bytes): %u.", mbp->framebuffer_pitch);
+		klogf("Framebuffer type: %u.", mbp->framebuffer_type);
+		klogf("It is %ux%u (in pixels).", mbp->framebuffer_width, mbp->framebuffer_height);
+		switch(mbp->framebuffer_type){
+			case MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED:
+				klogf("Framebuffer type: %s.", "indexed");
+				klogf("Palette at %p with %d colors.", (void*)mbp->fb_palette.framebuffer_palette_addr, mbp->fb_palette.framebuffer_palette_num_colors);
+				break;
+			case MULTIBOOT_FRAMEBUFFER_TYPE_RGB:
+				klogf("Framebuffer type: %s.", "RGB");
+				klogf("Red field position: %" PRIu8 ", mask size: %" PRIu8, mbp->fb_rgb.framebuffer_red_field_position, mbp->fb_rgb.framebuffer_red_mask_size);
+				klogf("Green field position: %" PRIu8 ", mask size: %" PRIu8, mbp->fb_rgb.framebuffer_green_field_position, mbp->fb_rgb.framebuffer_green_mask_size);
+				klogf("Blue field position: %" PRIu8 ", mask size: %" PRIu8, mbp->fb_rgb.framebuffer_blue_field_position, mbp->fb_rgb.framebuffer_blue_mask_size);
+				break;
+			case MULTIBOOT_FRAMEBUFFER_TYPE_EGA_TEXT:
+				klogf("Framebuffer type: %s.", "EGA text");
+				break;
+		}
+	}
+	else{
+		//TODO: actually do this
+		kwarn("Not finding a framebuffer from GRUB, falling back to text mode.");
+	}
 	kcritical("Nothing to do... Pausing now."); //boot.S should hang if we return
 }
 }

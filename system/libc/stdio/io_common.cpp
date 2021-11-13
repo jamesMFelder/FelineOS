@@ -6,17 +6,17 @@
 #if defined(__is_libk)
 
 //TODO: good stdio
-vga_text_term defaultTerm;
+//vga_text_term defaultTerm;
 
 int __internal_putchar(char const c){
 	put_serial(c);
-	defaultTerm.putchar(c);
+	//defaultTerm.putchar(c);
 	return 0;
 }
 
 int __internal_writeStr(char const * const s){
 	writestr_serial(s);
-	defaultTerm.puts(s);
+	//defaultTerm.puts(s);
 	return 0;
 }
 #else //__is_libk

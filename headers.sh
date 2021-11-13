@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2021 James McNaughton Felder
 set -e
+#shellcheck disable=SC1091
 . ./config.sh
 
 mkdir -p "$SYSROOT"

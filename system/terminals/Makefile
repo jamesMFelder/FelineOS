@@ -23,7 +23,8 @@ LIBS:=$(LIBS) -nostdlib -lk -lgcc
 
 VGA_TEXT_OBJS=\
 common/terminal.o \
-vga/vga_text.o
+vga/vga_text.o \
+vga/vga_fb.o
 
 .PHONY: all clean install install-headers
 .SUFFIXES: .o .c .S
