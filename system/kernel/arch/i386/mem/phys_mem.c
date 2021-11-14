@@ -70,7 +70,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 	for(unsigned int i=0;i<mbmp_len/sizeof(multiboot_memory_map_t);i++){
 		if((mbmp+i)->type==MULTIBOOT_MEMORY_AVAILABLE){
 			mem_stack_size+=(mbmp+i)->len/PHYS_MEM_CHUNK_SIZE;
-			klogf("Memory at %p for %llx with type %s.", GRUBPTR2CHAR(mbmp+i)->addr, (mbmp+i)->len, mem_types[(mbmp+i)->type]);
+			klogf("Memory at %p for %llx with type %s.", GRUBPTR2VOID(mbmp+i)->addr, (mbmp+i)->len, mem_types[(mbmp+i)->type]);
 		}
 	}
 
@@ -93,13 +93,13 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 					 {
 						 //And has enough space before the kernel
 						 if(GRUBPTR2CHAR((mbmp+i)->addr+(mem_stack_size*sizeof(phys_mem_area_t)))<(char*)&kernel_start){
-							 klogf("Found memory at %p.", GRUBPTR2CHAR((mbmp+i)->addr));
+							 klogf("Found memory at %p.", GRUBPTR2VOID((mbmp+i)->addr));
 							 mem_stack_bottom=(phys_mem_area_t*)(unsigned long)((mbmp+i)->addr);
 							 mem_stack=(phys_mem_area_t*)(unsigned long)((mbmp+i)->addr)+mem_stack_size;
 						 }
 						 //Or enough space after it
 						 else if(GRUBPTR2CHAR((mbmp+i)->addr+(mbmp+i)->len)-(char*)&kernel_end>=(ptrdiff_t)(mem_stack_size*sizeof(phys_mem_area_t))){
-							 klogf("Found memory at %p.", &kernel_end);
+							 klogf("Found memory at %p.", (void*)&kernel_end);
 							 mem_stack_bottom=(phys_mem_area_t*)&kernel_end;
 							 mem_stack=(phys_mem_area_t*)&kernel_end+mem_stack_size;
 						 }
@@ -118,7 +118,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 							(mem_stack_size*sizeof(phys_mem_area_t)))<
 						GRUBPTR2CHAR((mbmp+i)->addr+(mbmp+i)->len))
 				{
-					klogf("Found memory at %p.", GRUBPTR2CHAR((mbmp+i)->addr));
+					klogf("Found memory at %p.", GRUBPTR2VOID((mbmp+i)->addr));
 					mem_stack_bottom=(phys_mem_area_t*)(unsigned long)((mbmp+i)->addr);
 					mem_stack=(phys_mem_area_t*)(unsigned long)((mbmp+i)->addr)+mem_stack_size;
 				}
@@ -128,7 +128,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 			}
 			//It starts in the middle of the kernel?
 			else{
-				kwarnf("Memory starts at %p: in the middle of the kernel!", GRUBPTR2CHAR(mbmp+i)->addr);
+				kwarnf("Memory starts at %p: in the middle of the kernel!", GRUBPTR2VOID(mbmp+i)->addr);
 			}
 			//Note where we found the memory and stop searching
 			klog("");
@@ -171,7 +171,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 				}
 				ptr->begin=where;
 			}
-			klogf("Memory at %p for %llx with type %s.", GRUBPTR2CHAR(mbmp+i)->addr, (mbmp+i)->len, mem_types[(mbmp+i)->type]);
+			klogf("Memory at %p for %llx with type %s.", GRUBPTR2VOID(mbmp+i)->addr, (mbmp+i)->len, mem_types[(mbmp+i)->type]);
 		}
 	}
 	for(phys_mem_area_t *ptr=mem_stack_bottom; ptr<mem_stack; ptr++){

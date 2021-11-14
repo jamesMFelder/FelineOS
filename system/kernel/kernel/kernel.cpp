@@ -18,6 +18,8 @@
 
 #include <drivers/serial.h>
 
+#include <drivers/framebuffer.h>
+
 #include <kernel/mem.h>
 
 //Setup by the linker to be at the start and end of the kernel.
@@ -78,12 +80,12 @@ void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 	if(get_flag(mbp->flags, MULTIBOOT_INFO_FRAMEBUFFER_INFO)){
 		klogf("Framebuffer at %p.", (void*)mbp->framebuffer_addr);
 		klogf("Frame buffer pitch (in bytes): %u.", mbp->framebuffer_pitch);
-		klogf("Framebuffer type: %u.", mbp->framebuffer_type);
 		klogf("It is %ux%u (in pixels).", mbp->framebuffer_width, mbp->framebuffer_height);
+		klogf("With %" PRIu8 " bits per pixel.", mbp->framebuffer_bpp);
 		switch(mbp->framebuffer_type){
 			case MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED:
 				klogf("Framebuffer type: %s.", "indexed");
-				klogf("Palette at %p with %d colors.", (void*)mbp->fb_palette.framebuffer_palette_addr, mbp->fb_palette.framebuffer_palette_num_colors);
+				klogf("Palette at %p with %d colors.", (void*)(unsigned long)mbp->fb_palette.framebuffer_palette_addr, mbp->fb_palette.framebuffer_palette_num_colors);
 				break;
 			case MULTIBOOT_FRAMEBUFFER_TYPE_RGB:
 				klogf("Framebuffer type: %s.", "RGB");
@@ -95,10 +97,23 @@ void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 				klogf("Framebuffer type: %s.", "EGA text");
 				break;
 		}
+		framebuffer fb; //setup the framebuffer
+		fb.init((pixel_bgr_t*)mbp->framebuffer_addr, mbp->framebuffer_width, mbp->framebuffer_height, mbp->framebuffer_pitch, mbp->framebuffer_bpp);
+		//Fill each corner with a color
+		pixel_t p={255, 255, 255}; //white
+		uint16_t maxX, maxY;
+		fb.getMax(&maxX, &maxY); //get the maximum sizes
+		printf("%d\n", fb.putRect(0,      0,      maxX/2,   maxY/2, p)); //upper left
+		p={255, 0, 0}; //red
+		printf("%d\n", fb.putRect(maxX/2, 0,      maxX/2-1, maxY/2, p)); //uppper right
+		p={0, 255, 0}; //green
+		printf("%d\n", fb.putRect(0,      maxY/2, maxX/2,   maxY/2-1, p)); //lower left
+		p={0, 0, 255}; //blue
+		printf("%d\n", fb.putRect(maxX/2, maxY/2, maxX/2-1, maxY/2-1, p)); //lower right
 	}
 	else{
 		//TODO: actually do this
-		kwarn("Not finding a framebuffer from GRUB, falling back to text mode.");
+		kwarn("Not finding screen info GRUB, using serial port only.");
 	}
 	kcritical("Nothing to do... Pausing now."); //boot.S should hang if we return
 }

@@ -4,5 +4,5 @@
 #include <cstdint>
 
 inline bool get_flag(uint32_t flags, int which){
-	return flags & (0x1 << which);
+	return flags & which;
 }

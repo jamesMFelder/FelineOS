@@ -1,5 +1,4 @@
 #include <icxxabi.h>
-#include <drivers/serial.h>
 
 #ifdef __cplusplus
 extern "C" {

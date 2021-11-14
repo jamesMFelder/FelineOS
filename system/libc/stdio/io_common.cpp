@@ -1,6 +1,6 @@
 #include <bits/io.h>
 
-#include <terminals/vga/vga_text.h>
+//#include <terminals/vga/vga_text.h>
 #include <drivers/serial.h>
 
 #if defined(__is_libk)

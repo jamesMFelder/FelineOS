@@ -24,7 +24,6 @@ LIBS:=$(LIBS) -nostdlib -lk -lgcc
 VGA_TEXT_OBJS=\
 common/terminal.o \
 vga/vga_text.o \
-vga/vga_fb.o
 
 .PHONY: all clean install install-headers
 .SUFFIXES: .o .c .S
@@ -35,10 +34,10 @@ libVGA_text.a: $(VGA_TEXT_OBJS)
 	$(AR) rcs $@ $(VGA_TEXT_OBJS)
 
 .c.o:
-	$(CC) -MD -c $< -o $@ -std=gnu11 $(CFLAGS)
+	$(CC) -MD -c $< -o $@ -std=gnu17 $(CFLAGS)
 
 .cpp.o:
-	$(CPP) -MD -c $< -o $@ -std=gnu++11 $(CFLAGS) $(CPPFLAGS)
+	$(CPP) -MD -c $< -o $@ -std=gnu++17 $(CFLAGS) $(CPPFLAGS)
 
 .S.o:
 	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
@@ -47,7 +46,7 @@ libVGA_text.a: $(VGA_TEXT_OBJS)
 	$(NASM) $(NASM_ARGS) $< -o $@
 
 clean:
-	rm -f libVGA_text.a
+	rm -f $(BINARIES)
 	rm -f $(OBJS) *.o */*.o */*/*.o
 	rm -f $(OBJS:.o=.d) *.d */*.d */*/*.d
 
