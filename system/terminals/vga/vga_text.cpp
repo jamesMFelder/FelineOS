@@ -2,7 +2,6 @@
 // Copyright (c) 2021 James McNaughton Felder
 
 #include <terminals/vga/vga_text.h>
-#include <drivers/serial.h>
 #include <cstring>
 #include <cctype>
 
@@ -12,12 +11,10 @@ vga_text_char *vga_text_term::vga_hardware_mem=(vga_text_char*)(void*)0xB8000;
 vga_text_term::vga_text_term()
 {
 	reset();
-	writestr_serial("vga_text_term::vga_text_term() called\n");
 }
 
 //TODO: clear screen at end?
 vga_text_term::~vga_text_term(){
-	writestr_serial("vga_text_term::~vga_text_term() called\n");
 }
 
 //Clear the screen

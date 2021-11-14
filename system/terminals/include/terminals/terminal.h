@@ -3,11 +3,11 @@
 #ifndef _TERMINAL_H
 #define _TERMINAL_H 1
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 
 typedef struct term_color{
-	unsigned char r, g, b;
+	uint8_t r, g, b;
 } term_color_t;
 
 constexpr term_color_t term_black={0, 0, 0};

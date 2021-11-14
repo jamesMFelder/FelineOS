@@ -31,7 +31,7 @@ int vprintf(const char* restrict format, va_list parameters){
 	//bool left_justified=false;
 	bool always_signed=false;
 
-	size_t min_width=0;
+	__attribute__((unused)) size_t min_width=0;
 	//size_t min_precision;
 	__attribute__((unused)) size_t width=0;
 	//size_t precision=0;

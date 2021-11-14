@@ -18,10 +18,11 @@ EXEC_PREFIX?=$(PREFIX)
 BOOTDIR?=$(EXEC_PREFIX)/boot
 INCLUDEDIR?=$(PREFIX)/include
 
-CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra
-CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -D__is_kernel -Iinclude -Idrivers/include
+CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -isystem include -isystem drivers/include
+CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -D__is_kernel
 LDFLAGS:=$(LDFLAGS)
 LIBS:=$(LIBS) -nostdlib -Wl,-\( -lVGA_text -lk -Wl,-\) -lgcc
+#LIBS:=$(LIBS) -nostdlib -Wl,-\( -lk -Wl,-\) -lgcc
 
 include kernel/make.config
 include $(ARCHDIR)/make.config
@@ -66,10 +67,10 @@ $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" $@
 
 .c.o:
-	$(CC) -MD -c $< -o $@ -std=gnu11 $(CFLAGS)
+	$(CC) -MD -c $< -o $@ -std=gnu17 $(CFLAGS)
 
 .cpp.o:
-	$(CPP) -MD -c $< -o $@ -std=gnu++11 $(CFLAGS) $(CPPFLAGS)
+	$(CPP) -MD -c $< -o $@ -std=gnu++17 $(CFLAGS) $(CPPFLAGS)
 
 .S.o:
 	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)

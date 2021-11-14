@@ -15,8 +15,8 @@ EXEC_PREFIX?=$(PREFIX)
 INCLUDEDIR?=$(PREFIX)/include
 LIBDIR?=$(EXEC_PREFIX)/lib
 
-CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra
-CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -D__is_libc -Iinclude
+CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -isystem include
+CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -D__is_libc
 LIBK_CFLAGS:=$(CFLAGS) -D__is_libk
 LIBK_CPPFLAGS:=$(CPPFLAGS) -D__is_libk
 
@@ -31,6 +31,7 @@ LIBK_CPPFLAGS:=$(LIBK_CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
 
 FREEOBJS=\
 $(ARCH_FREEOBJS) \
+assert/assert.o \
 ctype/isdigit.o \
 ctype/iscntrl.o \
 icxxabi/icxxabi.o \
@@ -74,10 +75,10 @@ libk.a: $(LIBK_OBJS)
 	$(AR) rcs $@ $(LIBK_OBJS)
 
 .c.o:
-	$(CC) -MD -c $< -o $@ -std=gnu11 $(CFLAGS)
+	$(CC) -MD -c $< -o $@ -std=gnu17 $(CFLAGS)
 
 .cpp.o:
-	$(CPP) -MD -c $< -o $@ -std=gnu++11 $(CFLAGS) $(CPPFLAGS)
+	$(CPP) -MD -c $< -o $@ -std=gnu++17 $(CFLAGS) $(CPPFLAGS)
 
 .c.S:
 	$(CC) -MD -c $< -o $@ $(CFLAGS)
@@ -86,10 +87,10 @@ libk.a: $(LIBK_OBJS)
 	$(CPP) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
 
 .c.libk.o:
-	$(CC) -MD -c $< -o $@ -std=gnu11 $(LIBK_CFLAGS)
+	$(CC) -MD -c $< -o $@ -std=gnu17 $(LIBK_CFLAGS)
 
 .cpp.libk.o:
-	$(CPP) -MD -c $< -o $@ -std=gnu++11 $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)
+	$(CPP) -MD -c $< -o $@ -std=gnu++17 $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)
 
 .S.libk.o:
 	$(CC) -MD -c $< -o $@ $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)

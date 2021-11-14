@@ -51,7 +51,7 @@ void terminal::getPosition(unsigned char *newX, unsigned char *newY){
 	*newY=y;
 }
 
-//Get the current position
+//Get the maximum position
 void terminal::getMaxPosition(unsigned char *X, unsigned char *Y){
 	*X=maxX;
 	*Y=maxY;

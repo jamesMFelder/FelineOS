@@ -1,11 +1,23 @@
 ; SPDX-License-Identifier: MIT
 ; Copyright (c) 2021 James McNaughton Felder
 ; Declare constants for the multiboot header.
-MBALIGN    equ 1<<0             ; align loaded modules on page boundaries
+MBALIGN  equ 1<<0             ; align loaded modules on page boundaries
 MEMINFO  equ 1<<1             ; provide memory map
-FLAGS    equ MBALIGN | MEMINFO  ; this is the Multiboot 'flag' field
+VIDINFO  equ 1<<2             ; we have a preference about the graphics mode
+FLAGS    equ MBALIGN | MEMINFO | VIDINFO ; this is the Multiboot 'flag' field
 MAGIC    equ 0x1BADB002       ; 'magic number' lets bootloader find the header
 CHECKSUM equ -(MAGIC + FLAGS) ; checksum of above, to prove we are multiboot
+
+HEADER_ADDR equ 0 ; ELF contains this info
+LOAD_ADDR equ 0 ; ELF contains this info
+LOAD_END_ADDR equ 0 ; ELF contains this info
+BSS_END_ADDR equ 0 ; ELF contains this info
+ENTRY_ADDR equ 0 ; ELF contains this info
+
+GMODE  equ 0 ; framebuffer instead of text mode
+WIDTH  equ 0 ; no preference about pixels or characters per line
+HEIGHT equ 0 ; no preference about pixels or characters per column
+DEPTH  equ 0 ; no preference about bits per pixel
 
 ; Declare a header as in the Multiboot Standard.
 section .multiboot
@@ -13,6 +25,17 @@ section .multiboot
 	dd MAGIC
 	dd FLAGS
 	dd CHECKSUM
+
+	dd HEADER_ADDR
+	dd LOAD_ADDR
+	dd LOAD_END_ADDR
+	dd BSS_END_ADDR
+	dd ENTRY_ADDR
+
+	dd GMODE
+	dd WIDTH
+	dd HEIGHT
+	dd DEPTH
 
 ; Reserve a stack for the initial thread.
 section .bss
