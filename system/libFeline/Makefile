@@ -19,8 +19,8 @@ BINARIES= #Nothing in it yet
 #BINARIES=libfeline.a
 
 
-CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra
-CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -Iinclude
+CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -isystem include
+CPPFLAGS:=$(CFLAGS) $(CPPFLAGS)
 LIBFELINE_CFLAGS:=$(CFLAGS) -D__is_libfeline
 LIBFELINE_CPPFLAGS:=$(CPPFLAGS) -D__is_libfeline
 LIBS:=$(LIBS) -nostdlib -lgcc

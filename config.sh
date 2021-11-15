@@ -4,10 +4,14 @@ export PROJECTS="system/libc system/terminals system/kernel"
 export MAKE=${MAKE:-make}
 export HOST=${HOST:-$(./default-host.sh)}
 
-export AR=${HOST}-ar
-export AS=${HOST}-as
-export CC=${HOST}-gcc
-export CPP=${HOST}-g++
+#export AR=${HOST}-ar
+#export AS=${HOST}-as
+#export CC=${HOST}-gcc
+#export CPP=${HOST}-g++
+export AR="llvm-ar"
+export AS="llvm-as -target ${HOST}"
+export CC="clang -target ${HOST} -march=i386"
+export CPP="clang++ -target ${HOST} -march=i386"
 
 export NASM=nasm
 # TODO: figure out how to set the sysroot for nasm or switch to gas

@@ -58,8 +58,8 @@ void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 		printf("Your cpu is %s.\n", vendor);
 	}
 
-	printf("Kernel starts at %p\n", &kernel_start);
-	printf("Kernel ends at %p\n", &kernel_end);
+	printf("Kernel starts at %p\n", (void*)&kernel_start);
+	printf("Kernel ends at %p\n", (void*)&kernel_end);
 
 	if(get_flag(mbp->flags, MULTIBOOT_INFO_CMDLINE)){
 		klogf("Command line=%s", (char*)(unsigned long)mbp->cmdline);

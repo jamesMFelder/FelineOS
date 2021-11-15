@@ -18,11 +18,10 @@ EXEC_PREFIX?=$(PREFIX)
 BOOTDIR?=$(EXEC_PREFIX)/boot
 INCLUDEDIR?=$(PREFIX)/include
 
-CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -isystem include -isystem drivers/include
-CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -D__is_kernel
+CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -isystem include -isystem drivers/include -isystem ../libc/include
+CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -D__is_kernel -isystem ../libc/include/c++
 LDFLAGS:=$(LDFLAGS)
-LIBS:=$(LIBS) -nostdlib -Wl,-\( -lVGA_text -lk -Wl,-\) -lgcc
-#LIBS:=$(LIBS) -nostdlib -Wl,-\( -lk -Wl,-\) -lgcc
+LIBS:=$(LIBS) -nostdlib -L$(SYSROOT)/usr/lib -Wl,-\( -lVGA_text -lk -Wl,-\) -lgcc
 
 include kernel/make.config
 include $(ARCHDIR)/make.config
@@ -40,18 +39,14 @@ $(KERNEL_CORE_OBJS) \
 
 OBJS=\
 $(ARCHDIR)/boot/crti.o \
-$(ARCHDIR)/crtbegin.o \
 $(KERNEL_OBJS) \
-$(ARCHDIR)/crtend.o \
 $(ARCHDIR)/boot/crtn.o \
 
 LINK_LIST=\
 $(LDFLAGS) \
 $(ARCHDIR)/boot/crti.o \
-$(ARCHDIR)/crtbegin.o \
 $(KERNEL_OBJS) \
 $(LIBS) \
-$(ARCHDIR)/crtend.o \
 $(ARCHDIR)/boot/crtn.o \
 
 .PHONY: all clean install install-headers install-kernel
@@ -70,10 +65,10 @@ $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	$(CC) -MD -c $< -o $@ -std=gnu17 $(CFLAGS)
 
 .cpp.o:
-	$(CPP) -MD -c $< -o $@ -std=gnu++17 $(CFLAGS) $(CPPFLAGS)
+	$(CPP) -MD -c $< -o $@ -std=gnu++17 $(CPPFLAGS)
 
 .S.o:
-	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
+	$(CC) -MD -c $< -o $@ $(CPPFLAGS)
 
 .s.o:
 	$(NASM) $(NASM_ARGS) $< -o $@

@@ -47,6 +47,8 @@ static inline vga_text_char vga_entry(unsigned char uc, uint8_t color) {
 }
 
 #ifdef __cplusplus
+unsigned char terminal::maxX=VGA_TEXT_WIDTH;
+unsigned char terminal::maxY=VGA_TEXT_HEIGHT;
 class vga_text_term:public terminal{
 	public:
 		//constructor and destructor
@@ -71,8 +73,6 @@ class vga_text_term:public terminal{
 	private:
 		//Pointer to the video memory
 		static vga_text_char *vga_hardware_mem;
-		unsigned char const terminal::maxX=VGA_TEXT_WIDTH;
-		unsigned char const terminal::maxY=VGA_TEXT_HEIGHT;
 
 		//Color
 		uint8_t color;

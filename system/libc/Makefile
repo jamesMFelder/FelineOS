@@ -15,19 +15,19 @@ EXEC_PREFIX?=$(PREFIX)
 INCLUDEDIR?=$(PREFIX)/include
 LIBDIR?=$(EXEC_PREFIX)/lib
 
-CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -isystem include
-CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -D__is_libc
+CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -D__is_libc -isystem include
+CPPFLAGS:=$(CPPFLAGS) -isystem include/c++
 LIBK_CFLAGS:=$(CFLAGS) -D__is_libk
-LIBK_CPPFLAGS:=$(CPPFLAGS) -D__is_libk
+LIBK_CPPFLAGS:=$(CPPFLAGS)
 
 ARCHDIR=arch/$(HOSTARCH)
 
 include $(ARCHDIR)/make.config
 
 CFLAGS:=$(CFLAGS) $(ARCH_CFLAGS)
-CPPFLAGS:=$(CPPFLAGS) $(ARCH_CPPFLAGS)
+CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) $(ARCH_CPPFLAGS)
 LIBK_CFLAGS:=$(LIBK_CFLAGS) $(KERNEL_ARCH_CFLAGS)
-LIBK_CPPFLAGS:=$(LIBK_CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
+LIBK_CPPFLAGS:=$(LIBK_CFLAGS) $(LIBK_CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
 
 FREEOBJS=\
 $(ARCH_FREEOBJS) \
@@ -78,22 +78,22 @@ libk.a: $(LIBK_OBJS)
 	$(CC) -MD -c $< -o $@ -std=gnu17 $(CFLAGS)
 
 .cpp.o:
-	$(CPP) -MD -c $< -o $@ -std=gnu++17 $(CFLAGS) $(CPPFLAGS)
+	$(CPP) -MD -c $< -o $@ -std=gnu++17 $(CPPFLAGS)
 
 .c.S:
 	$(CC) -MD -c $< -o $@ $(CFLAGS)
 
 .cpp.S:
-	$(CPP) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
+	$(CPP) -MD -c $< -o $@ $(CPPFLAGS)
 
 .c.libk.o:
 	$(CC) -MD -c $< -o $@ -std=gnu17 $(LIBK_CFLAGS)
 
 .cpp.libk.o:
-	$(CPP) -MD -c $< -o $@ -std=gnu++17 $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)
+	$(CPP) -MD -c $< -o $@ -std=gnu++17 $(LIBK_CPPFLAGS)
 
 .S.libk.o:
-	$(CC) -MD -c $< -o $@ $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)
+	$(CC) -MD -c $< -o $@  $(LIBK_CPPFLAGS)
 
 .s.libk.o:
 	$(NASM) $(NASM_ARGS) -o $@ $<
