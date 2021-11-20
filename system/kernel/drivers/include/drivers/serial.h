@@ -8,16 +8,10 @@
 
 #define PORT 0x3f8 //COM1
 
-#ifdef __cplusplus
-extern "C"{
-#endif
 int init_serial();
 char read_serial();
 void put_serial(char a);
 void write_serial(const char *str, const size_t len);
 void writestr_serial(const char *str);
-#ifdef __cplusplus
-}
-#endif
 
 #endif //_KERN_DRIVER_SERIAL_H

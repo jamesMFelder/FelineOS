@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021 James McNaughton Felder
-#include <stdint.h>
-#include <stdlib.h>
+#include <cstdint>
+#include <cstdlib>
 #include <kernel/log.h>
 
 #if UINT32_MAX == UINTPTR_MAX
@@ -12,17 +12,20 @@
 
 uintptr_t __stack_chk_guard = STACK_CHK_GUARD;
 
-__attribute__((noreturn))
+//Run when the stack is corrupted.
+//See https://wiki.osdev.org/Stack_Smashing_Protector for info about
+//what to do here and what do avoid at all costs.
+//TODO: make this a stub for a specific syscall
+extern "C" __attribute__((noreturn)) void __stack_chk_fail(void);
+
 void __stack_chk_fail(void)
 {
 #if __STDC_HOSTED__
 	abort();
 	__builtin_unreachable();
-#elif defined(__is_libk)
+#else
 	kcritical("Stack smashing detected");
 	__asm__ ("hlt");
 	__builtin_unreachable();
-#else
-#error "If you aren't building hosted, build as part of libk."
 #endif
 }

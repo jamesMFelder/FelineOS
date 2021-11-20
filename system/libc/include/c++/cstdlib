@@ -14,6 +14,10 @@ namespace std {
 	using ::labs;
 	using ::llabs;
 
+	//Add overloaded versions of other functions
+	long int abs(long int n);
+	long long int abs(long long int n);
+
 } //namespace std
 
 #endif // _CSTDLIB

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021 James McNaughton Felder
-#include <string.h>
+#include <cstring>
 
 size_t strlen(const char* str) {
 	size_t len = 0;

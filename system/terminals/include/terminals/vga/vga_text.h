@@ -64,7 +64,7 @@ class vga_text_term:public terminal{
 
 		//Put them at the current cursor position with current color
 		//	updates the cursor position
-		int putchar(unsigned char const c);
+		int putchar(char const c);
 
 		//Sets the color
 		int setfg(uint8_t const fg);

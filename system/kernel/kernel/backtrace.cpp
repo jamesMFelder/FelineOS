@@ -11,7 +11,7 @@
 //Do a backtrace showing up to BT_STATIC_LEN functions
 void backtrace(){
 	//Create an array of pointers.
-	void* backtrace[BT_STATIC_LEN]={0};
+	void* backtrace[BT_STATIC_LEN]={nullptr};
 	//How far back we actuall got.
 	uint32_t stored;
 	//Actually do the backtrace

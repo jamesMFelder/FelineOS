@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021 James McNaughton Felder
-#include <string.h>
+#include <cstring>
 
 void* memset(void* bufptr, int value, size_t size) {
-	unsigned char* buf = (unsigned char*) bufptr;
+	unsigned char* buf = static_cast<unsigned char*>(bufptr);
 	for (size_t i = 0; i < size; i++)
-		buf[i] = (unsigned char) value;
+		buf[i] = static_cast<unsigned char>(value);
 	return bufptr;
 }

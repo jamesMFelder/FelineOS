@@ -18,10 +18,10 @@ EXEC_PREFIX?=$(PREFIX)
 BOOTDIR?=$(EXEC_PREFIX)/boot
 INCLUDEDIR?=$(PREFIX)/include
 
-CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -isystem include -isystem drivers/include -isystem ../libc/include
+CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -isystem include -isystem drivers/include -isystem ../libc/include -isystem ../libFeline/include
 CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -D__is_kernel -isystem ../libc/include/c++
 LDFLAGS:=$(LDFLAGS)
-LIBS:=$(LIBS) -nostdlib -L$(SYSROOT)/usr/lib -Wl,-\( -lVGA_text -lk -Wl,-\) -lgcc
+LIBS:=$(LIBS) -nostdlib -L$(SYSROOT)/usr/lib -Wl,-\( -lfeline -lk -Wl,-\) -lgcc
 
 include kernel/make.config
 include $(ARCHDIR)/make.config

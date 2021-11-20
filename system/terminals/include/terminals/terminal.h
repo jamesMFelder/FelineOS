@@ -18,7 +18,7 @@ class terminal{
 	public:
 		//constructor and destructor
 		terminal();
-		~terminal();
+		virtual ~terminal();
 
 		//utility functions
 		virtual void clear();
@@ -33,7 +33,7 @@ class terminal{
 
 		//Put them at the current cursor position with current color
 		//	updates the cursor position
-		virtual int putchar(unsigned char const c)=0;
+		virtual int putchar(char const c)=0;
 		virtual int puts(char const * const s);
 
 		//Sets the color (noop for monochrome terminal)

@@ -8,7 +8,7 @@
 
 int boot_setup(multiboot_info_t *mbp){
 	if(mbp->flags >> 2 & 0x1){
-		klogf("Command line: %s.", (char*)(unsigned long)mbp->cmdline);
+		klogf("Command line: %s.", reinterpret_cast<char*>(mbp->cmdline));
 	}
 
 	//Setup the Global Descriptor Table to do nothing

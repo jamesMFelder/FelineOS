@@ -10,16 +10,16 @@
 void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags) {
 	idt_entry_t* descriptor = &idt[vector];
 
-	descriptor->isr_low        = (intptr_t)isr & 0xFFFF;
+	descriptor->isr_low        = reinterpret_cast<uintptr_t>(isr) & 0xFFFF;
 	descriptor->kernel_cs      = 0x08; // this value can be whatever offset your kernel code selector is in your GDT
 	descriptor->attributes     = flags;
-	descriptor->isr_high       = (intptr_t)isr >> 16;
+	descriptor->isr_high       = reinterpret_cast<uintptr_t>(isr) >> 16;
 	descriptor->reserved       = 0;
 }
 
 void idt_init() {
-	idtr.base = (uintptr_t)&idt[0];
-	idtr.limit = (uint16_t)sizeof(idt_entry_t) * IDT_MAX_DESCRIPTORS - 1;
+	idtr.base = reinterpret_cast<uintptr_t>(&idt[0]);
+	idtr.limit = sizeof(idt_entry_t) * IDT_MAX_DESCRIPTORS - 1;
 
 	//Fill up the table with mostly interrupts
 	for (uint8_t vector = 0; vector < 31; vector++) {

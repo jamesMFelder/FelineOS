@@ -26,13 +26,14 @@
 
 #include <kernel/backtrace.h>
 
+#include <feline/str.h>
+
 //Setup by the linker to be at the start and end of the kernel.
 extern const char kernel_start;
 extern const char kernel_end;
 
 extern "C"{
 void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
-	char vendor[13];
 	init_serial();
 
 	//TODO: can we avoid relying on multiboot
@@ -54,15 +55,16 @@ void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 	klog("Hello kernel world!");
 
 	if(cpuid_supported()){
+		unsigned char vendor[13];
 		cpuid_vendor(vendor);
 		printf("Your cpu is %s.\n", vendor);
 	}
 
-	printf("Kernel starts at %p\n", (void*)&kernel_start);
-	printf("Kernel ends at %p\n", (void*)&kernel_end);
+	printf("Kernel starts at %p\n", static_cast<const void *>(&kernel_start));
+	printf("Kernel ends at %p\n", static_cast<const void *>(&kernel_end));
 
 	if(get_flag(mbp->flags, MULTIBOOT_INFO_CMDLINE)){
-		klogf("Command line=%s", (char*)(unsigned long)mbp->cmdline);
+		klogf("Command line=%s", reinterpret_cast<char*>(mbp->cmdline));
 	}
 
 	printf("Testing memory allocation.\n");
@@ -85,14 +87,14 @@ void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 	}
 
 	if(get_flag(mbp->flags, MULTIBOOT_INFO_FRAMEBUFFER_INFO)){
-		klogf("Framebuffer at %p.", (void*)mbp->framebuffer_addr);
+		klogf("Framebuffer at %p.", reinterpret_cast<void*>(mbp->framebuffer_addr));
 		klogf("Frame buffer pitch (in bytes): %u.", mbp->framebuffer_pitch);
 		klogf("It is %ux%u (in pixels).", mbp->framebuffer_width, mbp->framebuffer_height);
 		klogf("With %" PRIu8 " bits per pixel.", mbp->framebuffer_bpp);
 		switch(mbp->framebuffer_type){
 			case MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED:
 				klogf("Framebuffer type: %s.", "indexed");
-				klogf("Palette at %p with %d colors.", (void*)(unsigned long)mbp->fb_palette.framebuffer_palette_addr, mbp->fb_palette.framebuffer_palette_num_colors);
+				klogf("Palette at %p with %d colors.", reinterpret_cast<void*>(mbp->fb_palette.framebuffer_palette_addr), mbp->fb_palette.framebuffer_palette_num_colors);
 				break;
 			case MULTIBOOT_FRAMEBUFFER_TYPE_RGB:
 				klogf("Framebuffer type: %s.", "RGB");
@@ -105,18 +107,18 @@ void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 				break;
 		}
 		framebuffer fb; //setup the framebuffer
-		fb.init((pixel_bgr_t*)mbp->framebuffer_addr, mbp->framebuffer_width, mbp->framebuffer_height, mbp->framebuffer_pitch, mbp->framebuffer_bpp);
+		fb.init(reinterpret_cast<pixel_bgr_t*>(mbp->framebuffer_addr), mbp->framebuffer_width, mbp->framebuffer_height, mbp->framebuffer_pitch, mbp->framebuffer_bpp);
 		//Fill each corner with a color
 		pixel_t p={255, 255, 255}; //white
 		uint16_t maxX, maxY;
 		fb.getMax(&maxX, &maxY); //get the maximum sizes
-		printf("%d\n", fb.putRect(0,      0,      maxX/2,   maxY/2, p)); //upper left
+		fb.putRect(0,      0,      maxX/2,   maxY/2, p); //upper left
 		p={255, 0, 0}; //red
-		printf("%d\n", fb.putRect(maxX/2, 0,      maxX/2-1, maxY/2, p)); //uppper right
+		fb.putRect(maxX/2, 0,      maxX/2-1, maxY/2, p); //uppper right
 		p={0, 255, 0}; //green
-		printf("%d\n", fb.putRect(0,      maxY/2, maxX/2,   maxY/2-1, p)); //lower left
+		fb.putRect(0,      maxY/2, maxX/2,   maxY/2-1, p); //lower left
 		p={0, 0, 255}; //blue
-		printf("%d\n", fb.putRect(maxX/2, maxY/2, maxX/2-1, maxY/2-1, p)); //lower right
+		fb.putRect(maxX/2, maxY/2, maxX/2-1, maxY/2-1, p); //lower right
 	}
 	else{
 		//TODO: actually do this

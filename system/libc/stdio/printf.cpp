@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021 James McNaughton Felder
-#include <limits.h>
-#include <stdbool.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <stddef.h>
+#include <climits>
+#include <cstdbool>
+#include <cstdarg>
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <cstdlib>
+#include <cstddef>
+#include <feline/str.h>
 
 //Minimal wrapper around vprintf to reduce code duplication
-__attribute__ ((format (printf, 1, 2))) int printf(const char *restrict format, ...){
+__attribute__ ((format (printf, 1, 2))) int printf(const char *format, ...){
 	int retval;
 	va_list data;
 	va_start(data, format);
@@ -19,7 +20,7 @@ __attribute__ ((format (printf, 1, 2))) int printf(const char *restrict format, 
 	return retval;
 }
 
-int vprintf(const char* restrict format, va_list parameters){
+int vprintf(const char* format, va_list parameters){
 
 	char intStrBuf[256]={0};
 	char *bufPtr;
@@ -27,32 +28,32 @@ int vprintf(const char* restrict format, va_list parameters){
 	int written = 0;
 
 	bool alt_form=false;
-	//bool padded=false;
-	//bool left_justified=false;
+	bool padded=false;
+	bool left_justified=false;
 	bool always_signed=false;
 
-	__attribute__((unused)) size_t min_width=0;
+	size_t min_width=0;
 	//size_t min_precision;
-	__attribute__((unused)) size_t width=0;
+	size_t width=0;
 	//size_t precision=0;
 
 	char specifier='\0';
 	char length='\0';
 
 	while (*format != '\0') {
-		size_t maxrem = INT_MAX - written;
+		int maxrem = INT_MAX - written;
 
 		if (format[0] != '%' || format[1] == '%') {
 			if (format[0] == '%')
 				format++;
-			size_t amount = 1;
+			int amount = 1;
 			while (format[amount] && format[amount] != '%')
 				amount++;
-			if (maxrem < amount) {
+			if (maxrem < amount || amount<0) {
 				// TODO: Set errno to EOVERFLOW.
 				return -1;
 			}
-			for(size_t count=0; count<amount; count++){
+			for(int count=0; count<amount; count++){
 				putchar(format[count]);
 			}
 			format += amount;
@@ -91,7 +92,7 @@ int vprintf(const char* restrict format, va_list parameters){
 		//Get the explicit width (if any)
 		while(isdigit(*++format)){
 				min_width*=10;
-				min_width+=*format;
+				min_width+=static_cast<size_t>(*format+'0');
 		}
 		//We overshoot by one;
 		format--;
@@ -145,8 +146,7 @@ int vprintf(const char* restrict format, va_list parameters){
 		switch(specifier){
 			//Character (just display it);
 			case 'c':
-				*bufPtr++=(char)va_arg(parameters, int);
-				*bufPtr++='\0';
+				*bufPtr++=static_cast<char>(va_arg(parameters, int));
 				break;
 			//String (just display it);
 			case 's':
@@ -163,84 +163,84 @@ int vprintf(const char* restrict format, va_list parameters){
 					//char
 					case 'H':
 					{
-						char num=(char)va_arg(parameters, unsigned int);
+						char num=static_cast<char>(va_arg(parameters, unsigned int));
 						if(num<0){
 							*bufPtr++='-';
 						} else if(always_signed){
 							*bufPtr++='+';
 						}
-						ctostr(abs(num), bufPtr);
+						itostr(std::abs(num), bufPtr);
 						break;
 					}
 					//short
 					case 'h':
 					{
 
-						short num=(short)va_arg(parameters, signed int);
+						short num=static_cast<short>(va_arg(parameters, signed int));
 						if(num<0){
 							*bufPtr++='-';
 						} else if(always_signed){
 							*bufPtr++='+';
 						}
-						stostr(abs(num), bufPtr);
+						itostr(std::abs(num), bufPtr);
 						break;
 					}
 					//int
 					case '\0':
 					{
-						int num=(int)va_arg(parameters, unsigned int);
+						int num=static_cast<int>(va_arg(parameters, unsigned int));
 						if(num<0){
 							*bufPtr++='-';
 						} else if(always_signed){
 							*bufPtr++='+';
 						}
-						itostr(abs(num), bufPtr);
+						itostr(std::abs(num), bufPtr);
 						break;
 					}
 					//long
 					case 'l':
 					{
-						long num=(long)va_arg(parameters, unsigned long);
+						long num=static_cast<long>(va_arg(parameters, unsigned long));
 						if(num<0){
 							*bufPtr++='-';
 						} else if(always_signed){
 							*bufPtr++='+';
 						}
-						ltostr(abs(num), bufPtr);
+						itostr(std::abs(num), bufPtr);
 						break;
 					}
 					//long long
 					case 'q':
 					{
-						long long num=(long long)va_arg(parameters, unsigned long long);
+						long long num=static_cast<long long>(va_arg(parameters, unsigned long long));
 						if(num<0){
 							*bufPtr++='-';
 						} else if(always_signed){
 							*bufPtr++='+';
 						}
-						lltostr(abs(num), bufPtr);
+						itostr(std::abs(num), bufPtr);
 						break;
 					}
 					//size_t
 					case 'z':
 					{
-						size_t num=(size_t)va_arg(parameters, size_t);
+						size_t num=static_cast<size_t>(va_arg(parameters, size_t));
 						if(always_signed){
 							*bufPtr++='+';
 						}
-						ztostr(abs(num), bufPtr);
+						itostr(num, bufPtr);
 						break;
 					}
 					//ptrdiff_t
 					case 't':
 					{
-						ptrdiff_t num=(ptrdiff_t)va_arg(parameters, ptrdiff_t);
+						ptrdiff_t num=static_cast<ptrdiff_t>(va_arg(parameters, ptrdiff_t));
 						if(num<0){
 							*bufPtr++='-';
 						} else if(always_signed){
 							*bufPtr++='+';
 						}
-						ttostr(abs(num), bufPtr);
+						itostr(std::abs(num), bufPtr);
 						break;
 					}
 				}
@@ -257,50 +257,50 @@ int vprintf(const char* restrict format, va_list parameters){
 					//char
 					case 'H':
 					{
-						char num=(char)va_arg(parameters, unsigned int);
-						octostr(num, bufPtr);
+						char num=static_cast<char>(va_arg(parameters, unsigned int));
+						otostr(num, bufPtr);
 						break;
 					}
 					//short
 					case 'h':
 					{
-						short num=(short)va_arg(parameters, signed int);
-						ostostr(num, bufPtr);
+						short num=static_cast<short>(va_arg(parameters, signed int));
+						otostr(num, bufPtr);
 						break;
 					}
 					//int
 					case '\0':
 					{
-						int num=(int)va_arg(parameters, unsigned int);
+						int num=static_cast<int>(va_arg(parameters, unsigned int));
 						otostr(num, bufPtr);
 						break;
 					}
 					//long
 					case 'l':
 					{
-						long num=(long)va_arg(parameters, unsigned long);
-						oltostr(num, bufPtr);
+						long num=static_cast<long>(va_arg(parameters, unsigned long));
+						otostr(num, bufPtr);
 						break;
 					}
 					//long long
 					case 'q':
 					{
-						long long num=(long long)va_arg(parameters, unsigned long long);
-						olltostr(num, bufPtr);
+						long long num=static_cast<long long>(va_arg(parameters, unsigned long long));
+						otostr(num, bufPtr);
 						break;
 					}
 					//size_t
 					case 'z':
 					{
-						size_t num=(size_t)va_arg(parameters, size_t);
-						oztostr(num, bufPtr);
+						size_t num=static_cast<size_t>(va_arg(parameters, size_t));
+						otostr(num, bufPtr);
 						break;
 					}
 					//ptrdiff_t
 					case 't':
 					{
-						ptrdiff_t num=(ptrdiff_t)va_arg(parameters, ptrdiff_t);
-						ottostr(num, bufPtr);
+						ptrdiff_t num=static_cast<ptrdiff_t>(va_arg(parameters, ptrdiff_t));
+						otostr(num, bufPtr);
 						break;
 					}
 				}
@@ -313,27 +313,27 @@ int vprintf(const char* restrict format, va_list parameters){
 					//char
 					case 'H':
 					{
-						char num=(char)va_arg(parameters, unsigned int);
+						char num=static_cast<char>(va_arg(parameters, unsigned int));
 						if(always_signed){
 							*bufPtr++='+';
 						}
-						ctostr(num, bufPtr);
+						itostr(num, bufPtr);
 						break;
 					}
 					//short
 					case 'h':
 					{
-						short num=(short)va_arg(parameters, signed int);
+						short num=static_cast<short>(va_arg(parameters, signed int));
 						if(always_signed){
 							*bufPtr++='+';
 						}
-						stostr(num, bufPtr);
+						itostr(num, bufPtr);
 						break;
 					}
 					//int
 					case '\0':
 					{
-						int num=(int)va_arg(parameters, unsigned int);
+						int num=static_cast<int>(va_arg(parameters, unsigned int));
 						if(always_signed){
 							*bufPtr++='+';
 						}
@@ -343,41 +343,41 @@ int vprintf(const char* restrict format, va_list parameters){
 					//long
 					case 'l':
 					{
-						long num=(long)va_arg(parameters, unsigned long);
+						long num=static_cast<long>(va_arg(parameters, unsigned long));
 						if(always_signed){
 							*bufPtr++='+';
 						}
-						ltostr(num, bufPtr);
+						itostr(num, bufPtr);
 						break;
 					}
 					//long long
 					case 'q':
 					{
-						long long num=(long long)va_arg(parameters, unsigned long long);
+						long long num=static_cast<long long>(va_arg(parameters, unsigned long long));
 						if(always_signed){
 							*bufPtr++='+';
 						}
-						lltostr(num, bufPtr);
+						itostr(num, bufPtr);
 						break;
 					}
 					//size_t
 					case 'z':
 					{
-						size_t num=(size_t)va_arg(parameters, size_t);
+						size_t num=static_cast<size_t>(va_arg(parameters, size_t));
 						if(always_signed){
 							*bufPtr++='+';
 						}
-						ztostr(num, bufPtr);
+						itostr(num, bufPtr);
 						break;
 					}
 					//ptrdiff_t
 					case 't':
 					{
-						ptrdiff_t num=(ptrdiff_t)va_arg(parameters, ptrdiff_t);
+						ptrdiff_t num=static_cast<ptrdiff_t>(va_arg(parameters, ptrdiff_t));
 						if(always_signed){
 							*bufPtr++='+';
 						}
-						ttostr(num, bufPtr);
+						itostr(num, bufPtr);
 						break;
 					}
 				}
@@ -395,50 +395,50 @@ int vprintf(const char* restrict format, va_list parameters){
 					//char
 					case 'H':
 					{
-						char num=(char)va_arg(parameters, unsigned int);
-						xctostr(num, bufPtr);
+						char num=static_cast<char>(va_arg(parameters, unsigned int));
+						xtostr(num, bufPtr, false);
 						break;
 					}
 					//short
 					case 'h':
 					{
-						short num=(short)va_arg(parameters, signed int);
-						xstostr(num, bufPtr);
+						short num=static_cast<short>(va_arg(parameters, signed int));
+						xtostr(num, bufPtr, false);
 						break;
 					}
 					//int
 					case '\0':
 					{
-						int num=(int)va_arg(parameters, unsigned int);
-						xtostr(num, bufPtr);
+						int num=static_cast<int>(va_arg(parameters, unsigned int));
+						xtostr(num, bufPtr, false);
 						break;
 					}
 					//long
 					case 'l':
 					{
-						long num=(long)va_arg(parameters, unsigned long);
-						xltostr(num, bufPtr);
+						long num=static_cast<long>(va_arg(parameters, unsigned long));
+						xtostr(num, bufPtr, false);
 						break;
 					}
 					//long long
 					case 'q':
 					{
-						long long num=(long long)va_arg(parameters, unsigned long long);
-						xlltostr(num, bufPtr);
+						long long num=static_cast<long long>(va_arg(parameters, unsigned long long));
+						xtostr(num, bufPtr, false);
 						break;
 					}
 					//size_t
 					case 'z':
 					{
-						size_t num=(size_t)va_arg(parameters, size_t);
-						xztostr(num, bufPtr);
+						size_t num=static_cast<size_t>(va_arg(parameters, size_t));
+						xtostr(num, bufPtr, false);
 						break;
 					}
 					//ptrdiff_t
 					case 't':
 					{
-						ptrdiff_t num=(ptrdiff_t)va_arg(parameters, ptrdiff_t);
-						xttostr(num, bufPtr);
+						ptrdiff_t num=static_cast<ptrdiff_t>(va_arg(parameters, ptrdiff_t));
+						xtostr(num, bufPtr, false);
 						break;
 					}
 				}
@@ -456,50 +456,50 @@ int vprintf(const char* restrict format, va_list parameters){
 					//char
 					case 'H':
 					{
-						char num=(char)va_arg(parameters, unsigned int);
-						Xctostr(num, bufPtr);
+						char num=static_cast<char>(va_arg(parameters, unsigned int));
+						xtostr(num, bufPtr);
 						break;
 					}
 					//short
 					case 'h':
 					{
-						short num=(short)va_arg(parameters, signed int);
-						Xstostr(num, bufPtr);
+						short num=static_cast<short>(va_arg(parameters, signed int));
+						xtostr(num, bufPtr);
 						break;
 					}
 					//int
 					case '\0':
 					{
-						int num=(int)va_arg(parameters, unsigned int);
-						Xtostr(num, bufPtr);
+						int num=static_cast<int>(va_arg(parameters, unsigned int));
+						xtostr(num, bufPtr);
 						break;
 					}
 					//long
 					case 'l':
 					{
-						long num=(long)va_arg(parameters, unsigned long);
-						Xltostr(num, bufPtr);
+						long num=static_cast<long>(va_arg(parameters, unsigned long));
+						xtostr(num, bufPtr);
 						break;
 					}
 					//long long
 					case 'q':
 					{
-						long long num=(long long)va_arg(parameters, unsigned long long);
-						Xlltostr(num, bufPtr);
+						long long num=static_cast<long long>(va_arg(parameters, unsigned long long));
+						xtostr(num, bufPtr);
 						break;
 					}
 					//size_t
 					case 'z':
 					{
-						size_t num=(size_t)va_arg(parameters, size_t);
-						Xttostr(num, bufPtr);
+						size_t num=static_cast<size_t>(va_arg(parameters, size_t));
+						xtostr(num, bufPtr);
 						break;
 					}
 					//ptrdiff_t
 					case 't':
 					{
-						ptrdiff_t num=(ptrdiff_t)va_arg(parameters, ptrdiff_t);
-						Xttostr(num, bufPtr);
+						ptrdiff_t num=static_cast<ptrdiff_t>(va_arg(parameters, ptrdiff_t));
+						xtostr(num, bufPtr);
 						break;
 					}
 				}
@@ -509,13 +509,13 @@ int vprintf(const char* restrict format, va_list parameters){
 				break;
 			case 'p':
 			{
-				unsigned long num=(unsigned long)va_arg(parameters, unsigned long);
+				unsigned long num=static_cast<unsigned long>(va_arg(parameters, unsigned long));
 				if(alt_form){
-					xltostr(num, bufPtr);
+					xtostr(num, bufPtr, false);
 				} else{
 					*bufPtr++='0';
 					*bufPtr++='x';
-					xltostr(num, bufPtr);
+					xtostr(num, bufPtr, false);
 				}
 				width=strlen(bufPtr);
 				bufPtr+=width;
@@ -537,7 +537,7 @@ int vprintf(const char* restrict format, va_list parameters){
 		}
 
 		//Padd/justify the number
-/*		if(width<min_width){
+		if(width<min_width){
 			if(left_justified){
 				char *buff_end=intStrBuf+strlen(intStrBuf);
 				for(size_t i=0; i<(min_width-width); i++){
@@ -550,10 +550,10 @@ int vprintf(const char* restrict format, va_list parameters){
 					putchar(padded ? '0' : ' ');
 				}
 			}
-		}*/
+		}
 
 		//Write the number
-		if(maxrem<strlen(intStrBuf)){
+		if(static_cast<size_t>(maxrem)<strlen(intStrBuf)){
 			//TODO: set errono to EOVERFLOW
 			return -1;
 		}

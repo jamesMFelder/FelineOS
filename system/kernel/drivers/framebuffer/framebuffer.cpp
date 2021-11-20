@@ -17,7 +17,6 @@ int framebuffer::init(pixel_bgr_t *addr, uint16_t width, uint16_t height,
 	fb.pitch=pitch;
 	assert(bpp==32);
 	fb.bpp=bpp;
-	ready=true;
 	return 0;
 }
 
@@ -66,7 +65,7 @@ int framebuffer::putRect_bgr(uint16_t x, uint16_t y, uint16_t width, uint16_t he
 
 int framebuffer::checkParms(uint16_t maxRight, uint16_t maxDown, pixel_bgr_t p){
 	//If we aren't setup
-	if(!ready){
+	if(fb.addr==nullptr){
 		return -1;
 	}
 	//If it's off screen

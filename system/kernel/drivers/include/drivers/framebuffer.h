@@ -46,8 +46,7 @@ class framebuffer{
 		int getMax(uint16_t *x, uint16_t *y);
 		~framebuffer();
 	private:
-		fbInfo_t fb={0, 0, 0, 0, 0};
-		bool ready=false;
+		fbInfo_t fb={nullptr, 0, 0, 0, 0};
 		int putPixel_bgr(uint16_t x, uint16_t y, pixel_bgr_t p);
 		int putRect_bgr(uint16_t x, uint16_t y, uint16_t width, uint16_t height, pixel_bgr_t p);
 		int checkParms(uint16_t maxRight, uint16_t maxDown, pixel_bgr_t p);

@@ -6,7 +6,7 @@
 #include <cctype>
 
 //Pointer to the video memory
-vga_text_char *vga_text_term::vga_hardware_mem=(vga_text_char*)(void*)0xB8000;
+vga_text_char *vga_text_term::vga_hardware_mem=reinterpret_cast<vga_text_char*>(0xB8000ul);
 
 vga_text_term::vga_text_term()
 {
@@ -44,7 +44,7 @@ void vga_text_term::getMaxPosition(unsigned char &maxX, unsigned char &maxY){
 }
 
 //Add a character
-int vga_text_term::putchar(unsigned char const c){
+int vga_text_term::putchar(char const c){
 	//Check if it needs special handling
 	if(std::iscntrl(c)){
 		switch(c){

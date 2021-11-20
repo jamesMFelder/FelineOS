@@ -15,12 +15,11 @@ EXEC_PREFIX?=$(PREFIX)
 INCLUDEDIR?=$(PREFIX)/include
 LIBDIR?=$(EXEC_PREFIX)/lib
 
-BINARIES= #Nothing in it yet
-#BINARIES=libfeline.a
+BINARIES=libfeline.a
 
 
-CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -isystem include
-CPPFLAGS:=$(CFLAGS) $(CPPFLAGS)
+CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -isystem include -isystem ../libc/include
+CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -isystem ../libc/include/c++
 LIBFELINE_CFLAGS:=$(CFLAGS) -D__is_libfeline
 LIBFELINE_CPPFLAGS:=$(CPPFLAGS) -D__is_libfeline
 LIBS:=$(LIBS) -nostdlib -lgcc
@@ -36,6 +35,7 @@ LIBFELINE_CPPFLAGS:=$(LIBFELINE_CPPFLAGS) $(LIB_FELINE_ARCH_CPPFLAGS)
 
 FREEOBJS=\
 $(ARCH_FREEOBJS) \
+src/string/itostr.o \
 
 HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \
@@ -55,10 +55,10 @@ libfeline.a: $(OBJS)
 	$(AR) rcs $@ $(OBJS)
 
 .c.o:
-	$(CC) -MD -c $< -o $@ -std=gnu11 $(CFLAGS)
+	$(CC) -MD -c $< -o $@ -std=gnu17 $(CFLAGS)
 
 .cpp.o:
-	$(CPP) -MD -c $< -o $@ -std=gnu++11 $(CFLAGS) $(CPPFLAGS)
+	$(CPP) -MD -c $< -o $@ -std=gnu++17 $(CFLAGS) $(CPPFLAGS)
 
 .c.S:
 	$(CC) -MD -c $< -o $@ $(CFLAGS)
@@ -67,10 +67,10 @@ libfeline.a: $(OBJS)
 	$(CPP) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
 
 .c.libfeline.o:
-	$(CC) -MD -c $< -o $@ -std=gnu11 $(LIBFELINE_CFLAGS)
+	$(CC) -MD -c $< -o $@ -std=gnu17 $(LIBFELINE_CFLAGS)
 
 .cpp.libfeline.o:
-	$(CPP) -MD -c $< -o $@ -std=gnu++11 $(LIBFELINE_CFLAGS) $(LIBFELINE_CPPFLAGS)
+	$(CPP) -MD -c $< -o $@ -std=gnu++17 $(LIBFELINE_CFLAGS) $(LIBFELINE_CPPFLAGS)
 
 .S.libfeline.o:
 	$(CC) -MD -c $< -o $@ $(LIBFELINE_CFLAGS) $(LIBFELINE_CPPFLAGS)

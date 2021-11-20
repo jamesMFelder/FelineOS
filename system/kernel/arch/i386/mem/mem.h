@@ -11,7 +11,7 @@
 #include <kernel/log.h>
 #include <kernel/mem.h>
 
-extern char *mem_types[];
+extern char const * const mem_types[];
 
 #ifdef __cplusplus
 extern "C"{

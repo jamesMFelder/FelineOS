@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021 James McNaughton Felder
-#include <ctype.h>
-#include <stdbool.h>
+#include <cctype>
+#include <cstdbool>
 
 int isdigit(int c){
 	if(c>'0' && c<'9'){

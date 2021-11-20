@@ -5,7 +5,7 @@
 static bool __cpuid_supported=false;
 
 bool cpuid_supported(){
-	if(__get_cpuid_max(0, NULL)==0){
+	if(__get_cpuid_max(0, nullptr)==0){
 		__cpuid_supported=false;
 		return false;
 	}
@@ -17,13 +17,13 @@ int cpuid_max(){
 	if(!__cpuid_supported){
 		return -1;
 	}
-	return __get_cpuid_max(0x80000000, NULL);
+	return __get_cpuid_max(0x80000000, nullptr);
 }
 
-int cpuid_vendor(char regs[13]){
+unsigned int cpuid_vendor(unsigned char regs[13]){
 	if(!__cpuid_supported){
 		memset(regs, 0, 13);
-		return -1;
+		return 0;
 	}
 	unsigned int eax=0, ebx=0, ecx=0, edx=0;
 	__get_cpuid(0, &eax, &ebx, &ecx, &edx);

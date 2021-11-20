@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021 James McNaughton Felder
-#include <string.h>
+#include <cstring>
 
 char *strcpy(char *dest, const char *src){
 	//Do an ititial copy

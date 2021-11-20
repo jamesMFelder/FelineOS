@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021 James McNaughton Felder
-#include <ctype.h>
-#include <stdbool.h>
+#include <cctype>
+#include <cstdbool>
 
 int iscntrl(int c){
-	if(c<' ' || c=='\b'){
+	//If it is less than a space or a delete character
+	if(c<' ' || c==127){
 		return true;
 	}
 	return false;

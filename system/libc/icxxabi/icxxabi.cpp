@@ -11,7 +11,7 @@ extern "C" {
 
 	int __cxa_atexit(void (*f)(void *), void *objptr, void *dso)
 	{
-		if (__atexit_func_count >= ATEXIT_MAX_FUNCS) {return -1;};
+		if (__atexit_func_count >= ATEXIT_MAX_FUNCS) {return -1;}
 		__atexit_funcs[__atexit_func_count].destructor_func = f;
 		__atexit_funcs[__atexit_func_count].obj_ptr = objptr;
 		__atexit_funcs[__atexit_func_count].dso_handle = dso;
@@ -52,10 +52,10 @@ extern "C" {
 					 * This will result in the processor executing trash, and...we don't want that.
 					 **/
 					(*__atexit_funcs[i].destructor_func)(__atexit_funcs[i].obj_ptr);
-				};
-			};
+				}
+			}
 			return;
-		};
+		}
 
 		while (i--)
 		{
@@ -64,7 +64,7 @@ extern "C" {
 			 * should not destroy objects multiple times. Only one call is needed to eliminate multiple
 			 * entries with the same address.
 			 **/
-			if ((void*)__atexit_funcs[i].destructor_func == f)
+			if (reinterpret_cast<void*>(__atexit_funcs[i].destructor_func) == f)
 			{
 				/* 
 				 * Note that in the next line, not every destructor function is a class destructor.
@@ -77,7 +77,7 @@ extern "C" {
 				 * function itself. No worries.
 				 **/
 				(*__atexit_funcs[i].destructor_func)(__atexit_funcs[i].obj_ptr);
-				__atexit_funcs[i].destructor_func = 0;
+				__atexit_funcs[i].destructor_func = nullptr;
 
 				/*
 				 * Slide down everything above the current destructor and decrease the
@@ -87,8 +87,8 @@ extern "C" {
 					__atexit_funcs[j]=__atexit_funcs[j+1];
 				}
 				__atexit_func_count--;
-			};
-		};
+			}
+		}
 	};
 
 #ifdef __cplusplus

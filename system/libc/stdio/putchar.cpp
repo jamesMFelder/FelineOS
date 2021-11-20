@@ -8,10 +8,10 @@
 
 int putchar(int ic) {
 #if defined(__is_libk)
-	char c = (char) ic;
+	char c = static_cast<char>(ic);
 	return __internal_putchar(c);
 #else //__is_libk
 	// TODO: Implement stdio and the write system call.
-#endif //__is_libk (else)
 	return ic;
+#endif //__is_libk (else)
 }
