@@ -9,13 +9,25 @@ mkdir -p isodir
 mkdir -p isodir/boot
 mkdir -p isodir/boot/grub
 
+#Copy the kernel into the iso
 cp sysroot/boot/FelineOS.kernel isodir/boot/FelineOS.kernel
+#Create a GRUB config
 cat > isodir/boot/grub/grub.cfg << EOF
+#Load all graphics drivers we  can
 insmod vbe
 insmod vga
-menuentry "myos" {
+insmod efi_gop
+insmod efi_uga
+#Create a menuentry to boot the kernel
+menuentry "FelineOS" {
 	multiboot /boot/FelineOS.kernel
 }
+#Boot after 1 second if we don't do anything
 set timeout=1
 EOF
-grub-mkrescue -o FelineOS.iso isodir -d /usr/lib/grub/i386-pc
+#Tell VirtualBox what to boot
+cat > isodir/startup.nsh << EOF
+FS0:\System\Library\CoreServices\boot.efi
+EOF
+#Create the iso
+grub-mkrescue -o FelineOS.iso isodir
