@@ -138,7 +138,6 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 	}
 	klog("Ending bootstrap_phys_mem_manager.");
 	modifying_pmm.release_lock();
-	map_range(nullptr, 1, static_cast<void*>(nullptr), 0);
 	return 0;
 }
 
