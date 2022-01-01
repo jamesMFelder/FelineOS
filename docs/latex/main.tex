@@ -103,14 +103,18 @@
 
 \section{Memory management}
 \begin{list}{}{}
-\item The PMM currently has a stack of pages it hands out. It has no safeguards to prevent anything (freeing free memory = handing out memory twice, freeing other processes memory, \ldots) other than underflowing the stack.
-\item Get a free page (4 kilobytes) with \code{void *get\_mem\_area()} and free it with \code{int free\_mem\_area(void *loc)}.
-\item \code{get\_mem\_area()} returns a pointer to the begining of the memory. \code{free\_mem\_area()} returns 0 on sucess, anything else on failure (note that there are no failure conditions yet, but please check).
+\item The PMM has a bitmap that currently only tracks used/not used.
+\item Reserve memory with \code{pmm\_results get\_mem\_area(void **addr, uintptr\_t len, unsigned int opts)} or \code{pmm\_results get\_mem\_area(void const * const addr, uintptr\_t len, unsigned int opts);}
+\item Return it with \code{free\_mem\_area(void const * const addr, uintptr\_t len, unsigned int opts)}
+\item Note: opts does nothing, but is here for future-proofness.
+\item The VMM keeps track of paging. It is currently only able to handle the main process.
+\item Map pages with \code{map\_range()} (various types of arguments)
+\item Unmap pages with \code{unmap\_range()}.
 \end{list}
 
 \section{IO}
 \begin{list}{}{}
-\item Currently all standard output functions (\code{printf()}, \code{puts()}, \code{putchar()}, \ldots) all output to the screen (\code{terminal\_writestring()}, \code{terminal\_write()}, \code{terminal\_putchar()}) and serial port (\code{serial\_writestring()}, \code{serial\_write()}, \code{serial\_putchar()}).\linebreak
+\item Currently all standard output functions (\code{printf()}, \code{puts()}, \code{putchar()}, \ldots) all output to the serial port (\code{serial\_writestring()}, \code{serial\_write()}, \code{serial\_putchar()}).\linebreak
 \begin{list}{}{}
 \item Please only use standard output functions (\code{printf}, \code{puts}, \code{putchar}, \ldots). I make no garantees about supporting any other functions.
 \end{list}

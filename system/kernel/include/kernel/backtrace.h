@@ -3,14 +3,9 @@
 
 #include <stdint.h>
 
-typedef struct stackframe{
-	struct stackframe *outer;
-	void *caller;
-} stackframe_t;
-
 //Since we don't have dynamic memory allocation (yet), how far back we go.
 //Increase this if you need more functions showing.
-#define BT_STATIC_LEN 5
+#define BT_STATIC_LEN 15
 
 #ifdef __cplusplus
 extern "C"{

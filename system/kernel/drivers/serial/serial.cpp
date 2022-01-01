@@ -24,24 +24,24 @@ int init_serial() {
 	return 0;
 }
 
-int serial_received() {
+static int serial_received() {
 	return inb(PORT + 5) & 1;
 }
 
 char read_serial() {
 	while (serial_received() == 0);
 
-	return inb(PORT);
+	return static_cast<char>(inb(PORT));
 }
 
-int is_transmit_empty() {
+static int is_transmit_empty() {
 	return inb(PORT + 5) & 0x20;
 }
 
 void put_serial(char a) {
 	while (is_transmit_empty() == 0);
 
-	outb(PORT,a);
+	outb(PORT, static_cast<unsigned char>(a));
 }
 
 void write_serial(const char *str, const size_t len){

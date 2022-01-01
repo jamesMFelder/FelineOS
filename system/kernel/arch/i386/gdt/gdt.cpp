@@ -37,6 +37,7 @@ void encodeGdtEntry(uint8_t *target, struct GDT source)
 
 void disable_gdt(){
 	//TODO: add another for the TSS once we create it.
+	//These are generated from utils/gdt_create.c
 	static uint64_t gdt[]={0x0000000000000000,0x00CF9A000000FFFF,\
 		0x00CF92000000FFFF,0x00CFFA000000FFFF,0x00CFF2000000FFFF};
 	setGdt(gdt, sizeof(gdt));

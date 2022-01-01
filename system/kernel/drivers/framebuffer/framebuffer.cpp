@@ -3,10 +3,14 @@
 
 #include <drivers/framebuffer.h>
 #include <cassert>
+#include <cstdlib>
+#include <kernel/paging.h>
 
 framebuffer::framebuffer(){}
 //TODO: clear screen on destruction?
-framebuffer::~framebuffer(){}
+framebuffer::~framebuffer(){
+	unmap_range(fb.addr, fb.pitch*fb.height*sizeof(pixel_bgr_t), 0);
+}
 
 int framebuffer::init(pixel_bgr_t *addr, uint16_t width, uint16_t height,
 		uint16_t pitch, uint8_t bpp){
@@ -15,9 +19,11 @@ int framebuffer::init(pixel_bgr_t *addr, uint16_t width, uint16_t height,
 	fb.width=width;
 	fb.height=height;
 	fb.pitch=pitch;
+	//TODO: we should support other formats
 	assert(bpp==32);
 	fb.bpp=bpp;
-	return 0;
+	//Map as many pages as the framebuffer is
+	return map_range(addr, fb.pitch*fb.height*sizeof(pixel_bgr_t), fb.addr, 0);
 }
 
 int framebuffer::getMax(uint16_t *x, uint16_t *y){

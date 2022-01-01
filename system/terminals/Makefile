@@ -17,7 +17,7 @@ LIBDIR=$(EXECPREFIX)/lib
 BINARIES=libVGA_text.a
 
 CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -isystem include -isystem ../libc/include -isystem ../libFeline/include
-CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -isystem ../libc/include/c++
+CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -isystem ../libc/include/c++ -isystem ../libFeline/include/feline/c++
 LDFLAGS:=$(LDFLAGS)
 LIBS:=$(LIBS) -nostdlib -lk -lgcc
 
@@ -34,13 +34,13 @@ libVGA_text.a: $(VGA_TEXT_OBJS)
 	$(AR) rcs $@ $(VGA_TEXT_OBJS)
 
 .c.o:
-	$(CC) -MD -c $< -o $@ -std=gnu17 $(CFLAGS)
+	$(CC) -MD -o $@ -std=gnu17 $(CFLAGS) -c $<
 
 .cpp.o:
-	$(CPP) -MD -c $< -o $@ -std=gnu++17 $(CPPFLAGS)
+	$(CPP) -MD -o $@ -std=gnu++17 $(CPPFLAGS) -c $<
 
 .S.o:
-	$(CC) -MD -c $< -o $@ $(CPPFLAGS)
+	$(CC) -MD -o $@ $(CPPFLAGS) -c $<
 
 .s.o:
 	$(NASM) $(NASM_ARGS) $< -o $@

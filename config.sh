@@ -21,9 +21,9 @@ export LAR_OPTS=""
 export LAS="llvm-as"
 export LAS_OPTS="-target ${HOST}"
 export LCC="clang"
-export LCC_OPTS="-target ${HOST} -march=i386 -Weverything -Wno-c++98-compat -Wno-c++98-compat-extra-semi -Wno-c++98-compat-pedantic -Wno-reserved-identifier -Wno-missing-variable-declarations"
+export LCC_OPTS="-target ${HOST} -march=i386 -Weverything -Wno-c++98-compat -Wno-c++98-compat-extra-semi -Wno-c++98-compat-pedantic -Wno-reserved-identifier -Wno-missing-variable-declarations -Wno-global-constructors"
 export LPP="clang++"
-export LPP_OPTS="-target ${HOST} -march=i386 -Weverything -Wno-c++98-compat -Wno-c++98-compat-extra-semi -Wno-c++98-compat-pedantic -Wno-reserved-identifier -Wno-missing-variable-declarations"
+export LPP_OPTS="-target ${HOST} -march=i386 -Weverything -Wno-c++98-compat -Wno-c++98-compat-extra-semi -Wno-c++98-compat-pedantic -Wno-reserved-identifier -Wno-missing-variable-declarations -Wno-global-constructors"
 
 if [[ ${COMPILER} == "gcc" ]]; then
 	export AR="${GAR} ${GAR_OPTS}"
@@ -31,10 +31,10 @@ if [[ ${COMPILER} == "gcc" ]]; then
 	export CC="${GCC} ${GCC_OPTS}"
 	export CPP="${GPP} ${GPP_OPTS}"
 elif [[ ${COMPILER} == "llvm" ]]; then
-	export AR="${GAR} ${GAR_OPTS}"
-	export AS="${GAS} ${GAS_OPTS}"
-	export CC="${GCC} ${GCC_OPTS}"
-	export CPP="${GPP} ${GPP_OPTS}"
+	export AR="${LAR} ${LAR_OPTS}"
+	export AS="${LAS} ${LAS_OPTS}"
+	export CC="${LCC} ${LCC_OPTS}"
+	export CPP="${LPP} ${LPP_OPTS}"
 else
 	echo "Unknown compiler ${COMPILER}. Try setting to 'gcc' or 'llvm'." >&2
 	exit 2
@@ -44,7 +44,7 @@ export NASM=nasm
 # TODO: figure out how to set the sysroot for nasm or switch to gas
 #     this is just used to include my own assembly files that don't belong
 #     in the kernel (part of libFeline)
-export NASM_ARGS="-felf32 -w+all -i../../sysroot/usr/include/feline/asm/"
+export NASM_ARGS="-g -felf32 -w+all -i../../sysroot/usr/include/feline/asm/"
 
 export PREFIX=/usr
 export EXEC_PREFIX=$PREFIX

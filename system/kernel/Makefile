@@ -19,7 +19,7 @@ BOOTDIR?=$(EXEC_PREFIX)/boot
 INCLUDEDIR?=$(PREFIX)/include
 
 CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -isystem include -isystem drivers/include -isystem ../libc/include -isystem ../libFeline/include
-CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -D__is_kernel -isystem ../libc/include/c++
+CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -D__is_kernel -isystem ../libc/include/c++ -isystem ../libFeline/include/feline/c++
 LDFLAGS:=$(LDFLAGS)
 LIBS:=$(LIBS) -nostdlib -L$(SYSROOT)/usr/lib -Wl,-\( -lfeline -lk -Wl,-\) -lgcc
 
@@ -62,16 +62,16 @@ $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" $@
 
 .c.o:
-	$(CC) -MD -c $< -o $@ -std=gnu17 $(CFLAGS)
+	$(CC) -MD -o $@ -std=gnu17 $(CFLAGS) -c $<
 
 .cpp.o:
-	$(CPP) -MD -c $< -o $@ -std=gnu++17 $(CPPFLAGS)
+	$(CPP) -MD -o $@ -std=gnu++17 $(CPPFLAGS) -c $<
 
 .S.o:
-	$(CC) -MD -c $< -o $@ $(CPPFLAGS)
+	$(CC) -MD -o $@ $(CPPFLAGS) -c $<
 
 .s.o:
-	$(NASM) $(NASM_ARGS) $< -o $@
+	$(NASM) $(NASM_ARGS) -o $@ $<
 
 clean:
 	rm -f FelineOS.kernel

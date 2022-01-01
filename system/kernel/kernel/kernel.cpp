@@ -28,12 +28,16 @@
 
 #include <feline/str.h>
 
+#include <kernel/paging.h>
+
 //Setup by the linker to be at the start and end of the kernel.
 extern const char kernel_start;
 extern const char kernel_end;
 
 extern "C"{
-void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
+void kernel_main(multiboot_info_t *mbp, unsigned int magic);
+
+void kernel_main(multiboot_info_t *mbp, unsigned int magic){
 	init_serial();
 
 	//TODO: can we avoid relying on multiboot
@@ -63,15 +67,27 @@ void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 	printf("Kernel starts at %p\n", static_cast<const void *>(&kernel_start));
 	printf("Kernel ends at %p\n", static_cast<const void *>(&kernel_end));
 
+	map_range(mbp, sizeof(*mbp), mbp, 0);
+
+#if 0
 	if(get_flag(mbp->flags, MULTIBOOT_INFO_CMDLINE)){
 		klogf("Command line=%s", reinterpret_cast<char*>(mbp->cmdline));
 	}
+#endif
 
 	printf("Testing memory allocation.\n");
-	void *old_mem_ptr=get_mem_area();
+	void *old_mem_ptr, *mem_ptr;
+	pmm_results mem;
+	mem=get_mem_area(&old_mem_ptr, 1, 0);
+	if(mem!=pmm_success){kcriticalf("Getting memory returned %u.", mem); abort();}
+	printf("Getting mem area returns %d.\n", mem);
 	printf("Got a page at %p.\n", old_mem_ptr);
-	printf("Freeing an allocated area returns %d.\n", free_mem_area(old_mem_ptr));
-	void *mem_ptr=get_mem_area();
+	mem=free_mem_area(old_mem_ptr, 1, 0);
+	if(mem!=pmm_success){kcriticalf("Getting memory returned %d.", mem); abort();}
+	printf("Freeing an allocated area returns %d.\n", mem);
+	mem=get_mem_area(&mem_ptr, 1, 0);
+	if(mem!=pmm_success){kcriticalf("Getting memory returned %d.", mem); abort();}
+	printf("Getting mem area returns %d.\n", mem);
 	printf("Got another page at %p.\n", mem_ptr);
 	if(mem_ptr==old_mem_ptr){
 		printf("Addresses match!\n");
@@ -107,7 +123,11 @@ void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 				break;
 		}
 		framebuffer fb; //setup the framebuffer
-		fb.init(reinterpret_cast<pixel_bgr_t*>(mbp->framebuffer_addr), mbp->framebuffer_width, mbp->framebuffer_height, mbp->framebuffer_pitch, mbp->framebuffer_bpp);
+		int fb_init_rval=fb.init(reinterpret_cast<pixel_bgr_t*>(mbp->framebuffer_addr), static_cast<uint16_t>(mbp->framebuffer_width), static_cast<uint16_t>(mbp->framebuffer_height), static_cast<uint16_t>(mbp->framebuffer_pitch), mbp->framebuffer_bpp);
+		if(fb_init_rval!=0){
+			kerrorf("Unable to initialize framebuffer! Failed with value %d.", fb_init_rval);
+			abort();
+		}
 		//Fill each corner with a color
 		pixel_t p={255, 255, 255}; //white
 		uint16_t maxX, maxY;
@@ -126,7 +146,6 @@ void kernel_main(multiboot_info_t *mbp, unsigned int magic) {
 	}
 	printf("Testing an syscall...\n");
 	printf("It returned %ld.\n", syscall(0));
-	kcritical("Nothing to do... Aborting now."); //boot.S should hang if we return
-	abort(); //But we're just going to crash (and print a backtrace) for now.
+	kcritical("Nothing to do... Pausing now."); //boot.S should hang if we return
 }
 }

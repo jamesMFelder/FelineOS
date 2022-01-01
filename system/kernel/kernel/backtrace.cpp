@@ -18,9 +18,8 @@ void backtrace(){
 	stored=walk_stack(backtrace, BT_STATIC_LEN);
 	//Print it
 	kerror("Here is the backtrace.");
-	kerror("To get function names run addr2line -pfe kernel $pointer");
-	for(uint32_t i=0; i<stored; i++){
+	kerror("To get function names run addr2line -Cpfe kernel $pointer");
+	for(uint32_t i=0; i<stored && backtrace[i]!=nullptr; i++){
 		printf("%p\n", backtrace[i]);
 	}
-	kerror("We don't actually have code at 0x0, showing it here is a bug when our max length is greater than the number of functions.");
 }

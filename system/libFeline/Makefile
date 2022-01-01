@@ -19,7 +19,7 @@ BINARIES=libfeline.a
 
 
 CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -isystem include -isystem ../libc/include
-CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -isystem ../libc/include/c++
+CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -isystem ../libc/include/c++ -isystem include/feline/c++
 LIBFELINE_CFLAGS:=$(CFLAGS) -D__is_libfeline
 LIBFELINE_CPPFLAGS:=$(CPPFLAGS) -D__is_libfeline
 LIBS:=$(LIBS) -nostdlib -lgcc
@@ -36,6 +36,7 @@ LIBFELINE_CPPFLAGS:=$(LIBFELINE_CPPFLAGS) $(LIB_FELINE_ARCH_CPPFLAGS)
 FREEOBJS=\
 $(ARCH_FREEOBJS) \
 src/string/itostr.o \
+src/locking/spinlock.o
 
 HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \
@@ -55,25 +56,25 @@ libfeline.a: $(OBJS)
 	$(AR) rcs $@ $(OBJS)
 
 .c.o:
-	$(CC) -MD -c $< -o $@ -std=gnu17 $(CFLAGS)
+	$(CC) -MD -o $@ -std=gnu17 $(CFLAGS) -c $<
 
 .cpp.o:
-	$(CPP) -MD -c $< -o $@ -std=gnu++17 $(CFLAGS) $(CPPFLAGS)
+	$(CPP) -MD -o $@ -std=gnu++17 $(CFLAGS) $(CPPFLAGS) -c $<
 
 .c.S:
-	$(CC) -MD -c $< -o $@ $(CFLAGS)
+	$(CC) -MD -o $@ $(CFLAGS) -c $<
 
 .cpp.S:
-	$(CPP) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
+	$(CPP) -MD -o $@ $(CFLAGS) $(CPPFLAGS) -c $<
 
 .c.libfeline.o:
-	$(CC) -MD -c $< -o $@ -std=gnu17 $(LIBFELINE_CFLAGS)
+	$(CC) -MD -o $@ -std=gnu17 $(LIBFELINE_CFLAGS) -c $<
 
 .cpp.libfeline.o:
-	$(CPP) -MD -c $< -o $@ -std=gnu++17 $(LIBFELINE_CFLAGS) $(LIBFELINE_CPPFLAGS)
+	$(CPP) -MD -o $@ -std=gnu++17 $(LIBFELINE_CFLAGS) $(LIBFELINE_CPPFLAGS) -c $<
 
 .S.libfeline.o:
-	$(CC) -MD -c $< -o $@ $(LIBFELINE_CFLAGS) $(LIBFELINE_CPPFLAGS)
+	$(CC) -MD -o $@ $(LIBFELINE_CFLAGS) $(LIBFELINE_CPPFLAGS) -c $<
 
 .s.o:
 	$(NASM) $(NASM_ARGS) $< -o $@

@@ -16,7 +16,7 @@ INCLUDEDIR?=$(PREFIX)/include
 LIBDIR?=$(EXEC_PREFIX)/lib
 
 CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -D__is_libc -isystem include
-CPPFLAGS:=$(CPPFLAGS) -isystem include/c++
+CPPFLAGS:=$(CPPFLAGS) -isystem include/c++ -isystem ../libFeline/include/feline/c++
 LIBK_CFLAGS:=$(CFLAGS) -D__is_libk
 LIBK_CPPFLAGS:=$(CPPFLAGS)
 
@@ -74,25 +74,25 @@ libk.a: $(LIBK_OBJS)
 	$(AR) rcs $@ $(LIBK_OBJS)
 
 .c.o:
-	$(CC) -MD -c $< -o $@ -std=gnu17 $(CFLAGS)
+	$(CC) -MD -o $@ -std=gnu17 $(CFLAGS) -c $<
 
 .cpp.o:
-	$(CPP) -MD -c $< -o $@ -std=gnu++17 $(CPPFLAGS)
+	$(CPP) -MD -o $@ -std=gnu++17 $(CPPFLAGS) -c $<
 
 .c.S:
-	$(CC) -MD -c $< -o $@ $(CFLAGS)
+	$(CC) -MD -o $@ $(CFLAGS) -c $<
 
 .cpp.S:
-	$(CPP) -MD -c $< -o $@ $(CPPFLAGS)
+	$(CPP) -MD -o $@ $(CPPFLAGS) -c $<
 
 .c.libk.o:
-	$(CC) -MD -c $< -o $@ -std=gnu17 $(LIBK_CFLAGS)
+	$(CC) -MD -o $@ -std=gnu17 $(LIBK_CFLAGS) -c $<
 
 .cpp.libk.o:
-	$(CPP) -MD -c $< -o $@ -std=gnu++17 $(LIBK_CPPFLAGS)
+	$(CPP) -MD -o $@ -std=gnu++17 $(LIBK_CPPFLAGS) -c $<
 
 .S.libk.o:
-	$(CC) -MD -c $< -o $@  $(LIBK_CPPFLAGS)
+	$(CC) -MD -o $@  $(LIBK_CPPFLAGS) -c $<
 
 .s.libk.o:
 	$(NASM) $(NASM_ARGS) -o $@ $<

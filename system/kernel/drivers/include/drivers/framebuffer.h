@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
 typedef struct pixel{
 	uint8_t red;
 	uint8_t green;
@@ -35,7 +36,6 @@ typedef struct fbInfo{
 	uint8_t bpp; //bits per pixel (32(good), 24(bad), 16(old))
 } fbInfo_t;
 
-#ifdef __cplusplus
 class framebuffer{
 	public:
 		framebuffer();

@@ -40,5 +40,5 @@ size_t strlcpy(char *dest, const char *src, size_t n){
 			return count;
 		}
 	}
-	return count;
+	return strlen(src);
 }
