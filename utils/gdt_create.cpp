@@ -2,8 +2,9 @@
 // Copyright (c) 2021 James McNaughton Felder
 // Used for creating GDT segment descriptors in 64-bit integer form.
 
-#include <stdio.h>
-#include <stdint.h>
+#include <iostream>
+#include <iomanip>
+#include <cstdint>
 
 // Each define here is for a specific flag in the descriptor.
 // Refer to the intel documentation for a description of what each one does.
@@ -66,7 +67,7 @@ create_descriptor(uint32_t base, uint32_t limit, uint16_t flag)
     descriptor |= base  << 16;                       // set base bits 15:0
     descriptor |= limit  & 0x0000FFFF;               // set limit bits 15:0
 
-    printf("0x%.16lX\n", descriptor);
+	std::cout << "0x" << std::setw(16) << std::setfill('0') << std::hex << std::uppercase << descriptor << std::endl;
 }
 
 int

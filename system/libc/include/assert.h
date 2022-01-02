@@ -5,17 +5,13 @@
 #ifndef _ASSERT_H
 #define _ASSERT_H 1
 
-#ifdef __cplusplus
-extern "C"{
-#endif
+#include <bits/c_compat.h>
+
 //Print error message and call abort()
-[[noreturn]] void _Assert(char const * const err_msg);
+C_LINKAGE [[noreturn]] void _Assert(char const * const err_msg);
 //Print error message and call abort()
 //Extra parameters because __func__ can't be concatenated with a string literal.
-[[noreturn]] void _Assert_func(char const * const, char const * const, char const * const);
-#ifdef __cplusplus
-}
-#endif
+C_LINKAGE [[noreturn]] void _Assert_func(char const * const, char const * const, char const * const);
 
 //Turn __LINE__ (a macro number) into a string
 #define __symbol2value(x) #x
@@ -38,11 +34,11 @@ extern "C"{
 	_Assert_func("Assertion " #expr " failed in function ", __func__,\
 		" at " __FILE__ ":" __symbol2string(__LINE__) ".") )
 
-#else // __STDC_VERSION__ == 199901L
+#else // __STDC_VERSION__ >= 199901L || __cplusplus >=201108L
 
 #define assert(expr) ( (expr) ? (void)0 : \
 	_Assert("Assertion " #expr " failed at " __FILE__ ":" __symbol2string(__LINE__) ".") )
 
-#endif // __STDC_VERSION__ == 199901L (else)
+#endif // __STDC_VERSION__ >= 199901L || __cplusplus >=201108L (else)
 
 #endif // NDEBUG (else)

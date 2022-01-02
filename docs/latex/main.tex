@@ -23,9 +23,7 @@
 \section{Overview}
 \begin{list}{}{}
 \item This is my hobby OS, don't expect anything professional.
-\item I don't have a cross compiler with this because that would lock it to my type of machine.
-\begin{tiny} The real reason is my distribution has one as a package.\end{tiny}
-
+\item The kernel is written in C++ so the kernel and terminal library headers are \textbf{not} C compatible, but the libc and libFeline headers should be.
 \end{list}
 
 \section{Structure of the Code}
@@ -96,9 +94,9 @@
 
 \section{Usefull Programs}
 \begin{list}{}{}
-\item \code{utils/gdt\_create.c}: The main function calls \code{create\_descriptor(base, limit, type)}. The only defined types (currently) are \code{\{code,data\}-ring\{0,3\}}.
-\item \code{utils/sizes.c}: Print the sizes of various types. Use \code{-{}-json} if wanted.
-\item \code{utils/sizes\_freestanding.c}: Print the sizes of various types. Only uses freestanding available types. Try \code{\$target-compiler -S} to get the assembly without linking if needed.
+\item \code{utils/gdt\_create.cpp}: The main function calls \code{create\_descriptor(base, limit, type)}. The only defined types (currently) are \code{\{code,data\}-ring\{0,3\}}.
+\item \code{utils/sizes.cpp}: Print the sizes of various types. Use \code{-{}-json} if wanted.
+\item \code{utils/sizes\_freestanding.cpp}: Print the sizes of various types. Only uses freestanding available types. Try \code{\$target-compiler -S} to get the assembly without linking if needed.
 \end{list}
 
 \section{Memory management}

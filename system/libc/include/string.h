@@ -3,31 +3,23 @@
 #ifndef _STRING_H
 #define _STRING_H 1
 
+#include <bits/c_compat.h>
 #include <sys/cdefs.h>
-
 #include <stddef.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif //__cplusplus
+C_LINKAGE int memcmp(const void*, const void*, size_t);
+C_LINKAGE void* memcpy(void* __restrict, const void* __restrict, size_t);
+C_LINKAGE void* memmove(void*, const void*, size_t);
+C_LINKAGE void* memset(void*, int, size_t);
 
-int memcmp(const void*, const void*, size_t);
-void* memcpy(void* __restrict, const void* __restrict, size_t);
-void* memmove(void*, const void*, size_t);
-void* memset(void*, int, size_t);
+C_LINKAGE size_t strlen(const char*);
 
-size_t strlen(const char*);
+C_LINKAGE char* strcpy(char*, const char*);
+C_LINKAGE char* strncpy(char*, const char*, size_t);
+C_LINKAGE size_t strlcpy(char*, const char*, size_t);
 
-char* strcpy(char*, const char*);
-char* strncpy(char*, const char*, size_t);
-size_t strlcpy(char*, const char*, size_t);
-
-char *strcat(char*, const char*);
-char *strncat(char*, const char*, size_t);
-size_t strlcat(char*, const char*, size_t);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
+C_LINKAGE char *strcat(char*, const char*);
+C_LINKAGE char *strncat(char*, const char*, size_t);
+C_LINKAGE size_t strlcat(char*, const char*, size_t);
 
 #endif //_STRING_H

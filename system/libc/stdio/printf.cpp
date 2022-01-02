@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <cstddef>
 #include <feline/str.h>
+#include <bits/io.h>
 
 //Minimal wrapper around vprintf to reduce code duplication
 __attribute__ ((format (printf, 1, 2))) int printf(const char *format, ...){
@@ -529,7 +530,7 @@ int vprintf(const char* format, va_list parameters){
 					format--;
 				}
 				//Show the percent
-				putchar('%');
+				__internal_putchar('%');
 				written++;
 				//Don't repeat this loop
 				format++;
@@ -547,7 +548,7 @@ int vprintf(const char* format, va_list parameters){
 			}
 			else{
 				for(size_t i=0; i<(min_width-width); i++){
-					putchar(padded ? '0' : ' ');
+					__internal_putchar(padded ? '0' : ' ');
 				}
 			}
 		}
@@ -557,7 +558,7 @@ int vprintf(const char* format, va_list parameters){
 			//TODO: set errono to EOVERFLOW
 			return -1;
 		}
-		puts_no_nl(intStrBuf);
+		__internal_writeStr(intStrBuf);
 		written+=strlen(intStrBuf);
 		format++;
 	}

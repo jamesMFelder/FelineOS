@@ -4,8 +4,7 @@
 
 // target is a pointer to the 8-byte GDT entry
 // source is an arbitrary structure describing the GDT entry
-void encodeGdtEntry(uint8_t *target, struct GDT source)
-{
+void encodeGdtEntry(uint8_t *target, struct GDT source){
     // Check the limit to make sure that it can be encoded
     if ((source.limit > 65536) && ((source.limit & 0xFFF) != 0xFFF)) {
         kerror("Invalid GDT struct!");

@@ -3,10 +3,6 @@
 #ifndef _INTTYPES_H
 #define _INTTYPES_H 1
 
-#ifdef __cplusplus
-extern "C" {
-#endif //__cplusplus
-
 #define PRId "d"
 #define PRIi "i"
 #define PRIo "o"
@@ -48,9 +44,5 @@ extern "C" {
 #define PRIX16 PRI16 PRIX
 #define PRIX32 PRI32 PRIX
 #define PRIX64 PRI64 PRIX
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif // _INTTYPES_H

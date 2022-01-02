@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <kernel/log.h>
+#include <bits/c_compat.h>
 
 #if UINT32_MAX == UINTPTR_MAX
 #define STACK_CHK_GUARD 0xe2dee396
@@ -16,7 +17,7 @@ uintptr_t __stack_chk_guard = STACK_CHK_GUARD;
 //See https://wiki.osdev.org/Stack_Smashing_Protector for info about
 //what to do here and what do avoid at all costs.
 //TODO: make this a stub for a specific syscall
-extern "C" __attribute__((noreturn)) void __stack_chk_fail(void);
+C_LINKAGE __attribute__((noreturn)) void __stack_chk_fail(void);
 
 void __stack_chk_fail(void)
 {

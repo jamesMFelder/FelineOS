@@ -11,8 +11,6 @@
 }
 
 [[noreturn]] void _Assert_func(char const * const err_msg, char const * const func ,char const * const end){
-	puts_no_nl(err_msg);
-	puts_no_nl(func);
-	puts(end);
+	printf("%s%s%s\n", err_msg, func, end);
 	abort();
 }

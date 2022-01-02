@@ -3,22 +3,14 @@
 #ifndef _STDLIB_H
 #define _STDLIB_H 1
 
+#include <bits/c_compat.h>
 #include <sys/cdefs.h>
 #include <stddef.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif //__cplusplus
+C_LINKAGE __attribute__((__noreturn__)) void abort(void);
 
-__attribute__((__noreturn__))
-void abort(void);
-
-int abs(int j);
-long labs(long j);
-long long llabs(long long j);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
+C_LINKAGE int abs(int j);
+C_LINKAGE long labs(long j);
+C_LINKAGE long long llabs(long long j);
 
 #endif // _STDLIB_H

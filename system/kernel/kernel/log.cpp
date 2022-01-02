@@ -4,7 +4,7 @@
 #include <stdarg.h>
 
 //Add a log. Logging functions should always use this so I can change the backend
-void __internal_log(const int level, const char *fmt, va_list data);
+__attribute__((format (printf, 2, 0))) void __internal_log(const int level, const char *fmt, va_list data);
 
 void __internal_log(const int level, const char *fmt, va_list data){
 

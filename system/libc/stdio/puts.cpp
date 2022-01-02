@@ -16,10 +16,3 @@ int puts(const char* string) {
 	//TODO: check return values
 	return 0;
 }
-
-#if defined(__is_libk)
-int puts_no_nl(const char* string) {
-	__internal_writeStr(string);
-	return 0;
-}
-#endif //__is_libk

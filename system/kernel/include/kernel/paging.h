@@ -7,8 +7,6 @@
 #include <feline/fixed_width.h>
 #include <kernel/mem.h>
 
-#ifdef __cplusplus
-
 //Map len bytes from phys_addr to virt_addr
 map_results map_range(void const * const phys_addr, uintptr_t len, void const * const virt_addr, unsigned int opts);
 //Map len bytes from phys_addr to any free virtual address
@@ -39,7 +37,5 @@ extern "C" void enable_paging(uintptr_t cr3);
 
 //Invalidates the cpu's TLB for the page containing addr
 void invlpg(page const addr);
-
-#endif //__cplusplus
 
 #endif //_KERN_PAGING_H

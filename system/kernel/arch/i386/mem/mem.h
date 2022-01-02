@@ -12,8 +12,6 @@
 
 extern char const * const mem_types[];
 
-#ifdef __cplusplus
-
 //Start the memory manager
 int bootstrap_phys_mem_manager(multiboot_info_t *mbp);
 
@@ -22,7 +20,5 @@ typedef struct phys_mem_area{
 	//Is any part of this in use (including through a child)
 	bool in_use;
 } phys_mem_area_t;
-
-#endif
 
 #endif //_KERN_ARCH_MEM_H

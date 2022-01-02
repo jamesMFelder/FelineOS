@@ -46,7 +46,6 @@ static inline vga_text_char vga_entry(unsigned char uc, uint8_t color) {
 	return (vga_text_char) uc | (vga_text_char) color << 8;
 }
 
-#ifdef __cplusplus
 unsigned char terminal::maxX=VGA_TEXT_WIDTH;
 unsigned char terminal::maxY=VGA_TEXT_HEIGHT;
 class vga_text_term:public terminal{
@@ -77,8 +76,5 @@ class vga_text_term:public terminal{
 		//Color
 		uint8_t color;
 };
-#else //__cplusplus
-#error "This is a c++ header file, try compiling your program with g++ or clang++ instead of gcc or clang"
-#endif //__cplusplus (else)
 
 #endif // _TERMINAL_VGA_TEXT_H

@@ -3,12 +3,8 @@
 #ifndef _KERN_SYSCALL_H
 #define _KERN_SYSCALL_H 1
 
-#ifdef __cplusplus
-extern "C"{
-#endif
-long syscall(long which, ...);
-#ifdef __cplusplus
-}
-#endif
+#include <bits/c_compat.h>
+
+C_LINKAGE long syscall(long which, ...);
 
 #endif //_KERN_SYSCALL_H

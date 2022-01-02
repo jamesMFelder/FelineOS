@@ -5,5 +5,6 @@
 //	Given that this never should be called, we can't assume anything
 //	so just don't do anything
 //Seperate declaration and definition to quiet a warning.
-extern "C" void __cxa_pure_virtual();
-extern "C" void __cxa_pure_virtual(){}
+#include <bits/c_compat.h>
+C_LINKAGE void __cxa_pure_virtual();
+void __cxa_pure_virtual(){}

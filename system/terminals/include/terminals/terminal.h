@@ -13,7 +13,6 @@ typedef struct term_color{
 constexpr term_color_t term_black={0, 0, 0};
 constexpr term_color_t term_white={255, 255, 255};
 
-#ifdef __cplusplus
 class terminal{
 	public:
 		//constructor and destructor
@@ -45,8 +44,5 @@ class terminal{
 		static unsigned char x, y;
 		static unsigned char maxX, maxY;
 };
-#else //__cplusplus
-#error "This is a c++ header file, try compiling your program with g++ or clang++ instead of gcc or clang"
-#endif //__cplusplus (else)
 
 #endif // _TERMINAL_H

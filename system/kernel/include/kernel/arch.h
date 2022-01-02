@@ -5,12 +5,6 @@
 
 #include <kernel/multiboot.h>
 
-#ifdef __cplusplus
-extern "C"{
-#endif
 int boot_setup(multiboot_info_t *mbp);
-#ifdef __cplusplus
-}
-#endif
 
 #endif //_KERN_BOOT_H

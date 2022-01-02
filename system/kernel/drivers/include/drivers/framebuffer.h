@@ -5,7 +5,6 @@
 
 #include <stdint.h>
 
-#ifdef __cplusplus
 typedef struct pixel{
 	uint8_t red;
 	uint8_t green;
@@ -51,6 +50,5 @@ class framebuffer{
 		int putRect_bgr(uint16_t x, uint16_t y, uint16_t width, uint16_t height, pixel_bgr_t p);
 		int checkParms(uint16_t maxRight, uint16_t maxDown, pixel_bgr_t p);
 };
-#endif // __cplusplus
 
 #endif // _KERN_DRIVER_FB_H

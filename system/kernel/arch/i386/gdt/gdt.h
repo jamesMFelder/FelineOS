@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <kernel/log.h>
 #include <stddef.h>
+#include <kernel/asm_compat.h>
 
 //This warning doesn't matter here, unlike a lot of the kernel
 #pragma GCC diagnostic push
@@ -21,16 +22,10 @@ struct GDT{
 // source is an arbitrary structure describing the GDT entry
 void encodeGdtEntry(uint8_t *target, struct GDT source);
 
-#ifdef __cplusplus
-extern "C"{
-#endif
 //gdt is the target struct from encodeGDTEntry
-void setGdt(uint64_t *GDT, unsigned int gdt_size);
+ASM void setGdt(uint64_t *GDT, unsigned int gdt_size);
 
 //Creates segments spanning the entire memory for everything.
 void disable_gdt();
-#ifdef __cplusplus
-}
-#endif
 
 #endif //_KERN_GDT_H

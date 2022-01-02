@@ -9,8 +9,6 @@
 //Size of 1 page=granularity of chunks we're handing out
 #define PHYS_MEM_CHUNK_SIZE 4_KiB
 
-#ifdef __cplusplus
-
 //Use for manipulating pages instead of void*/uintptr_t
 //TODO: support 2MiB pages
 class page{
@@ -81,7 +79,5 @@ inline uintptr_t constexpr bytes_to_pages(uintptr_t const bytes){
 inline uintptr_t bytes_to_pages(page const bytes){
 	return bytes_to_pages(bytes.getInt());
 }
-
-#endif
 
 #endif //_KERN_MEM_H

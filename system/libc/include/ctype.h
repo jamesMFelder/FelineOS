@@ -3,12 +3,9 @@
 #ifndef _CTYPE_H
 #define _CTYPE_H 1
 
-#ifdef __cplusplus
-extern "C"{
-#endif
-int isdigit(int c);
-int iscntrl(int c);
-#ifdef __cplusplus
-}
-#endif
+#include <bits/c_compat.h>
+
+C_LINKAGE int isdigit(int c);
+C_LINKAGE int iscntrl(int c);
+
 #endif //_CTYPE_H

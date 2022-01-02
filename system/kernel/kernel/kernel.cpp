@@ -1,41 +1,28 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021 James McNaughton Felder
+
 #include <cstdio>
-
 #include <cstdlib>
-
 #include <cinttypes>
-
 #include <kernel/arch.h>
-
 #include <kernel/log.h>
-
 #include <kernel/cpuid.h>
-
 #include <kernel/multiboot.h>
-
 #include <kernel/misc.h>
-
 #include <drivers/serial.h>
-
 #include <drivers/framebuffer.h>
-
 #include <kernel/mem.h>
-
 #include <sys/syscall.h>
-
 #include <kernel/backtrace.h>
-
 #include <feline/str.h>
-
 #include <kernel/paging.h>
+#include <kernel/asm_compat.h>
 
 //Setup by the linker to be at the start and end of the kernel.
 extern const char kernel_start;
 extern const char kernel_end;
 
-extern "C"{
-void kernel_main(multiboot_info_t *mbp, unsigned int magic);
+ASM void kernel_main(multiboot_info_t *mbp, unsigned int magic);
 
 void kernel_main(multiboot_info_t *mbp, unsigned int magic){
 	init_serial();
@@ -147,5 +134,4 @@ void kernel_main(multiboot_info_t *mbp, unsigned int magic){
 	printf("Testing an syscall...\n");
 	printf("It returned %ld.\n", syscall(0));
 	kcritical("Nothing to do... Pausing now."); //boot.S should hang if we return
-}
 }
