@@ -94,9 +94,6 @@ libk.a: $(LIBK_OBJS)
 .S.libk.o:
 	$(CC) -MD -o $@  $(LIBK_CPPFLAGS) -c $<
 
-.s.libk.o:
-	$(NASM) $(NASM_ARGS) -o $@ $<
-
 clean:
 	rm -f $(BINARIES) *.a
 	rm -f $(OBJS) $(LIBK_OBJS) *.o */*.o */*/*.o

@@ -40,12 +40,6 @@ else
 	exit 2
 fi
 
-export NASM=nasm
-# TODO: figure out how to set the sysroot for nasm or switch to gas
-#     this is just used to include my own assembly files that don't belong
-#     in the kernel (part of libFeline)
-export NASM_ARGS="-g -felf32 -w+all -i../../sysroot/usr/include/feline/asm/"
-
 export PREFIX=/usr
 export EXEC_PREFIX=$PREFIX
 export BOOTDIR=/boot

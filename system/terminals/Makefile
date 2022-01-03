@@ -42,9 +42,6 @@ libVGA_text.a: $(VGA_TEXT_OBJS)
 .S.o:
 	$(CC) -MD -o $@ $(CPPFLAGS) -c $<
 
-.s.o:
-	$(NASM) $(NASM_ARGS) $< -o $@
-
 clean:
 	rm -f $(BINARIES)
 	rm -f $(OBJS) *.o */*.o */*/*.o

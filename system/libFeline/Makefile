@@ -76,9 +76,6 @@ libfeline.a: $(OBJS)
 .S.libfeline.o:
 	$(CC) -MD -o $@ $(LIBFELINE_CFLAGS) $(LIBFELINE_CPPFLAGS) -c $<
 
-.s.o:
-	$(NASM) $(NASM_ARGS) $< -o $@
-
 clean:
 	rm -f $(BINARIES) *.a
 	rm -f $(OBJS) $(LIBFELINE_OBJS) *.o */*.o */*/*.o

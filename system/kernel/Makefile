@@ -70,9 +70,6 @@ $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 .S.o:
 	$(CC) -MD -o $@ $(CPPFLAGS) -c $<
 
-.s.o:
-	$(NASM) $(NASM_ARGS) -o $@ $<
-
 clean:
 	rm -f FelineOS.kernel
 	rm -f $(OBJS) *.o */*.o */*/*.o
