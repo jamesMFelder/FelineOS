@@ -54,9 +54,17 @@ _start:
 	push %ebp
 	mov %esp, %ebp
 
+	//Check if we were loaded by grub
+	cmp $0x2BADB002, %eax
+	jne .not_multiboot
+
 	//Save the arguments from GRUB
 	push %eax
 	push %ebx
+
+	//Setup what C(++) has no idea of
+	.extern early_boot_setup
+	call early_boot_setup
 
 	// Call the global constructors.
 	.extern _init
@@ -79,4 +87,29 @@ _start:
 	hlt
 	jmp .hang
 
+	//Come here if we aren't booted by a multiboot-compliant bootloader.
+	//Prints and error on the serial port.
+	//If you booted this without a multiboot-compliant bootloader and you don't
+	//	give me serial port I am ***not*** going to help you more in this file.
+.not_multiboot:
+	//Try to assume nothing
+	//We already setup the stack
+	cli //Stop interrupts
+	cld //And reset the direction flag (the serial functions are C++)
+
+	//Setup serial for logging
+	.extern init_serial
+	call init_serial
+
+	//Send the error over serial port
+	push .not_multiboot_err
+	.extern writestr_serial
+	call writestr_serial
+
+	//Hang cause what else can we do?
+	jmp .hang
+
 .end:
+
+.section .rodata
+	.not_multiboot_err: .asciz "Feline OS CRIT: Not booted by a multiboot compliant bootloader, unable to continue."
