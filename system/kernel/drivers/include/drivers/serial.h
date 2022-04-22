@@ -3,15 +3,18 @@
 #ifndef _KERN_DRIVER_SERIAL_H
 #define _KERN_DRIVER_SERIAL_H 1
 
-#include <kernel/asm.h>
 #include <stddef.h>
+#include <kernel/asm_compat.h>
 
-#define PORT 0x3f8 //COM1
-
-int init_serial();
+//Setup the serial port (ASM because of emergency at initialization possibility)
+ASM int init_serial();
+//Read a character from the serial port
 char read_serial();
+//Write a character to the serial port
 void put_serial(char a);
+//Write len bytes from str to the serial port (ignoring null characters)
 void write_serial(const char *str, const size_t len);
-void writestr_serial(const char *str);
+//Write from str to the next null (ASM because of emergency at initialization posibility)
+ASM void writestr_serial(const char *str);
 
 #endif //_KERN_DRIVER_SERIAL_H

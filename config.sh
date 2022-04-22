@@ -21,9 +21,9 @@ export LAR_OPTS=""
 export LAS="llvm-as"
 export LAS_OPTS="-target ${HOST}"
 export LCC="clang"
-export LCC_OPTS="-target ${HOST} -march=i386 -Weverything -Wno-c++98-compat -Wno-c++98-compat-extra-semi -Wno-c++98-compat-pedantic -Wno-reserved-identifier -Wno-missing-variable-declarations -Wno-global-constructors"
+export LCC_OPTS="-target ${HOST} -march=i386 -Weverything -Wno-c++98-compat -Wno-c++98-compat-extra-semi -Wno-c++98-compat-pedantic -Wno-c++17-extensions -Wno-reserved-identifier -Wno-missing-variable-declarations -Wno-global-constructors -Wno-language-extension-token"
 export LPP="clang++"
-export LPP_OPTS="-target ${HOST} -march=i386 -Weverything -Wno-c++98-compat -Wno-c++98-compat-extra-semi -Wno-c++98-compat-pedantic -Wno-reserved-identifier -Wno-missing-variable-declarations -Wno-global-constructors"
+export LPP_OPTS="-target ${HOST} -march=i386 -Weverything -Wno-c++98-compat -Wno-c++98-compat-extra-semi -Wno-c++98-compat-pedantic -Wno-c++17-extensions -Wno-reserved-identifier -Wno-missing-variable-declarations -Wno-global-constructors -Wno-language-extension-token"
 
 if [[ ${COMPILER} == "gcc" ]]; then
 	export AR="${GAR} ${GAR_OPTS}"

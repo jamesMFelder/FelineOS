@@ -1,0 +1,71 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 James McNaughton Felder
+#ifndef _ATOMIC_H
+#define _ATOMIC_H 1
+
+namespace std{
+
+typedef enum memory_order{
+	memory_order_relaxed,
+	memory_order_consume,
+	memory_order_aquire,
+	memory_order_release,
+	memory_order_aqu_rel,
+	memory_order_seq_cst
+} memory_order;
+
+template <class T> struct atomic{
+	public:
+		//Construct the atomic object. These are not atomic!!
+		atomic() noexcept=default; //Initialize to default value
+		constexpr atomic(T val) noexcept; //Initialize to val
+		atomic(const atomic&) = delete; //Atomic objects cannot be copied or moved
+
+		//Set to value. This is atomic.
+		T operator=(T val) noexcept;
+		T operator=(T val) volatile noexcept;
+		//Atomic objects cannot be copied
+		atomic& operator=(const atomic&) = delete;
+		atomic& operator=(const atomic&) volatile = delete;
+
+		//Set a value
+		void store(T val, memory_order sync=memory_order_seq_cst) noexcept;
+		void store(T val, memory_order sync=memory_order_seq_cst) volatile noexcept;
+
+		//Read the value
+		T load(memory_order sync=memory_order_seq_cst) noexcept;
+		T load(memory_order sync=memory_order_seq_cst) volatile noexcept;
+		operator T() const noexcept;
+		operator T() const volatile noexcept;
+
+		//Set and return the value atomically
+		T exchange(T val, memory_order sync=memory_order_seq_cst) noexcept;
+		T exchange(T val, memory_order sync=memory_order_seq_cst) volatile noexcept;
+
+		//Set to val if it equals expected, otherwise, set val to it
+		//These do a bitwise compare (not using operator==())
+		//These next four may return false without modifying expected even if it equals val (may increase preformance)
+		bool compare_exchange_weak(T& expected, T val, memory_order sync=memory_order_seq_cst) noexcept;
+		bool compare_exchange_weak(T& expected, T val, memory_order sync=memory_order_seq_cst) volatile noexcept;
+		bool compare_exchange_weak(T& expected, T val, memory_order success, memory_order failure) noexcept;
+		bool compare_exchange_weak(T& expected, T val, memory_order success, memory_order failure) volatile noexcept;
+		//These must return true and modify expected if it equals val
+		bool compare_exchange_strong(T& expected, T val, memory_order sync=memory_order_seq_cst) noexcept;
+		bool compare_exchange_strong(T& expected, T val, memory_order sync=memory_order_seq_cst) volatile noexcept;
+		bool compare_exchange_strong(T& expected, T val, memory_order success, memory_order failure) noexcept;
+		bool compare_exchange_strong(T& expected, T val, memory_order success, memory_order failure) volatile noexcept;
+
+		//Is the object lock free?
+		bool is_lock_free() const noexcept;
+		bool is_lock_free() const volatile noexcept;
+
+	private:
+		T value;
+};
+
+} //namespace std
+
+//Instantiate the template
+#include <templates/arch/atomic.tpp>
+
+#endif // _ATOMIC_H

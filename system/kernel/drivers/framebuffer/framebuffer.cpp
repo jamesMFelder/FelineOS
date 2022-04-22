@@ -4,13 +4,8 @@
 #include <drivers/framebuffer.h>
 #include <cassert>
 #include <cstdlib>
+#include <kernel/log.h>
 #include <kernel/paging.h>
-
-framebuffer::framebuffer(){}
-//TODO: clear screen on destruction?
-framebuffer::~framebuffer(){
-	unmap_range(fb.addr, fb.pitch*fb.height*sizeof(pixel_bgr_t), 0);
-}
 
 int framebuffer::init(pixel_bgr_t *addr, uint16_t width, uint16_t height,
 		uint16_t pitch, uint8_t bpp){
@@ -23,7 +18,19 @@ int framebuffer::init(pixel_bgr_t *addr, uint16_t width, uint16_t height,
 	assert(bpp==32);
 	fb.bpp=bpp;
 	//Map as many pages as the framebuffer is
-	return map_range(addr, fb.pitch*fb.height*sizeof(pixel_bgr_t), fb.addr, 0);
+	return map_range(addr, fb.pitch*fb.height*sizeof(pixel_bgr_t), reinterpret_cast<void**>(&fb.addr), 0);
+}
+
+int framebuffer::wrapUp(bool clearScreen){
+	if(clearScreen){
+		putRect(0, 0, fb.width, fb.height, {0, 0, 0});
+	}
+	map_results unmap=unmap_range(fb.addr, fb.pitch*fb.height*sizeof(pixel_bgr_t), 0);
+	if(unmap!=map_success){
+		kerrorf("Error %d unmapping the framebuffer.", unmap);
+		return 0;
+	}
+	return -1;
 }
 
 int framebuffer::getMax(uint16_t *x, uint16_t *y){
@@ -42,9 +49,20 @@ int framebuffer::putRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height
 
 int framebuffer::putPixel_bgr(uint16_t x, uint16_t y, pixel_bgr_t p){
 	//Check everything is okay
-	int inval=checkParms(x, y, p);
+	unsigned int inval=checkParms(x, y, p);
 	if(inval!=0){
-		return inval;
+		//If we aren't setup
+		if(inval&0b1){
+			return -1;
+		}
+		//If the padding is bad (this shouldn't be possible, because this is a private function)
+		if(inval&0b10){
+			return -2;
+		}
+		//If we are off-screen
+		if(inval&0b100){
+			return -3;
+		}
 	}
 	*(fb.addr+y*fb.pitch+x)=p;
 	return 0;
@@ -52,9 +70,20 @@ int framebuffer::putPixel_bgr(uint16_t x, uint16_t y, pixel_bgr_t p){
 
 int framebuffer::putRect_bgr(uint16_t x, uint16_t y, uint16_t width, uint16_t height, pixel_bgr_t p){
 	//Check everything is okay
-	int inval=checkParms(x+width, y+height, p);
+	unsigned int inval=checkParms(x+width, y+height, p);
 	if(inval!=0){
-		return inval;
+		//If we aren't setup
+		if(inval&0b1){
+			return -1;
+		}
+		//If the padding is bad (this shouldn't be possible, because this is a private function)
+		if(inval&0b10){
+			return -2;
+		}
+		//If we are off-screen (TODO: truncate?)
+		if(inval&0b100){
+			return -3;
+		}
 	}
 	//Start in the upper left
 	pixel_bgr_t *point=fb.addr+y*(fb.pitch/sizeof(pixel_bgr_t))+x;
@@ -69,14 +98,16 @@ int framebuffer::putRect_bgr(uint16_t x, uint16_t y, uint16_t width, uint16_t he
 	return 0;
 }
 
-int framebuffer::checkParms(uint16_t maxRight, uint16_t maxDown, pixel_bgr_t p){
+unsigned int framebuffer::checkParms(uint16_t maxRight, uint16_t maxDown, pixel_bgr_t p){
+	//No errors to start
+	unsigned int errors=0;
 	//If we aren't setup
 	if(fb.addr==nullptr){
-		return -1;
+		errors&=0b1;
 	}
 	//If it's off screen
 	if(maxRight>=fb.width || maxDown>=fb.height){
-		return -1;
+		errors&=0b100;
 	}
 	//If the reserved bits are non-zero
 	//Apparently in at least one setup it switches that pixel to palette mode
@@ -85,7 +116,7 @@ int framebuffer::checkParms(uint16_t maxRight, uint16_t maxDown, pixel_bgr_t p){
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 	if(p.fb_padding!=0){
 #pragma GCC diagnostic pop
-		return -1;
+		errors&=0b10;
 	}
-	return 0;
+	return errors;
 }

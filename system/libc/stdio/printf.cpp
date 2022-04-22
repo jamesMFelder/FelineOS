@@ -63,7 +63,6 @@ int vprintf(const char* format, va_list parameters){
 		}
 
 		//Prepair the buffer
-		memset(intStrBuf, '\0', 256);
 		bufPtr=intStrBuf;
 
 		//Get flags

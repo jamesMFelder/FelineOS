@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021 James McNaughton Felder
 #include "mem.h"
+#include <cassert>
 #include <kernel/log.h>
 #include <kernel/paging.h>
-#include <string.h>
-#include <stdlib.h>
+#include <cstring>
+#include <cstdlib>
 #include <feline/fixed_width.h>
 #include <feline/spinlock.h>
 
@@ -27,7 +28,9 @@ size_t mem_bitmap_len=0;
 //Setup by the linker to be at the start and end of the kernel.
 extern const char kernel_start;
 extern const char kernel_end;
-ptrdiff_t size;
+const uintptr_t uint_kernel_start = reinterpret_cast<uintptr_t>(&kernel_start);
+const uintptr_t uint_kernel_end = reinterpret_cast<uintptr_t>(&kernel_end);
+size_t kernel_size=uint_kernel_end-uint_kernel_start;
 
 //Start the physical memory manager
 //mbp=MultiBoot Pointer (everything grub gives us)
@@ -43,12 +46,11 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 
 
 	klog("Starting bootstrap_phys_mem_manager.");
-	size=reinterpret_cast<intptr_t>(&kernel_end)-reinterpret_cast<intptr_t>(&kernel_start);
 
 	//Print debugging information
 	klogf("Kernel starts at %p", static_cast<void const *>(&kernel_start));
 	klogf("Kernel ends at %p", static_cast<void const *>(&kernel_end));
-	klogf("It is %#tx bytes long.", size);
+	klogf("It is %#tx bytes long.", kernel_size);
 
 	//Print the memory grub says is useable
 	klogf("Useable memory:");
@@ -59,7 +61,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 		}
 	}
 
-	klogf("Using %zx elements in array.", mem_bitmap_len);
+	klogf("Using %zd elements in array.", mem_bitmap_len);
 
 	//Find where we can keep track of unused pages
 	//Loop through the available memory again
@@ -68,19 +70,19 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 				(mbmp+i)->len>(mem_bitmap_len*sizeof(phys_mem_area_t)))
 		{
 			//If the area starts before the kernel
-			if(static_cast<uintptr_t>((mbmp+i)->addr)<=reinterpret_cast<uintptr_t>(&kernel_start)){
+			if(static_cast<uintptr_t>((mbmp+i)->addr)<=uint_kernel_start){
 				//And has enough space
 				if(static_cast<uintptr_t>(((mbmp+i)->addr)+
 					(mem_bitmap_len<
 					 ((mbmp+i)->addr+(mbmp+i)->len))))
 					 {
 						 //And has enough space before the kernel
-						 if(((mbmp+i)->addr+(mem_bitmap_len*sizeof(phys_mem_area_t)))<reinterpret_cast<uintptr_t>(&kernel_start)){
+						 if(((mbmp+i)->addr+(mem_bitmap_len*sizeof(phys_mem_area_t)))<uint_kernel_start){
 							 klogf("Found memory at %p.", reinterpret_cast<void*>((mbmp+i)->addr));
 							 normal_mem_bitmap=reinterpret_cast<phys_mem_area_t*>((mbmp+i)->addr);
 						 }
 						 //Or enough space after it
-						 else if(((mbmp+i)->addr+(mbmp+i)->len)-reinterpret_cast<uintptr_t>(&kernel_end)>=(mem_bitmap_len*sizeof(phys_mem_area_t))){
+						 else if(((mbmp+i)->addr+(mbmp+i)->len)-uint_kernel_end>=(mem_bitmap_len*sizeof(phys_mem_area_t))){
 							 klogf("Found memory at %p.", static_cast<void const *>(&kernel_end));
 							 normal_mem_bitmap=reinterpret_cast<phys_mem_area_t *>(const_cast<char*>(&kernel_end));
 						 }
@@ -93,7 +95,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 				}
 			}
 			//If it is after the kernel
-			else if(reinterpret_cast<char*>((mbmp+i)->addr)>&kernel_end){
+			else if(static_cast<uintptr_t>((mbmp+i)->addr)>uint_kernel_end){
 				//And has enough space
 				if(((mbmp+i)->addr+
 							(mem_bitmap_len*sizeof(phys_mem_area_t)))<
@@ -119,23 +121,30 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 		}
 	}
 
-	//Fill in the bitmap
-	page where=nullptr;
-	//We're not going to even try to use <1MiB, and we're loaded at exactly 1MiB
-	while(where<=&kernel_end){
-			normal_mem_bitmap[where.getInt()/PHYS_MEM_CHUNK_SIZE].in_use=true;
-			where++;
+	//Loop through the memory again to fill in the bitmap
+	for(unsigned int i=0;i<mbmp_len/sizeof(multiboot_memory_map_t);i++){
+		bool available = (mbmp+i)->type == MULTIBOOT_MEMORY_AVAILABLE;
+		//TODO: delete low-level logging
+		printf("i=%u, mbmp->len=%llu, mbmp->type=%d, available=%s\n", i, (mbmp+i)->len, (mbmp+i)->type, (available ? "true" : "false"));
+		// fill in the array (pretend we loop over it)
+		std::memset(&normal_mem_bitmap[(mbmp+i)->addr/PHYS_MEM_CHUNK_SIZE], available, static_cast<size_t>((mbmp+i)->len)*sizeof(bool));
 	}
-	while(where.getInt()<mem_bitmap_len*PHYS_MEM_CHUNK_SIZE){
-			normal_mem_bitmap[where.getInt()/PHYS_MEM_CHUNK_SIZE].in_use=false;
-			where++;
-	}
+	puts("Bitmap filled...Marking kernel as used.");
+	//Now mark the kernel as used
+	std::memset(&normal_mem_bitmap[uint_kernel_start/PHYS_MEM_CHUNK_SIZE], true, bytes_to_pages(kernel_size));
+	//And the bitmap itself
+	std::memset(&normal_mem_bitmap[reinterpret_cast<uintptr_t>(normal_mem_bitmap)/PHYS_MEM_CHUNK_SIZE], true, bytes_to_pages(mem_bitmap_len));
+	//And the first page (so it can be nullptr)
+	normal_mem_bitmap[0].in_use=true;
 	//And map it
+	printf("Bitmap points to %p in physical memory...", reinterpret_cast<void*>(normal_mem_bitmap));
 	map_results mapping=map_range(normal_mem_bitmap, mem_bitmap_len*sizeof(phys_mem_area_t), reinterpret_cast<void**>(&normal_mem_bitmap), 0);
 	if(mapping!=map_success){
+		puts("");
 		kcriticalf("Unable to map the physical memory manager (error code %d).", mapping);
 		abort();
 	}
+	printf("and to %p in virtual memory.\n", reinterpret_cast<void*>(normal_mem_bitmap));
 	klog("Ending bootstrap_phys_mem_manager.");
 	modifying_pmm.release_lock();
 	return 0;

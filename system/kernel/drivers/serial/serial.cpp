@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021 James McNaughton Felder
 #include <drivers/serial.h>
+#include <kernel/asm.h>
+
+#define PORT 0x3f8 //COM1
 
 int init_serial() {
 	outb(PORT + 1, 0x00);    // Disable all interrupts

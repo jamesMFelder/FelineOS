@@ -3,7 +3,7 @@
 #ifndef _HEADER_H
 #define _HEADER_H 1
 
-#include <stdatomic.h>
+#include <atomic>
 
 //A basic spinlock implimentation
 class Spinlock{
@@ -16,9 +16,7 @@ class Spinlock{
 		void release_lock();
 	private:
 		//The actual lock
-		//This is c-style atomics, but I don't have all the headers I need (type_traits) for c++-style
-		atomic_flag lock=ATOMIC_FLAG_INIT;
+		std::atomic<bool> lock;
 };
 
 #endif // _HEADER_H
-

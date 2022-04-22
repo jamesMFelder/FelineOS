@@ -39,6 +39,14 @@ typedef uint32_t page_table_entry;
 
 //Begin Private Declarations
 
+//Return the offset into a page
+inline uintptr_t page_offset(uintptr_t const addr){
+	return addr&(PHYS_MEM_CHUNK_SIZE-1);
+}
+inline uintptr_t page_offset(void const * const addr){
+	return page_offset(reinterpret_cast<uintptr_t>(addr));
+}
+
 //Set a bit in a page table/directory
 inline int set_bit(page_table_entry * const p, uint32_t const b){
 	*p|=b;
@@ -123,7 +131,8 @@ inline void* get_virt_addr(unsigned int const pdindex, unsigned int const ptinde
 
 //Check if needed pages are free starting at virt_addr_base
 //Don't call this function if you haven't locked `modifying_page_tables`
-bool free_from_here(page &virt_addr_base, uintptr_t needed);
+bool free_from_here(page virt_addr_base, uintptr_t needed);
+bool free_from_here(page *virt_addr_base, uintptr_t needed);
 
 //Find len bytes of unmapped memory
 //Don't call this function if you haven't locked `modifying_page_tables`
@@ -163,9 +172,9 @@ extern char const kernel_end;
 
 //Initialize immediately
 //What the CPU sees
-page_directory_entry bootstrap_page_directory[[gnu::aligned(1024)]][1024]={0};
+page_directory_entry bootstrap_page_directory[[gnu::aligned(0x1000)]][1024]={0};
 page_directory_entry *page_directory=bootstrap_page_directory;
-page_table_entry all_page_tables[[gnu::aligned(1024)]][1024][1024]={{0}};
+page_table_entry all_page_tables[[gnu::aligned(0x1000)]][1024][1024]={{0}};
 //What we use for searching
 //True if present, false otherwise
 //Keep in sync with the CPU's page tables!
@@ -177,9 +186,6 @@ bool page_tables_searchable[MAX_VIRT_MEM/PHYS_MEM_CHUNK_SIZE]={0};
 bool isMapped(page const virt_addr){
 	//If the page table is present
 	return page_tables_searchable[searchable_page_table_offset(virt_addr)];
-	//Otherwise, it isn't mapped
-	klog("Page directory is not present.");
-	return false;
 }
 
 //Keep this incase we do more complicated tricks
@@ -200,35 +206,42 @@ page_table_entry* create_new_page_table(){
 //If they aren't, virt_addr_base is updated to the first in-use page greater than what it was
 //	or 0 if it would wrap around
 //lock modifying_page_tables before calling this
-bool free_from_here(page &virt_addr_base, uintptr_t needed){
+bool free_from_here(page *virt_addr_base, uintptr_t needed){
 	//If we would overflow
-	if(virt_addr_base.getInt()>MAX_VIRT_MEM-needed*4_KiB){
+	//read as (virt_addr_base->getInt()+needed >= MAX_VIRT_MEM) that actually checks for overflow
+	if(virt_addr_base->getInt()>MAX_VIRT_MEM-needed){
 		//return an error
-		virt_addr_base.set(nullptr);
+		virt_addr_base->set(nullptr);
 		return false;
 	}
+	page last_page_needed=virt_addr_base->getInt()+needed;
 	//For each page that would be needed
-	for(size_t spt_index=searchable_page_table_offset(virt_addr_base); spt_index<searchable_page_table_offset(virt_addr_base.getInt()+needed*PHYS_MEM_CHUNK_SIZE); spt_index++){
-		//If it is present
-		if(page_tables_searchable[spt_index]){
-			//Update the address
-			virt_addr_base=spt_index*PHYS_MEM_CHUNK_SIZE;
-			//The whole range isn't free
+	for(page base=*virt_addr_base; base<=last_page_needed; base++) {
+		if(isMapped(base)) {
+			virt_addr_base->set(base);
 			return false;
 		}
 	}
-	//The pages are free
 	return true;
+}
+//Same as above, except doesn't modify virt_addr_base
+bool free_from_here(page virt_addr_base, uintptr_t needed){
+	return free_from_here(&virt_addr_base, needed);
 }
 
 //Find len bytes of unmapped memory
 void *find_free_virtmem(uintptr_t len){
 	//Loop through all of the virtual memory
-	for(page base=4_KiB; base.getInt()<(MAX_VIRT_MEM-PHYS_MEM_CHUNK_SIZE) && base.isNull()==false; base++){
+	for(page base=4_KiB; base.getInt()<(MAX_VIRT_MEM-PHYS_MEM_CHUNK_SIZE) && !base.isNull(); base++){
 		//Check if enough memory is free
-		if(free_from_here(base, len)){
+		if(free_from_here(&base, len)){
 			//returns true if base points to len bytes of free memory
 			return base;
+		}
+		//If it set base to null, we are out of room
+		if(base.isNull()){
+			kwarn("No memory left!");
+			return nullptr;
 		}
 		//free_from_here() moves base to blocked memory if it isn't at the start of enough free memory
 	}
@@ -279,6 +292,10 @@ map_results map_page(page const phys_addr, page const virt_addr, unsigned int op
 //Map len bytes from phys_addr to virt_addr (internal use only)
 //Don't call this function if you haven't locked `modifying_page_tables`
 static map_results internal_map_range(void const * const phys_addr, uintptr_t len, void const * const virt_addr, unsigned int opts){
+	//Verify correct alignment
+	if (page_offset(phys_addr) != page_offset(virt_addr)){
+		return map_invalid_align;
+	}
 	//Create the page objects for internal use
 	page virt_to_map=virt_addr;
 	page phys_to_map=phys_addr;
@@ -298,10 +315,10 @@ static map_results internal_map_range(void const * const phys_addr, uintptr_t le
 			//If it failed
 			//NOTE: getting here is a bug (is the spinlock not working?)
 			if(attempt!=map_success){
-				kerror("Mapping a page failed. Is the spinlock working?");
+				kerrorf("Mapping a page failed with error %d. Is the spinlock working?", attempt);
 				//Loop until we get back to where we started
 				while(virt_to_map>virt_addr){
-					//Decrementing first means we don't unmap the failed map that we unmap the first mapping
+					//Decrementing first means we don't unmap the failed map and that we unmap the first mapping
 					virt_to_map--;
 					//Unmap the page
 					if(unmap_page(virt_to_map, 0)!=map_success){
@@ -340,6 +357,8 @@ map_results map_range(void const * const phys_addr, uintptr_t len, void **virt_a
 	if(*virt_addr==nullptr){
 		return map_no_virtmem;
 	}
+	//Set it to the correct offset in the page
+	*virt_addr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(*virt_addr) + page_offset(phys_addr));
 	map_results temp=internal_map_range(phys_addr, len, *virt_addr, opts);
 	modifying_page_tables.release_lock();
 	return temp;
@@ -492,7 +511,7 @@ int immediate_paging_initialization(){
 
 int setup_paging(){
 	uintptr_t cr3=reinterpret_cast<uintptr_t>(bootstrap_page_directory);
-	cr3 &= ~0xFFF_uintptr_t; //Mask out lower bits (for config)
+	//Lower bits need to be zero because it needs to be aligned
 	assert((cr3 & 0xFFF) == 0);
 
 	//Map the kernel and page directory again, overwriting anything else
@@ -503,7 +522,7 @@ int setup_paging(){
 		kerrorf("Error mapping the kernel: %d.", map);
 		abort();
 	}
-	map=map_page(bootstrap_page_directory, 0xFFFFF000, MAP_OVERWRITE);
+	map=map_page(bootstrap_page_directory, ~0xFFF_uintptr_t, MAP_OVERWRITE);
 	if(map!=map_success){
 		kerrorf("Error mapping the paging tables: %d.", map);
 		abort();
@@ -520,7 +539,7 @@ int setup_paging(){
 	//cr3 |= (1<<4);
 	enable_paging(cr3);
 	//Change where we can access the page tables
-	page_directory=reinterpret_cast<page_directory_entry*>(0xFFFFF000);
+	page_directory=reinterpret_cast<page_directory_entry*>(~0xFFF_uintptr_t);
 	return 0;
 }
 

@@ -29,6 +29,10 @@ class page{
 		uintptr_t getInt() const;
 		void set(const void *newAddr);
 
+		//Arithmetic
+		page operator+(uintptr_t);
+		page operator-(uintptr_t);
+
 		//Implicit get
 		operator void * () const;
 
@@ -56,7 +60,8 @@ enum map_results{
 	map_invalid_option,
 	map_no_physmem, //Only used when we can't swap out something
 	map_no_perm, //General permission denied
-	map_err_kernel_space //You tried to map or unmap a page from kernel space as a user program
+	map_err_kernel_space, //You tried to map or unmap a page from kernel space as a user program
+	map_invalid_align, //phys_addr and virt_addr are at different offsets in their respective pages
 };
 
 

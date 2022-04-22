@@ -73,6 +73,7 @@ isr_stub_\isr_num:
     iret //Return from the interrupt
 .endm
 
+.section .text
 //List of interrupt service routines
 //#DE (Division by Zero)
 isr_stub_0:
@@ -152,12 +153,12 @@ isr_stub_14:
 	mov  %cr2, %eax
 	push %eax //Push the invalid address
 
-	//Change to `push QWORD [ebp+16]` for 64-bit
+	//Change to `push 16(%rbp)` for 64-bit
 	push 8(%ebp) //Push the faulting address
 
 	mov 4(%ebp), %eax //Check if this is due to a missing page, or invalid access to a page
-	and 1,       %eax
-	cmp 0,       %eax
+	and $1,       %eax
+	cmp $0,       %eax
 	jne push_invalid_access //The page table is present
 
 	push log_msg_page_notpresent //The page table isn't present
@@ -167,7 +168,7 @@ isr_stub_14:
 	push log_msg_page_access_violation
 
 	pg_msg_pushed:
-	call klogf //Actually print it
+	call kerrorf //Actually print it
 	push interrupt_corrupted_stack_trace //Apologize for the broken stack trace
 	call kerrorf
 	call abort //We didn't actually fix anything
@@ -218,13 +219,14 @@ isr_stub_31:
 	iret //Return to the next instruction
 
 //Used for the lidt instruction
+.section .data
 .global isr_stub_table
 isr_stub_table:
-.irp i,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
+.irp i,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
     .long isr_stub_\i // use DQ instead if targeting 64-bit
 .endr
-.section .rodata
 
+.section .rodata
 //Change %lX to %llX for 64-bit
 	interrupt_corrupted_stack_trace: .asciz "Replace the address that caused the fault in the stack trace below with the address shown here when you are debugging."
 	temp_syscall_error_msg: .asciz "Unknown system call %ld made."
