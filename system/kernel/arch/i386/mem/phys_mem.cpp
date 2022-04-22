@@ -123,11 +123,11 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 
 	//Loop through the memory again to fill in the bitmap
 	for(unsigned int i=0;i<mbmp_len/sizeof(multiboot_memory_map_t);i++){
-		bool available = (mbmp+i)->type == MULTIBOOT_MEMORY_AVAILABLE;
+		bool available = ((mbmp+i)->type == MULTIBOOT_MEMORY_AVAILABLE);
 		//TODO: delete low-level logging
 		printf("i=%u, mbmp->len=%llu, mbmp->type=%d, available=%s\n", i, (mbmp+i)->len, (mbmp+i)->type, (available ? "true" : "false"));
 		// fill in the array (pretend we loop over it)
-		std::memset(&normal_mem_bitmap[(mbmp+i)->addr/PHYS_MEM_CHUNK_SIZE], available, static_cast<size_t>((mbmp+i)->len)*sizeof(bool));
+		std::memset(&normal_mem_bitmap[(mbmp+i)->addr/PHYS_MEM_CHUNK_SIZE], available, bytes_to_pages(static_cast<uintptr_t>((mbmp+i)->len)));
 	}
 	puts("Bitmap filled...Marking kernel as used.");
 	//Now mark the kernel as used
@@ -135,7 +135,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 	//And the bitmap itself
 	std::memset(&normal_mem_bitmap[reinterpret_cast<uintptr_t>(normal_mem_bitmap)/PHYS_MEM_CHUNK_SIZE], true, bytes_to_pages(mem_bitmap_len));
 	//And the first page (so it can be nullptr)
-	normal_mem_bitmap[0].in_use=true;
+	//normal_mem_bitmap[0].in_use=true;
 	//And map it
 	printf("Bitmap points to %p in physical memory...", reinterpret_cast<void*>(normal_mem_bitmap));
 	map_results mapping=map_range(normal_mem_bitmap, mem_bitmap_len*sizeof(phys_mem_area_t), reinterpret_cast<void**>(&normal_mem_bitmap), 0);
