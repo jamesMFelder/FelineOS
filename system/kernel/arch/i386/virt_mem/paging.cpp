@@ -413,7 +413,7 @@ map_results unmap_page(page const virt_addr, unsigned int opts){
 			//Attempt to free it
 			pmm_results attempt=free_mem_area(virt_to_phys(virt_addr), PHYS_MEM_CHUNK_SIZE, 0);
 			//If the attempt failed
-			if(attempt==pmm_notused || attempt==pmm_null){
+			if(attempt==pmm_invalid || attempt==pmm_null){
 				//Call it an invalid option because we shouldn't have been managing it (TODO: stop doing this!)
 				return map_invalid_option;
 			}
@@ -449,7 +449,7 @@ map_results unmap_range(void const * const virt_addr, uintptr_t len, unsigned in
 		//Attempt to free it
 		pmm_results attempt=free_mem_area(virt_to_phys(virt_addr), len, 0);
 		//If the attempt failed
-		if(attempt==pmm_notused || attempt==pmm_null){
+		if(attempt==pmm_invalid || attempt==pmm_null){
 			//Call it an invalid option because we shouldn't have been managing it(TODO: better description)
 			return map_invalid_option;
 		}

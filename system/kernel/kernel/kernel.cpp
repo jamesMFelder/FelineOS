@@ -11,11 +11,10 @@
 #include <kernel/misc.h>
 #include <drivers/serial.h>
 #include <drivers/framebuffer.h>
-#include <kernel/mem.h>
 #include <sys/syscall.h>
 #include <kernel/backtrace.h>
 #include <feline/str.h>
-#include <kernel/paging.h>
+#include <kernel/mem.h>
 #include <kernel/asm_compat.h>
 
 //Setup by the linker to be at the start and end of the kernel.
@@ -41,16 +40,16 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 
 	printf("Testing memory allocation.\n");
 	void *old_mem_ptr, *mem_ptr;
-	pmm_results mem;
-	mem=get_mem_area(&old_mem_ptr, 1, 0);
-	if(mem!=pmm_success){kcriticalf("Getting memory returned %u.", mem); abort();}
+	mem_results mem;
+	mem=get_mem(&old_mem_ptr, 1);
+	if(mem!=mem_success){kcriticalf("Getting memory returned %u.", mem); abort();}
 	printf("Getting mem area returns %d.\n", mem);
 	printf("Got a page at %p.\n", old_mem_ptr);
-	mem=free_mem_area(old_mem_ptr, 1, 0);
-	if(mem!=pmm_success){kcriticalf("Getting memory returned %d.", mem); abort();}
+	mem=free_mem(old_mem_ptr, 1);
+	if(mem!=mem_success){kcriticalf("Getting memory returned %d.", mem); abort();}
 	printf("Freeing an allocated area returns %d.\n", mem);
-	mem=get_mem_area(&mem_ptr, 1, 0);
-	if(mem!=pmm_success){kcriticalf("Getting memory returned %d.", mem); abort();}
+	mem=get_mem(&mem_ptr, 1);
+	if(mem!=mem_success){kcriticalf("Getting memory returned %d.", mem); abort();}
 	printf("Getting mem area returns %d.\n", mem);
 	printf("Got another page at %p.\n", mem_ptr);
 	if(mem_ptr==old_mem_ptr){

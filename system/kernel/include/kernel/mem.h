@@ -45,8 +45,7 @@ class page{
 
 enum pmm_results{
 	pmm_success,
-	pmm_already_used,
-	pmm_notused,
+	pmm_invalid,
 	pmm_nomem,
 	pmm_null
 };
@@ -63,6 +62,19 @@ enum map_results{
 	map_err_kernel_space, //You tried to map or unmap a page from kernel space as a user program
 	map_invalid_align, //phys_addr and virt_addr are at different offsets in their respective pages
 };
+
+enum mem_results {
+	mem_success, //generic success
+	mem_perm_denied, //you don't have permission
+	mem_invalid, //physical or virtual memory is in use already (if allocating) or not (if freeing)
+	mem_no_virtmem, //you ran out of space in virtual memory
+	mem_no_physmem, //there is no physical memory left (TODO: impliment swap)
+};
+
+mem_results get_mem_from(void *phys_addr, void **new_virt_addr, uintptr_t len);
+mem_results get_mem_at(void *virt_addr, uintptr_t len);
+mem_results get_mem(void **new_virt_addr, uintptr_t len);
+mem_results free_mem(void *addr, uintptr_t len);
 
 
 //Aquire len unused bytes

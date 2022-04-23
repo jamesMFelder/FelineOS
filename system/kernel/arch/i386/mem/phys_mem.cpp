@@ -6,6 +6,7 @@
 #include <kernel/paging.h>
 #include <cstring>
 #include <cstdlib>
+#include <cinttypes>
 #include <feline/fixed_width.h>
 #include <feline/spinlock.h>
 
@@ -30,7 +31,6 @@ extern const char kernel_start;
 extern const char kernel_end;
 const uintptr_t uint_kernel_start = reinterpret_cast<uintptr_t>(&kernel_start);
 const uintptr_t uint_kernel_end = reinterpret_cast<uintptr_t>(&kernel_end);
-size_t kernel_size=uint_kernel_end-uint_kernel_start;
 
 //Start the physical memory manager
 //mbp=MultiBoot Pointer (everything grub gives us)
@@ -50,15 +50,12 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 	//Print debugging information
 	klogf("Kernel starts at %p", static_cast<void const *>(&kernel_start));
 	klogf("Kernel ends at %p", static_cast<void const *>(&kernel_end));
-	klogf("It is %#tx bytes long.", kernel_size);
+	klogf("It is %#" PRIxPTR " bytes long.", uint_kernel_end-uint_kernel_start);
 
-	//Print the memory grub says is useable
-	klogf("Useable memory:");
+	//List all the memory
 	for(unsigned int i=0;i<mbmp_len/sizeof(multiboot_memory_map_t);i++){
-		if((mbmp+i)->type==MULTIBOOT_MEMORY_AVAILABLE){
-			mem_bitmap_len+=(mbmp+i)->len/PHYS_MEM_CHUNK_SIZE;
-			klogf("Memory at %p for %llx with type %s.", reinterpret_cast<void const *>((mbmp+i)->addr), (mbmp+i)->len, mem_types[(mbmp+i)->type]);
-		}
+		mem_bitmap_len+=(mbmp+i)->len/PHYS_MEM_CHUNK_SIZE;
+		klogf("Memory at %p for %llx with type %s.", reinterpret_cast<void const *>((mbmp+i)->addr), (mbmp+i)->len, mem_types[(mbmp+i)->type]);
 	}
 
 	klogf("Using %zd elements in array.", mem_bitmap_len);
@@ -131,7 +128,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 	}
 	puts("Bitmap filled...Marking kernel as used.");
 	//Now mark the kernel as used
-	std::memset(&normal_mem_bitmap[uint_kernel_start/PHYS_MEM_CHUNK_SIZE], true, bytes_to_pages(kernel_size));
+	std::memset(&normal_mem_bitmap[uint_kernel_start/PHYS_MEM_CHUNK_SIZE], true, bytes_to_pages(uint_kernel_end-uint_kernel_start));
 	//And the bitmap itself
 	std::memset(&normal_mem_bitmap[reinterpret_cast<uintptr_t>(normal_mem_bitmap)/PHYS_MEM_CHUNK_SIZE], true, bytes_to_pages(mem_bitmap_len));
 	//And the first page (so it can be nullptr)
@@ -197,7 +194,7 @@ static pmm_results internal_claim_mem_area(page const addr, size_t num, unsigned
 	//Get the offset into the bitmap
 	size_t offset=bytes_to_pages(addr);
 	//Check if someone is trying to access beyond the end of RAM
-	if(offset+num>mem_bitmap_len){
+	if(offset>mem_bitmap_len-num){
 		return pmm_nomem;
 	}
 	//Double check that everything is free and claim it
@@ -210,7 +207,7 @@ static pmm_results internal_claim_mem_area(page const addr, size_t num, unsigned
 				count--;
 			}
 			//And return an error
-			return pmm_already_used;
+			return pmm_invalid;
 		}
 		//It is free
 		else{
@@ -255,7 +252,7 @@ pmm_results free_mem_area(void const * const addr, uintptr_t len, unsigned int o
 		if(!normal_mem_bitmap[base_index+count].in_use){
 			//If any are, quit immediatly
 			modifying_pmm.release_lock();
-			return pmm_notused;
+			return pmm_invalid;
 		}
 	}
 	//Loop through again

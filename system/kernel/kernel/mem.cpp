@@ -1,84 +1,153 @@
+#include <cstdlib>
 #include <kernel/mem.h>
+#include <kernel/paging.h>
+#include <kernel/log.h>
 
-page::page(void const * const virt_addr){
-	//Do the cast
-	addr=reinterpret_cast<uintptr_t>(virt_addr);
-	//And cut of the lower bytes
-	addr&=~(4_KiB-1);
+inline uintptr_t offset(uintptr_t const addr) {
+	return addr%PHYS_MEM_CHUNK_SIZE;
 }
 
-page::page(uintptr_t const virt_addr){
-	addr=virt_addr;
-	addr&=~(4_KiB-1);
+inline uintptr_t offset(void const * const addr) {
+	return offset(reinterpret_cast<uintptr_t>(addr));
 }
 
-//Prefix increment
-page& page::operator++(){
-	//Make sure we won't overflow
-	if(addr<=UINTPTR_MAX-4_KiB){
-		addr+=4_KiB;
+mem_results get_mem_from(void *phys_addr, void **new_virt_addr, uintptr_t len) {
+	pmm_results phys_mem_results;
+	map_results virt_mem_results;
+
+	phys_mem_results=get_mem_area(phys_addr, len, 0);
+	switch (phys_mem_results) {
+		case pmm_success:
+			break;
+		case pmm_nomem:
+			return mem_no_physmem;
+		case pmm_null:
+		case pmm_invalid:
+			return mem_invalid;
 	}
-	else{
-		addr=UINTPTR_MAX;
+
+	virt_mem_results=map_range(phys_addr, len, new_virt_addr, 0);
+	switch (virt_mem_results) {
+		case map_success:
+			break;
+		case map_no_virtmem:
+			return mem_no_virtmem;
+		case map_no_perm:
+		case map_already_mapped:
+		case map_notmapped:
+		case map_err_kernel_space:
+			kcritical("The VMM has a bug!\n");
+			abort();
+		case map_no_physmem:
+		case map_invalid_align:
+		case map_invalid_option:
+			kcritical("The memory manager has a bug!\n");
+			abort();
 	}
-	return *this;
+	return mem_success;
 }
 
-//Postfix increment
-page page::operator++(int){
-	//Create a copy
-	page temp=*this;
-	//Do the increment
-	operator++();
-	//Return the copy
-	return temp;
-}
+mem_results get_mem_at(void *virt_addr, uintptr_t len) {
+	void *phys_addr;
+	pmm_results phys_mem_results;
+	map_results virt_mem_results;
 
-//Prefix decrement
-page& page::operator--(){
-	//Make sure we won't underflow
-	if(addr>=4_KiB){
-		addr+=4_KiB;
+	phys_mem_results=get_mem_area(&phys_addr, len, 0);
+	switch (phys_mem_results) {
+		case pmm_success:
+			break;
+		case pmm_nomem:
+			return mem_no_physmem;
+		case pmm_null:
+		case pmm_invalid:
+			kcritical("The PMM has a bug!\n");
+			abort();
 	}
-	//If we would: set to 0
-	else{
-		addr=0;
+
+	uintptr_t phys_addr_with_offset=reinterpret_cast<uintptr_t>(phys_addr);
+	phys_addr_with_offset+=offset(virt_addr);
+	virt_mem_results=map_range(reinterpret_cast<void*>(phys_addr_with_offset), len, virt_addr, 0);
+	switch (virt_mem_results) {
+		case map_success:
+			break;
+		case map_no_perm:
+		case map_err_kernel_space:
+			return mem_perm_denied;
+		case map_no_virtmem:
+			return mem_no_virtmem;
+		case map_already_mapped:
+		case map_notmapped:
+			kcritical("The VMM has a bug!\n");
+			abort();
+		case map_no_physmem:
+		case map_invalid_align:
+		case map_invalid_option:
+			kcritical("The memory manager has a bug!\n");
+			abort();
 	}
-	return *this;
+	return mem_success;
 }
 
-//Postfix decrement
-page page::operator--(int){
-	//Create a copy
-	page temp=*this;
-	//Do the increment
-	operator--();
-	//Return the copy
-	return temp;
+mem_results get_mem(void **new_virt_addr, uintptr_t len) {
+	void *phys_addr;
+	pmm_results phys_mem_results;
+	map_results virt_mem_results;
+
+	phys_mem_results=get_mem_area(&phys_addr, len, 0);
+	switch (phys_mem_results) {
+		case pmm_success:
+			break;
+		case pmm_nomem:
+			return mem_no_physmem;
+		case pmm_null:
+		case pmm_invalid:
+			kcritical("The PMM has a bug!\n");
+			abort();
+	}
+
+	virt_mem_results=map_range(phys_addr, len, new_virt_addr, 0);
+	switch (virt_mem_results) {
+		case map_success:
+			break;
+		case map_no_perm:
+		case map_err_kernel_space:
+			return mem_perm_denied;
+		case map_no_virtmem:
+			return mem_no_virtmem;
+		case map_already_mapped:
+		case map_notmapped:
+			kcritical("The VMM has a bug!\n");
+			abort();
+		case map_no_physmem:
+		case map_invalid_align:
+		case map_invalid_option:
+			kcritical("The memory manager has a bug!\n");
+			abort();
+	}
+	return mem_success;
 }
 
-//Return the address
-void *page::get() const{
-	return reinterpret_cast<void*>(addr);
-}
+mem_results free_mem(void *addr, uintptr_t len){
+	map_results virt_mem_results;
 
-//Return the address as a uintptr_t (not encouraged)
-uintptr_t page::getInt() const{
-	return addr;
-}
-
-//Set the address (rounding off)
-void page::set(const void *newAddr){
-	addr=reinterpret_cast<uintptr_t>(newAddr);
-	addr&=~(4_KiB-1);
-}
-
-//Implicit get (encourage only taking pointer)
-page::operator void*() const{
-	return reinterpret_cast<void*>(addr);
-}
-
-//Check if it is null
-bool page::isNull() const{
-	return addr==0;
+	virt_mem_results=unmap_range(addr, len, PHYS_ADDR_AUTO);
+	switch (virt_mem_results) {
+		case map_success:
+			break;
+		case map_no_perm:
+		case map_err_kernel_space:
+			return mem_perm_denied;
+		case map_invalid_align:
+		case map_already_mapped:
+		case map_no_physmem:
+		case map_no_virtmem:
+			kcritical("The VMM has a bug!\n");
+			abort();
+		case map_invalid_option:
+			kcritical("The memory manager has a bug!\n");
+			abort();
+		case map_notmapped:
+			return mem_invalid;
+	}
+	return mem_success;
 }
