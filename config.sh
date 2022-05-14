@@ -58,6 +58,6 @@ export CPP="$CPP --sysroot=$SYSROOT"
 # Work around that the -elf gcc targets doesn't have a system include directory
 # because it was configured with --without-headers rather than --with-sysroot.
 if echo "$HOST" | grep -Eq -- '-elf($|-)'; then
-  export CC="$CC -isystem=$INCLUDEDIR"
-  export CPP="$CPP -isystem=$INCLUDEDIR -isystem=$CPP_INCLUDEDIR"
+  export CC="$CC -isystem $SYSROOT/$INCLUDEDIR"
+  export CPP="$CPP -isystem $SYSROOT/$INCLUDEDIR -isystem $SYSROOT/$CPP_INCLUDEDIR"
 fi

@@ -3,6 +3,8 @@
 #ifndef _HEADER_H
 #define _HEADER_H 1
 
+#include <feline/cpp_only.h>
+
 #include <atomic>
 
 //A basic spinlock implimentation

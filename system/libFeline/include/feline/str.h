@@ -4,6 +4,8 @@
 #ifndef _FELINE_STR_H
 #define _FELINE_STR_H 1
 
+#include <feline/cpp_only.h>
+
 int ntostr(unsigned long long const num, char str[9], unsigned const base);
 
 template<class T>

@@ -3,6 +3,8 @@
 #ifndef _FELINE_FIXED_WIDTH_H
 #define _FELINE_FIXED_WIDTH_H 1
 
+#include <feline/cpp_only.h>
+
 #include <cstdint>
 
 constexpr inline uint8_t operator"" _uint8_t(unsigned long long num){return static_cast<uint8_t>(num);}

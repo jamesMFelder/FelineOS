@@ -18,8 +18,8 @@ LIBDIR?=$(EXEC_PREFIX)/lib
 BINARIES=libfeline.a
 
 
-CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -isystem include -isystem ../libc/include
-CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -isystem ../libc/include/c++ -isystem include/feline/c++
+CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra
+CPPFLAGS:=$(CFLAGS) $(CPPFLAGS)
 LIBFELINE_CFLAGS:=$(CFLAGS) -D__is_libfeline
 LIBFELINE_CPPFLAGS:=$(CPPFLAGS) -D__is_libfeline
 LIBS:=$(LIBS) -nostdlib -lgcc

@@ -16,8 +16,8 @@ INCLUDEDIR?=$(PREFIX)/include
 LIBDIR=$(EXECPREFIX)/lib
 BINARIES=libVGA_text.a
 
-CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -isystem include -isystem ../libc/include -isystem ../libFeline/include
-CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -isystem ../libc/include/c++ -isystem ../libFeline/include/feline/c++
+CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra
+CPPFLAGS:=$(CFLAGS) $(CPPFLAGS)
 LDFLAGS:=$(LDFLAGS)
 LIBS:=$(LIBS) -nostdlib -lk -lgcc
 

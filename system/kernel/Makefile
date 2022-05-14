@@ -18,8 +18,8 @@ EXEC_PREFIX?=$(PREFIX)
 BOOTDIR?=$(EXEC_PREFIX)/boot
 INCLUDEDIR?=$(PREFIX)/include
 
-CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -isystem include -isystem drivers/include -isystem ../libc/include -isystem ../libFeline/include
-CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -D__is_kernel -isystem ../libc/include/c++ -isystem ../libFeline/include/feline/c++
+CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra
+CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -D__is_kernel
 LDFLAGS:=$(LDFLAGS)
 LIBS:=$(LIBS) -nostdlib -L$(SYSROOT)/usr/lib -Wl,-\( -lfeline -lk -Wl,-\) -lgcc
 

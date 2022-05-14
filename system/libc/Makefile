@@ -15,8 +15,8 @@ EXEC_PREFIX?=$(PREFIX)
 INCLUDEDIR?=$(PREFIX)/include
 LIBDIR?=$(EXEC_PREFIX)/lib
 
-CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -D__is_libc -isystem include
-CPPFLAGS:=$(CPPFLAGS) -isystem include/c++ -isystem ../libFeline/include/feline/c++
+CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -D__is_libc
+CPPFLAGS:=$(CPPFLAGS)
 LIBK_CFLAGS:=$(CFLAGS) -D__is_libk
 LIBK_CPPFLAGS:=$(CPPFLAGS)
 
