@@ -18,6 +18,6 @@ void abort(void) {
 	// TODO: Abnormally terminate the process as if by SIGABRT.
 	printf("abort()\n");
 #endif //__is_libk (else)
-	while (1) { }
+	while (true) { }
 	__builtin_unreachable();
 }

@@ -17,7 +17,7 @@ int __cxa_atexit(void (*f)(void *), void *objptr, void *dso){
 
 void __cxa_finalize(void *f){
 	uarch_t i = __atexit_func_count;
-	if (!f)
+	if (f != nullptr)
 	{
 		/*
 		 * According to the Itanium C++ ABI, if __cxa_finalize is called without a
@@ -32,9 +32,9 @@ void __cxa_finalize(void *f){
 		 **/
 		//You may insert a prinf() here to tell you whether or not the function gets called. Testing
 		//is CRITICAL!
-		while (i--)
+		while (i-- != 0)
 		{
-			if (__atexit_funcs[i].destructor_func)
+			if (__atexit_funcs[i].destructor_func != nullptr)
 			{
 				/* ^^^ That if statement is a safeguard...
 				 * To make sure we don't call any entries that have already been called and unset at runtime.
@@ -52,7 +52,7 @@ void __cxa_finalize(void *f){
 		return;
 	}
 
-	while (i--)
+	while (i-- != 0)
 	{
 		/*
 		 * The ABI states that multiple calls to the __cxa_finalize(destructor_func_ptr) function

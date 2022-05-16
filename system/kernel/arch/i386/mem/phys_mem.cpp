@@ -9,6 +9,7 @@
 #include <cinttypes>
 #include <feline/fixed_width.h>
 #include <feline/spinlock.h>
+#include <feline/bool_int.h>
 
 //An array of strings for all types of memory
 //The subscript should be the type field from GRUB's memory map
@@ -69,10 +70,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 			//If the area starts before the kernel
 			if(static_cast<uintptr_t>((mbmp+i)->addr)<=uint_kernel_start){
 				//And has enough space
-				if(static_cast<uintptr_t>(((mbmp+i)->addr)+
-					(mem_bitmap_len<
-					 ((mbmp+i)->addr+(mbmp+i)->len))))
-					 {
+				if(((mbmp+i)->addr)+mem_bitmap_len < ((mbmp+i)->addr+(mbmp+i)->len)) {
 						 //And has enough space before the kernel
 						 if(((mbmp+i)->addr+(mem_bitmap_len*sizeof(phys_mem_area_t)))<uint_kernel_start){
 							 klogf("Found memory at %p.", reinterpret_cast<void*>((mbmp+i)->addr));
@@ -124,13 +122,13 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 		//TODO: delete low-level logging
 		printf("i=%u, mbmp->len=%llu, mbmp->type=%d, available=%s\n", i, (mbmp+i)->len, (mbmp+i)->type, (available ? "true" : "false"));
 		// fill in the array (pretend we loop over it)
-		std::memset(&normal_mem_bitmap[(mbmp+i)->addr/PHYS_MEM_CHUNK_SIZE], available, bytes_to_pages(static_cast<uintptr_t>((mbmp+i)->len)));
+		std::memset(&normal_mem_bitmap[(mbmp+i)->addr/PHYS_MEM_CHUNK_SIZE], static_cast<int>(available), bytes_to_pages(static_cast<uintptr_t>((mbmp+i)->len)));
 	}
 	puts("Bitmap filled...Marking kernel as used.");
 	//Now mark the kernel as used
-	std::memset(&normal_mem_bitmap[uint_kernel_start/PHYS_MEM_CHUNK_SIZE], true, bytes_to_pages(uint_kernel_end-uint_kernel_start));
+	std::memset(&normal_mem_bitmap[uint_kernel_start/PHYS_MEM_CHUNK_SIZE], INT_TRUE, bytes_to_pages(uint_kernel_end-uint_kernel_start));
 	//And the bitmap itself
-	std::memset(&normal_mem_bitmap[reinterpret_cast<uintptr_t>(normal_mem_bitmap)/PHYS_MEM_CHUNK_SIZE], true, bytes_to_pages(mem_bitmap_len));
+	std::memset(&normal_mem_bitmap[reinterpret_cast<uintptr_t>(normal_mem_bitmap)/PHYS_MEM_CHUNK_SIZE], INT_TRUE, bytes_to_pages(mem_bitmap_len));
 	//And the first page (so it can be nullptr)
 	//normal_mem_bitmap[0].in_use=true;
 	//And map it

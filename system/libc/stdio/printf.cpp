@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <cstddef>
 #include <feline/str.h>
+#include <feline/bool_int.h>
 #include <bits/io.h>
 
 //Minimal wrapper around vprintf to reduce code duplication
@@ -48,7 +49,7 @@ int vprintf(const char* format, va_list parameters){
 			if (format[0] == '%')
 				format++;
 			int amount = 1;
-			while (format[amount] && format[amount] != '%')
+			while (format[amount] != '\0' && format[amount] != '%')
 				amount++;
 			if (maxrem < amount || amount<0) {
 				// TODO: Set errno to EOVERFLOW.
@@ -90,9 +91,9 @@ int vprintf(const char* format, va_list parameters){
 		format--;
 
 		//Get the explicit width (if any)
-		while(isdigit(*++format)){
+		while(isdigit(*++format) == INT_TRUE){
 				min_width*=10;
-				min_width+=static_cast<size_t>(*format+'0');
+				min_width+=static_cast<size_t>(*format-'0');
 		}
 		//We overshoot by one;
 		format--;

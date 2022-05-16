@@ -52,15 +52,15 @@ int framebuffer::putPixel_bgr(uint16_t x, uint16_t y, pixel_bgr_t p){
 	unsigned int inval=checkParms(x, y, p);
 	if(inval!=0){
 		//If we aren't setup
-		if(inval&0b1){
+		if((inval&0b1) != 0){
 			return -1;
 		}
 		//If the padding is bad (this shouldn't be possible, because this is a private function)
-		if(inval&0b10){
+		if((inval&0b10) != 0){
 			return -2;
 		}
 		//If we are off-screen
-		if(inval&0b100){
+		if((inval&0b100) != 0){
 			return -3;
 		}
 	}
@@ -73,15 +73,15 @@ int framebuffer::putRect_bgr(uint16_t x, uint16_t y, uint16_t width, uint16_t he
 	unsigned int inval=checkParms(x+width, y+height, p);
 	if(inval!=0){
 		//If we aren't setup
-		if(inval&0b1){
+		if((inval&0b1) != 0){
 			return -1;
 		}
 		//If the padding is bad (this shouldn't be possible, because this is a private function)
-		if(inval&0b10){
+		if((inval&0b10) != 0){
 			return -2;
 		}
 		//If we are off-screen (TODO: truncate?)
-		if(inval&0b100){
+		if((inval&0b100) != 0){
 			return -3;
 		}
 	}

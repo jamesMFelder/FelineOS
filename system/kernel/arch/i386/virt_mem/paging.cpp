@@ -59,18 +59,18 @@ inline int unset_bit(page_table_entry * const p, uint32_t const b){
 }
 //Check if a bit is set in a page table/directory
 inline bool is_set(page_table_entry const p, uint32_t const b){
-	return p & b;
+	return (p & b) != 0;
 }
 inline bool is_set(page_table_entry const *p, uint32_t const b){
-	return *p & b;
+	return (*p & b) != 0;
 }
 
 //Is the page table/directory present
 constexpr inline bool present(page_table_entry const p){
-	return p & PRESENT;
+	return (p & PRESENT) != 0;
 }
 constexpr inline bool present(page_table_entry const * const p){
-	return *p & PRESENT;
+	return (*p & PRESENT) != 0;
 }
 
 //What is the address pointed to by the page table/directory
@@ -178,7 +178,7 @@ page_table_entry all_page_tables[[gnu::aligned(0x1000)]][1024][1024]={{0}};
 //What we use for searching
 //True if present, false otherwise
 //Keep in sync with the CPU's page tables!
-bool page_tables_searchable[MAX_VIRT_MEM/PHYS_MEM_CHUNK_SIZE]={0};
+bool page_tables_searchable[MAX_VIRT_MEM/PHYS_MEM_CHUNK_SIZE]={false};
 
 //End Global Variables
 
@@ -251,7 +251,7 @@ void *find_free_virtmem(uintptr_t len){
 //Map virt_addr to phys_addr (rounding both down to multiple of 4KiB)
 //Don't call this function if you haven't locked `modifying_page_tables`
 map_results map_page(page const phys_addr, page const virt_addr, unsigned int opts){
-	if(!(opts & MAP_OVERWRITE) && isMapped(virt_addr)){
+	if((opts & MAP_OVERWRITE) == 0 && isMapped(virt_addr)){
 		//TODO: check that we aren't leaking info about the kernel
 		return map_already_mapped;
 	}
@@ -300,7 +300,7 @@ static map_results internal_map_range(void const * const phys_addr, uintptr_t le
 	page virt_to_map=virt_addr;
 	page phys_to_map=phys_addr;
 	//If we can map it
-	if((opts & MAP_OVERWRITE) || free_from_here(virt_to_map, len)){
+	if((opts & MAP_OVERWRITE) != 0 || free_from_here(virt_to_map, len)){
 		//Figure out how many pages we need to map
 		//The only way this doesn't work is if we round down to get the base page
 		//	more than this rounds up to get an amount of pages
@@ -409,7 +409,7 @@ map_results unmap_page(page const virt_addr, unsigned int opts){
 	modifying_page_tables.aquire_lock();
 	if(isMapped(virt_addr)){
 		//If we are managing the physical memory
-		if(opts & PHYS_ADDR_AUTO){
+		if((opts & PHYS_ADDR_AUTO) != 0){
 			//Attempt to free it
 			pmm_results attempt=free_mem_area(virt_to_phys(virt_addr), PHYS_MEM_CHUNK_SIZE, 0);
 			//If the attempt failed
@@ -445,7 +445,7 @@ map_results unmap_range(void const * const virt_addr, uintptr_t len, unsigned in
 		}
 	}
 	//If we are managing the physical memory
-	if(opts & PHYS_ADDR_AUTO){
+	if((opts & PHYS_ADDR_AUTO) != 0){
 		//Attempt to free it
 		pmm_results attempt=free_mem_area(virt_to_phys(virt_addr), len, 0);
 		//If the attempt failed
