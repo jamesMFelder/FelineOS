@@ -1,8 +1,5 @@
 #include <feline/spinlock.h>
 
-//Initialize the lock to unlocked
-Spinlock::Spinlock(){}
-
 //Wait to get the lock
 void Spinlock::aquire_lock(){
 	bool temp=false;
