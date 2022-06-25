@@ -60,7 +60,7 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 	}
 
 	extern framebuffer fb; //the framebuffer is setup
-						   //Fill each corner with a color
+	//Fill each corner with a color
 	pixel_t p={255, 255, 255}; //white
 	uint16_t maxX, maxY;
 	fb.getMax(&maxX, &maxY); //get the maximum sizes
