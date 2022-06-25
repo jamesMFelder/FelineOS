@@ -51,7 +51,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 	//Print debugging information
 	klogf("Kernel starts at %p", static_cast<void const *>(&kernel_start));
 	klogf("Kernel ends at %p", static_cast<void const *>(&kernel_end));
-	klogf("It is %#" PRIxPTR " bytes long.", uint_kernel_end-uint_kernel_start);
+	klogf("It is %#lx bytes long.", uint_kernel_end-uint_kernel_start);
 
 	//List all the memory
 	for(unsigned int i=0;i<mbmp_len/sizeof(multiboot_memory_map_t);i++){

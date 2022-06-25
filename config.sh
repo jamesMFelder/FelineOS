@@ -4,8 +4,8 @@ export PROJECTS="system/libc system/libFeline system/kernel"
 export MAKE=${MAKE:-make}
 export HOST=${HOST:-$(./default-host.sh)}
 
-#export COMPILER="gcc"
-export COMPILER="llvm"
+export COMPILER="gcc"
+#export COMPILER="llvm"
 
 export GAR="${HOST}-ar"
 export GAR_OPTS=""
