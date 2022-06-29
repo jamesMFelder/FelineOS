@@ -18,14 +18,14 @@ isr_stub_\isr_num:
 
 	push 8(%ebp) //Push the error code for the logging function
     push \isr_num //Push the error code for the logging function
-	push error_msg_generic_interrupt
+	push $error_msg_generic_interrupt
     call kerrorf //Error because we don't know what to do
 
-	push interrupt_corrupted_stack_trace //Apologize for the broken stack trace
+	push $interrupt_corrupted_stack_trace //Apologize for the broken stack trace
 	call kerrorf
 
 	push 4(%ebp) //Push the faulting instruction
-	push error_msg_generic_eip
+	push $error_msg_generic_eip
 	call kerrorf
 
 	hlt //Halt because we don't know what to do
@@ -52,11 +52,11 @@ isr_stub_\isr_num:
 	push %edx
 
     push \isr_num //Add the exeption number to the stack
-	push noerror_msg_generic_interrupt
+	push $noerror_msg_generic_interrupt
     call kerrorf //Error because we don't know what to do
 
 	push 4(%ebp) //Push the faulting instruction
-	push error_msg_generic_eip
+	push $error_msg_generic_eip
 	call kerrorf
 
 	add $8, %esp //Remove local variables
@@ -85,7 +85,7 @@ isr_stub_0:
 	cld //Reset string operation direction flag before calling C code
 	push 4(%ebp) //put the fauling address lower on the stack (for logging)
 	//Change to `push QWORD [ebp+8]` for 64-bit
-	push error_msg_division_by_zero //The format string
+	push $error_msg_division_by_zero //The format string
 	call kerrorf
 	call abort //Hang
 isr_no_err_stub 1
@@ -104,9 +104,9 @@ isr_stub_8:
 	push %ecx
 	push %edx
 	cld //Reset string operation direction flag before calling C code
-	push error_msg_double_fault
+	push $error_msg_double_fault
 	call kcriticalf
-	push interrupt_corrupted_stack_trace //Apologize for the broken stack trace
+	push $interrupt_corrupted_stack_trace //Apologize for the broken stack trace
 	call kcriticalf
 	call abort //Hang
 isr_no_err_stub 9
@@ -125,7 +125,7 @@ isr_stub_13:
 
 	push 8(%ebp) //put the fauling address lower on the stack (for logging)
 	//Change to `push QWORD [ebp+8]` for 64-bit
-	push error_msg_GPF //The format string
+	push $error_msg_GPF //The format string
 	call kerrorf
 
 	mov 4(%ebp), %eax //Check if we have a relevant segment selector index
@@ -133,10 +133,10 @@ isr_stub_13:
 	je gpf_end //If we don't (it's 0), jump to the abort call
 
 	push %eax //put the segment selector index on the stack (for logging)
-	push error_msg_GPF_segment //Format string if we have a segment selector index
+	push $error_msg_GPF_segment //Format string if we have a segment selector index
 	call kerrorf
 
-	push interrupt_corrupted_stack_trace //Apologize for the broken stack trace
+	push $interrupt_corrupted_stack_trace //Apologize for the broken stack trace
 	call kerrorf
 
 	gpf_end: //Jump here to skip printing a non-relevant segment selector index
@@ -161,15 +161,15 @@ isr_stub_14:
 	cmp $0,       %eax
 	jne push_invalid_access //The page table is present
 
-	push log_msg_page_notpresent //The page table isn't present
+	push $log_msg_page_notpresent //The page table isn't present
 	jmp pg_msg_pushed //Don't push the other message
 
 	push_invalid_access: //The page table is present
-	push log_msg_page_access_violation
+	push $log_msg_page_access_violation
 
 	pg_msg_pushed:
 	call kerrorf //Actually print it
-	push interrupt_corrupted_stack_trace //Apologize for the broken stack trace
+	push $interrupt_corrupted_stack_trace //Apologize for the broken stack trace
 	call kerrorf
 	call abort //We didn't actually fix anything
 
@@ -202,7 +202,7 @@ isr_stub_31:
 	cld //Reset string operation direction flag before calling C code
 
 	push %eax //Push the syscall number
-	push temp_syscall_error_msg //The format string
+	push $temp_syscall_error_msg //The format string
 	call klogf //Error because we don't support anything yet
 
 	call abort //Quit
@@ -223,8 +223,11 @@ isr_stub_31:
 .global isr_stub_table
 isr_stub_table:
 .irp i,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
-    .long isr_stub_\i // use DQ instead if targeting 64-bit
+	.long isr_stub_\i // use DQ instead if targeting 64-bit
 .endr
+
+.section .bss
+in_page_fault: .long 0
 
 .section .rodata
 //Change %lX to %llX for 64-bit
