@@ -89,6 +89,9 @@ pmm_results free_mem_area(void const * const addr, uintptr_t len, unsigned int o
 //Just a division rounding up
 inline uintptr_t constexpr bytes_to_pages(uintptr_t const bytes){
 	uintptr_t pages=bytes;
+	if (UINTPTR_MAX-pages < PHYS_MEM_CHUNK_SIZE-1) {
+		return UINTPTR_MAX/PHYS_MEM_CHUNK_SIZE;
+	}
 	pages+=PHYS_MEM_CHUNK_SIZE-1;
 	pages/=PHYS_MEM_CHUNK_SIZE;
 	return pages;
