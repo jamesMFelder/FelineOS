@@ -16,7 +16,7 @@ class Spinlock{
 		void release_lock();
 	private:
 		//The actual lock
-		std::atomic<bool> lock=false;
+		std::atomic<bool> lock {false};
 };
 
 #endif // _HEADER_H
