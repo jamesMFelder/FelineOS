@@ -13,3 +13,7 @@ kernel.sym
 utils/a.out
 #From clangd (for YCM)
 .cache
+#(n)vim config
+.exrc
+#You should have this, I just don't know if I'm allowed to share it (probably but rather play it safe).
+Intel-Manual.pdf
