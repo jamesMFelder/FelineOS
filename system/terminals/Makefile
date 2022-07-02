@@ -43,9 +43,9 @@ libVGA_text.a: $(VGA_TEXT_OBJS)
 	$(CC) -MD -o $@ $(CPPFLAGS) -c $<
 
 clean:
-	rm -f $(BINARIES)
-	rm -f $(OBJS) *.o */*.o */*/*.o
-	rm -f $(OBJS:.o=.d) *.d */*.d */*/*.d
+	$(RM) $(BINARIES)
+	$(RM) $(OBJS) *.o */*.o */*/*.o
+	$(RM) $(OBJS:.o=.d) *.d */*.d */*/*.d
 
 install: install-headers install-libs
 

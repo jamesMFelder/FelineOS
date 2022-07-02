@@ -55,8 +55,11 @@ $(ARCHDIR)/boot/crtn.o \
 all: FelineOS.kernel
 
 FelineOS.kernel: $(OBJS) $(ARCHDIR)/linker.ld
-	$(CC) -T $(ARCHDIR)/linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
+	$(CPP) -T $(ARCHDIR)/linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
 	grub2-file --is-x86-multiboot FelineOS.kernel
+
+$(ARCHDIR)/linker.ld: $(ARCHDIR)/linker.ldpp
+	$(CPP) $(CFLAGS) $(CPPFLAGS) -CC -E -x c++ $< -o $@
 
 $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" $@
@@ -71,9 +74,10 @@ $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	$(CC) -MD -o $@ $(CPPFLAGS) -c $<
 
 clean:
-	rm -f FelineOS.kernel
-	rm -f $(OBJS) *.o */*.o */*/*.o
-	rm -f $(OBJS:.o=.d) *.d */*.d */*/*.d
+	$(RM) FelineOS.kernel
+	$(RM) $(ARCHDIR)/linker.ld
+	$(RM) $(OBJS) *.o */*.o */*/*.o
+	$(RM) $(OBJS:.o=.d) *.d */*.d */*/*.d
 
 install: install-headers install-kernel
 

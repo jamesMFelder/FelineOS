@@ -77,9 +77,9 @@ libfeline.a: $(OBJS)
 	$(CC) -MD -o $@ $(LIBFELINE_CFLAGS) $(LIBFELINE_CPPFLAGS) -c $<
 
 clean:
-	rm -f $(BINARIES) *.a
-	rm -f $(OBJS) $(LIBFELINE_OBJS) *.o */*.o */*/*.o
-	rm -f $(OBJS:.o=.d) $(LIBFELINE_OBJS:.o=.d) *.d */*.d */*/*.d
+	$(RM) $(BINARIES) *.a
+	$(RM) $(OBJS) $(LIBFELINE_OBJS) *.o */*.o */*/*.o
+	$(RM) $(OBJS:.o=.d) $(LIBFELINE_OBJS:.o=.d) *.d */*.d */*/*.d
 
 install: install-headers install-libs
 
