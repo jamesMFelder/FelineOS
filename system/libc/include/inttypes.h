@@ -14,7 +14,7 @@
 #define PRI16 "h"
 #define PRI32 "l"
 #define PRI64 "ll"
-#define PRIPTR
+#define PRIPTR PRI32
 
 #define PRId8 PRI8 PRId
 #define PRId16 PRI16 PRId
