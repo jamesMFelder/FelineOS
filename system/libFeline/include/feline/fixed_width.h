@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2021 James McNaughton Felder
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2021 James McNaughton Felder */
 #ifndef _FELINE_FIXED_WIDTH_H
 #define _FELINE_FIXED_WIDTH_H 1
 
@@ -26,4 +26,4 @@ constexpr inline unsigned long long __attribute((section(".multiboot.data"))) op
 constexpr inline unsigned long long __attribute((section(".multiboot.data"))) operator"" _MiB(unsigned long long MiB) noexcept {return MiB*1024ull*1024ull*1024ull;}
 constexpr inline unsigned long long __attribute((section(".multiboot.data"))) operator"" _GiB(unsigned long long GiB) noexcept {return GiB*1024ull*1024ull*1024ull;}
 
-#endif // _FELINE_FIXED_WIDTH_H
+#endif /* _FELINE_FIXED_WIDTH_H */

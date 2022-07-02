@@ -1,9 +1,9 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2021 James McNaughton Felder
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2021 James McNaughton Felder */
 #ifndef _CSTDARG
 #define _CSTDARG 1
 
-//Just dump the definitions in the global namespace
+/* Just dump the definitions in the global namespace */
 #include "stdarg.h"
 
-#endif // _CSTDARG
+#endif /* _CSTDARG */

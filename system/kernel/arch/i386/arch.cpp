@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2021 James McNaughton Felder
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2021 James McNaughton Felder */
 #include <kernel/arch.h>
 
 #include "gdt/gdt.h"
@@ -40,20 +40,20 @@ static void screen_init(multiboot_info_t *mbp){
 		kerrorf("Unable to initialize framebuffer! Failed with error %d.", fb_init_rval);
 		abort();
 	}
-	//Fill each corner with a color
+	/* Fill each corner with a color */
 #if 0
-	pixel_t p={255, 255, 255}; //white
+	pixel_t p={255, 255, 255}; /* white */
 	uint16_t maxX, maxY;
-	fb.getMax(&maxX, &maxY); //get the maximum sizes
-	fb.putRect(0,      0,      maxX/2,   maxY/2, p); //upper left
-	p={255, 0, 0}; //red
-	fb.putRect(maxX/2, 0,      maxX/2-1, maxY/2, p); //uppper right
-	p={0, 255, 0}; //green
-	fb.putRect(0,      maxY/2, maxX/2,   maxY/2-1, p); //lower left
-	p={0, 0, 255}; //blue
-	fb.putRect(maxX/2, maxY/2, maxX/2-1, maxY/2-1, p); //lower right
+	fb.getMax(&maxX, &maxY); /* get the maximum sizes */
+	fb.putRect(0,      0,      maxX/2,   maxY/2, p); /* upper left */
+	p={255, 0, 0}; /* red */
+	fb.putRect(maxX/2, 0,      maxX/2-1, maxY/2, p); /* uppper right */
+	p={0, 255, 0}; /* green */
+	fb.putRect(0,      maxY/2, maxX/2,   maxY/2-1, p); /* lower left */
+	p={0, 0, 255}; /* blue */
+	fb.putRect(maxX/2, maxY/2, maxX/2-1, maxY/2-1, p); /* lower right */
 	fb.putRect(maxX/4, maxY/4-15, maxX/2, 15, p);
-	p={128, 128, 128}; //black
+	p={128, 128, 128}; /* black */
 	fb.putRect(maxX/4, maxY/4, maxX/2, maxY/2, p);
 #endif
 }
@@ -75,39 +75,39 @@ static void save_grub_params(multiboot_info_t *mbp){
 		screen_init(mbp);
 	}
 	else{
-		//TODO: actually do this
+		/* TODO: actually do this */
 		kwarn("Not finding screen info GRUB, using serial port only.");
 	}
 	return;
 }
 
-//Dependencies:
-//	Setup the GDT ASAP
-//	Turn on the serial port before we log anything
-//	Setup the IDT before any errors can occur
-//	Initial paging setup so map_range doesn't fail (not turning it on)
-//	Save grub info before it gets clobbered
-//	TODO: save ACPI tables before they get clobbered
-//	Setup the PMM (don't call it until paging is ON)
-//	Turn on paging
-//Flexibility:
-//	Saving grub info (esp. the command line) and ACPI tables after the PMM would
-//		be ideal in that we could save a variable length command line, but messier
-//		and more likely to end up overwriting them (esp. in low-mem computers).
-//		And honestly, why should we support more than a kilobyte long command line?
-//	In an ideal world we should be able to setup the IDT anytime before paging.
-//	If you write a real serial port driver using interrupts, note that you won't
-//		be able to log anything until the IDT is setup (attempts will triple-fault)
-//		Also note that the interrupts actually log stuff, so watch out!
-//After this we should be good to go!
+/* Dependencies:
+	Setup the GDT ASAP
+	Turn on the serial port before we log anything
+	Setup the IDT before any errors can occur
+	Initial paging setup so map_range doesn't fail (not turning it on)
+	Save grub info before it gets clobbered
+	TODO: save ACPI tables before they get clobbered
+	Setup the PMM (don't call it until paging is ON)
+	Turn on paging
+Flexibility:
+	Saving grub info (esp. the command line) and ACPI tables after the PMM would
+		be ideal in that we could save a variable length command line, but messier
+		and more likely to end up overwriting them (esp. in low-mem computers).
+		And honestly, why should we support more than a kilobyte long command line?
+	In an ideal world we should be able to setup the IDT anytime before paging.
+	If you write a real serial port driver using interrupts, note that you won't
+		be able to log anything until the IDT is setup (attempts will triple-fault)
+		Also note that the interrupts actually log stuff, so watch out!
+After this we should be good to go! */
 int early_boot_setup(multiboot_info_t *mbp){
-	disable_gdt(); //We don't use it because it's not cross platform
-	init_serial(); //We can't do any logging before this gets setup
-	idt_init(); //Actually display an error if we have a problem: don't just triple fault
-	immediate_paging_initialization(); //Setup so map_range works
+	disable_gdt(); /* We don't use it because it's not cross platform */
+	init_serial(); /* We can't do any logging before this gets setup */
+	idt_init(); /* Actually display an error if we have a problem: don't just triple fault */
+	immediate_paging_initialization(); /* Setup so map_range works */
 	save_grub_params(mbp);
-	bootstrap_phys_mem_manager(mbp); //Get the physical memory manager working
-	setup_paging(); //Turn on paging!
+	bootstrap_phys_mem_manager(mbp); /* Get the physical memory manager working */
+	setup_paging(); /* Turn on paging! */
 	return 0;
 }
 

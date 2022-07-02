@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2021 James McNaughton Felder
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2021 James McNaughton Felder */
 #include <cstring>
 
 char *strcat(char *dest, const char *src){
@@ -9,15 +9,15 @@ char *strcat(char *dest, const char *src){
 char *strncat(char *dest, const char *src, size_t n){
 	size_t count;
 	char *dest_ptr=dest+strlen(dest);
-	//Loop up
+	/* Loop up */
 	for(count=0; count<n; count++){
-		//If we copy a null byte
+		/* If we copy a null byte */
 		if((*(dest_ptr+count)=*(src+count))=='\0'){
-			//We are done
+			/* We are done */
 			return dest;
 		}
 	}
-	//Since we haven't copied a null byte, append one now
+	/* Since we haven't copied a null byte, append one now */
 	*(dest_ptr+count)='\0';
 	return dest;
 }
@@ -25,16 +25,16 @@ char *strncat(char *dest, const char *src, size_t n){
 size_t strlcat(char *dest, const char *src, size_t n){
 	size_t max=n-strlen(dest)-1;
 	size_t count;
-	//append, don't overwrite
+	/* append, don't overwrite */
 	char *dest_ptr=dest+strlen(dest);
-	//loop up
+	/* loop up */
 	for(count=0;count<max;count++){
-		//If we copy a null byte
+		/* If we copy a null byte */
 		if((*(dest_ptr+count)=*(src+count))=='\0'){
-			//We are done
+			/* We are done */
 			return static_cast<size_t>((dest_ptr+count)-dest);
 		}
 	}
-	//Don't append a null (avoid buffer overflow)
+	/* Don't append a null (avoid buffer overflow) */
 	return count;
 }

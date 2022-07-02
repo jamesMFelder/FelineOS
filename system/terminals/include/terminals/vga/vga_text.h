@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2021 James McNaughton Felder
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2021 James McNaughton Felder */
 #ifndef _TERMINAL_VGA_TEXT_H
 #define _TERMINAL_VGA_TEXT_H 1
 
@@ -7,18 +7,18 @@
 #include <stdint.h>
 #include <terminals/terminal.h>
 
-//Width and height
+/* Width and height */
 #define VGA_TEXT_HEIGHT 25
 #define VGA_TEXT_WIDTH 80
 
-//Tabstops (VGA_TEXT_WIDTH%TABSTOP must equal zero or '\t' breaks)
+/* Tabstops (VGA_TEXT_WIDTH%TABSTOP must equal zero or '\t' breaks) */
 #define TABSTOP 4
 
-//The size of a VGA character+attributes
+/* The size of a VGA character+attributes */
 typedef uint16_t vga_text_char;
 
-//VGA text mode colors
-//The full color is `bg<<4 | fg`
+/* VGA text mode colors */
+/* The full color is `bg<<4 | fg` */
 enum vga_color {
 	VGA_COLOR_BLACK = 0,
 	VGA_COLOR_BLUE = 1,
@@ -50,31 +50,31 @@ unsigned char terminal::maxX=VGA_TEXT_WIDTH;
 unsigned char terminal::maxY=VGA_TEXT_HEIGHT;
 class vga_text_term:public terminal{
 	public:
-		//constructor and destructor
+		/* constructor and destructor */
 		vga_text_term();
 		~vga_text_term();
 
-		//utility functions
+		/* utility functions */
 		void clear();
 		void reset();
 		void scroll();
 
 		static void getMaxPosition(unsigned char &maxX, unsigned char &maxY);
 
-		//Put them at the current cursor position with current color
-		//	updates the cursor position
+		/* Put them at the current cursor position with current color */
+		/* 	updates the cursor position */
 		int putchar(char const c);
 
-		//Sets the color
+		/* Sets the color */
 		int setfg(uint8_t const fg);
 		int setbg(uint8_t const bg);
 
 	private:
-		//Pointer to the video memory
+		/* Pointer to the video memory */
 		static vga_text_char *vga_hardware_mem;
 
-		//Color
+		/* Color */
 		uint8_t color;
 };
 
-#endif // _TERMINAL_VGA_TEXT_H
+#endif /* _TERMINAL_VGA_TEXT_H */

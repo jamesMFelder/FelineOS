@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2021 James McNaughton Felder
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2021 James McNaughton Felder */
 
 #include <cstddef>
 #include <cinttypes>
@@ -8,15 +8,15 @@
 
 #include <kernel/backtrace.h>
 
-//Do a backtrace showing up to BT_STATIC_LEN functions
+/* Do a backtrace showing up to BT_STATIC_LEN functions */
 void backtrace(){
-	//Create an array of pointers.
+	/* Create an array of pointers. */
 	void* backtrace[BT_STATIC_LEN]={nullptr};
-	//How far back we actuall got.
+	/* How far back we actuall got. */
 	uint32_t stored;
-	//Actually do the backtrace
+	/* Actually do the backtrace */
 	stored=walk_stack(backtrace, BT_STATIC_LEN);
-	//Print it
+	/* Print it */
 	kerror("Here is the backtrace.");
 	kerror("To get function names run addr2line -Cpfe kernel $pointer");
 	for(uint32_t i=0; i<stored && backtrace[i]!=nullptr; i++){

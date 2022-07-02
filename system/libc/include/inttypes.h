@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2021 James McNaughton Felder
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2021 James McNaughton Felder */
 #ifndef _INTTYPES_H
 #define _INTTYPES_H 1
 
@@ -52,4 +52,4 @@
 #define PRIX64 PRI64 PRIX
 #define PRIXPTR PRIPTR PRIX
 
-#endif // _INTTYPES_H
+#endif /* _INTTYPES_H */

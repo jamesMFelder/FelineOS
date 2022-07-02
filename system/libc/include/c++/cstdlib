@@ -1,12 +1,12 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2021 James McNaughton Felder
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2021 James McNaughton Felder */
 #ifndef _CSTDLIB
 #define _CSTDLIB 1
 
-//Just dump the definitions in the global namespace
+/* Just dump the definitions in the global namespace */
 #include "stdlib.h"
 
-//Including a c++ header means functions are in the std namespace
+/* Including a c++ header means functions are in the std namespace */
 namespace std {
 
 	using ::abort;
@@ -14,10 +14,10 @@ namespace std {
 	using ::labs;
 	using ::llabs;
 
-	//Add overloaded versions of other functions
+	/* Add overloaded versions of other functions */
 	long int abs(long int n);
 	long long int abs(long long int n);
 
-} //namespace std
+} /* namespace std */
 
-#endif // _CSTDLIB
+#endif /* _CSTDLIB */

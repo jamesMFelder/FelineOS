@@ -1,24 +1,24 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2021 James McNaughton Felder
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2021 James McNaughton Felder */
 
-//You can use a cross compiler, but make sure to grab the asm file so you can see these numbers
-//Compile without optimizations or it might just be `ret $num`
-//Use one of the following commands (depending on what compiler you have installed)
-//	clang++ -target i686-elf -ffreestanding sizes_freestanding.cpp -S -o sizes_freestanding.S
-//	i686-elf-g++ -ffreestanding sizes_freestanding.cpp -S -o sizes_freestanding.S
-//Then compare sizes_freestanding.S to sizes_freestanding.cpp
-//You're probably going to have to start counting addl instructions from the top or bottom (make sure not to count adding to %esp)
+/* You can use a cross compiler, but make sure to grab the asm file so you can see these numbers
+ Compile without optimizations or it might just be `ret $num`
+ Use one of the following commands (depending on what compiler you have installed)
+	clang++ -target i686-elf -ffreestanding sizes_freestanding.cpp -S -o sizes_freestanding.S
+	i686-elf-g++ -ffreestanding sizes_freestanding.cpp -S -o sizes_freestanding.S
+ Then compare sizes_freestanding.S to sizes_freestanding.cpp
+ You're probably going to have to start counting addl instructions from the top or bottom (make sure not to count adding to %esp) */
 
-//Just a way to get the value of the size into an ASM file
+/* Just a way to get the value of the size into an ASM file */
 #define SHOW_SIZE_IN_ASM(size) i+=sizeof(size)
-//Some freestanding headers
+/* Some freestanding headers */
 #include <stddef.h>
 #include <stdint.h>
 
 int main(int argc, char **argv){
 	int i=0;
-	//TODO: is there any way to insert a comment using gcc or clang so you don't have to scroll through these files side by side?
-	//Other idea: break into functions?
+	/* TODO: is there any way to insert a comment using gcc or clang so you don't have to scroll through these files side by side? */
+	/* Other idea: break into functions? */
 	SHOW_SIZE_IN_ASM(void*);
 	SHOW_SIZE_IN_ASM(char);
 	SHOW_SIZE_IN_ASM(int);
@@ -49,6 +49,6 @@ int main(int argc, char **argv){
 	SHOW_SIZE_IN_ASM(uintmax_t);
 	SHOW_SIZE_IN_ASM(intptr_t);
 	SHOW_SIZE_IN_ASM(uintptr_t);
-	//Make sure that we use the values somehow by returning them
+	/* Make sure that we use the values somehow by returning them */
 	return i;
 }

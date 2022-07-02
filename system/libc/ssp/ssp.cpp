@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2021 James McNaughton Felder
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2021 James McNaughton Felder */
 #include <cstdint>
 #include <cstdlib>
 #include <kernel/log.h>
@@ -13,10 +13,10 @@
 
 uintptr_t __stack_chk_guard = STACK_CHK_GUARD;
 
-//Run when the stack is corrupted.
-//See https://wiki.osdev.org/Stack_Smashing_Protector for info about
-//what to do here and what do avoid at all costs.
-//TODO: make this a stub for a specific syscall
+/* Run when the stack is corrupted. */
+/* See https://wiki.osdev.org/Stack_Smashing_Protector for info about */
+/* what to do here and what do avoid at all costs. */
+/* TODO: make this a stub for a specific syscall */
 C_LINKAGE __attribute__((noreturn)) void __stack_chk_fail(void);
 
 void __stack_chk_fail(void)

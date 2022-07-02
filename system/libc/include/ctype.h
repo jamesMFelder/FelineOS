@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2021 James McNaughton Felder
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2021 James McNaughton Felder */
 #ifndef _CTYPE_H
 #define _CTYPE_H 1
 
@@ -8,4 +8,4 @@
 C_LINKAGE int isdigit(int c);
 C_LINKAGE int iscntrl(int c);
 
-#endif //_CTYPE_H
+#endif /* _CTYPE_H */

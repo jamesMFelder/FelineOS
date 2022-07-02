@@ -1,9 +1,9 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2021 James McNaughton Felder
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2021 James McNaughton Felder */
 #include <kernel/log.h>
 #include <stdarg.h>
 
-//Add a log. Logging functions should always use this so I can change the backend
+/* Add a log. Logging functions should always use this so I can change the backend */
 __attribute__((format (printf, 2, 0))) void __internal_log(const int level, const char *fmt, va_list data);
 
 void __internal_log(const int level, const char *fmt, va_list data){
@@ -22,7 +22,7 @@ void __internal_log(const int level, const char *fmt, va_list data){
 	return;
 }
 
-//For the moment, just write to terminal.
+/* For the moment, just write to terminal. */
 __attribute__ ((format (printf, 1, 2))) void kerrorf(const char* format, ...){
 	va_list data;
 	va_start(data, format);

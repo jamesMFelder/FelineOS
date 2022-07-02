@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2021 James McNaughton Felder
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2021 James McNaughton Felder */
 #ifndef _STDLIB_H
 #define _STDLIB_H 1
 
@@ -13,4 +13,4 @@ C_LINKAGE int abs(int j);
 C_LINKAGE long labs(long j);
 C_LINKAGE long long llabs(long long j);
 
-#endif // _STDLIB_H
+#endif /* _STDLIB_H */

@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2021 James McNaughton Felder
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2021 James McNaughton Felder */
 #ifndef _KERN_ASM_H
 #define _KERN_ASM_H 1
 
@@ -47,4 +47,4 @@ static inline void io_wait(void){
 	outb(0x80, 0);
 }
 
-#endif ///_KERN_ASM_H
+#endif /* /_KERN_ASM_H */

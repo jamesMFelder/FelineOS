@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2021 James McNaughton Felder
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2021 James McNaughton Felder */
 #ifndef _STRING_H
 #define _STRING_H 1
 
@@ -22,4 +22,4 @@ C_LINKAGE char *strcat(char*, const char*);
 C_LINKAGE char *strncat(char*, const char*, size_t);
 C_LINKAGE size_t strlcat(char*, const char*, size_t);
 
-#endif //_STRING_H
+#endif /* _STRING_H */

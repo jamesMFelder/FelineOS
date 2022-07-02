@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2021 James McNaughton Felder
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2021 James McNaughton Felder */
 #ifndef _HEADER_H
 #define _HEADER_H 1
 
@@ -7,16 +7,16 @@
 
 #include <atomic>
 
-//A basic spinlock implimentation
+/* A basic spinlock implimentation */
 class Spinlock{
 	public:
-		//Wait to aquire the lock
+		/* Wait to aquire the lock */
 		void aquire_lock();
-		//Release the lock
+		/* Release the lock */
 		void release_lock();
 	private:
-		//The actual lock
+		/* The actual lock */
 		std::atomic<bool> lock {false};
 };
 
-#endif // _HEADER_H
+#endif /* _HEADER_H */

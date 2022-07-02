@@ -4,7 +4,7 @@
 atexit_func_entry_t __atexit_funcs[ATEXIT_MAX_FUNCS];
 uarch_t __atexit_func_count = 0;
 
-void *__dso_handle = nullptr; //Attention! Optimally, you should remove the '= 0' part and define this in your asm script.
+void *__dso_handle = nullptr; /* Attention! Optimally, you should remove the '= 0' part and define this in your asm script. */
 
 int __cxa_atexit(void (*f)(void *), void *objptr, void *dso){
 	if (__atexit_func_count >= ATEXIT_MAX_FUNCS) {return -1;}
@@ -30,8 +30,8 @@ void __cxa_finalize(void *f){
 		 * an object file exist at runtime in a particular application. This can be used to tell
 		 * when a shared object is no longer in use. It is one of many methods, however.
 		 **/
-		//You may insert a prinf() here to tell you whether or not the function gets called. Testing
-		//is CRITICAL!
+		/* You may insert a prinf() here to tell you whether or not the function gets called. Testing */
+		/* is CRITICAL! */
 		while (i-- != 0)
 		{
 			if (__atexit_funcs[i].destructor_func != nullptr)

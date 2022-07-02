@@ -1,12 +1,12 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2021 James McNaughton Felder
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2021 James McNaughton Felder */
 #ifndef _CSTRING
 #define _CSTRING 1
 
-//Just dump the definitions in the global namespace
+/* Just dump the definitions in the global namespace */
 #include "string.h"
 
-//Including a c++ header means functions are in the std namespace
+/* Including a c++ header means functions are in the std namespace */
 namespace std {
 
 	using ::memcmp;
@@ -25,6 +25,6 @@ namespace std {
 	using ::strncat;
 	using ::strlcat;
 
-} //namespace std
+} /* namespace std */
 
-#endif //_CSTRING
+#endif /* _CSTRING */

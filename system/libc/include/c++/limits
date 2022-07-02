@@ -1,17 +1,17 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2021 James McNaughton Felder
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2021 James McNaughton Felder */
 
 #ifndef _LIMITS
 #define _LIMITS 1
 
-//Off-limits for a system header file, but I don't know what else to do.
+/* Off-limits for a system header file, but I don't know what else to do. */
 #include <climits>
 #include <float.h>
 
 namespace std{
 
-//How are floats rounded
-//Copied from https://en.cppreference.com/w/cpp/types/numeric_limits/float_round_style
+/* How are floats rounded */
+/* Copied from https://en.cppreference.com/w/cpp/types/numeric_limits/float_round_style */
 enum float_round_style {
 	round_indeterminate       = -1,
 	round_toward_zero         = 0,
@@ -20,16 +20,16 @@ enum float_round_style {
 	round_toward_neg_infinity = 3
 };
 
-//How are floats denormalized
-//Copied from https://en.cppreference.com/w/cpp/types/numeric_limits/float_denorm_style
+/* How are floats denormalized */
+/* Copied from https://en.cppreference.com/w/cpp/types/numeric_limits/float_denorm_style */
 enum float_denorm_style {
 	denorm_indeterminate = -1,
 	denorm_absent        = 0,
 	denorm_present       = 1
 };
 
-//The base numeric_limits class
-//Copied from https://en.cppreference.com/w/cpp/header/limits, https://www.cplusplus.com/reference/limits/numeric_limits/ and eel.is/c++draft/numeric.limits
+/* The base numeric_limits class */
+/* Copied from https://en.cppreference.com/w/cpp/header/limits, https://www.cplusplus.com/reference/limits/numeric_limits/ and eel.is/c++draft/numeric.limits */
 template <class T> class numeric_limits {
 	public:
 		static constexpr bool is_specialized = false;
@@ -69,7 +69,7 @@ template <class T> class numeric_limits {
 		static constexpr float_round_style round_style = round_toward_zero;
 };
 
-//Bool
+/* Bool */
 template<> class numeric_limits<bool> {
 	public:
 		static constexpr bool is_specialized = true;
@@ -113,7 +113,7 @@ template<> class numeric_limits<bool> {
 		static constexpr float_round_style round_style = round_toward_zero;
 };
 
-//Char
+/* Char */
 template<> class numeric_limits<char>{
 	public:
 		static constexpr bool is_specialized = true;
@@ -157,7 +157,7 @@ template<> class numeric_limits<char>{
 		static constexpr float_round_style round_style = round_toward_zero;
 };
 
-//Unsigned char
+/* Unsigned char */
 template<> class numeric_limits<unsigned char>{
 	public:
 		static constexpr bool is_specialized = true;
@@ -201,7 +201,7 @@ template<> class numeric_limits<unsigned char>{
 		static constexpr float_round_style round_style = round_toward_zero;
 };
 
-//Signed char
+/* Signed char */
 template<> class numeric_limits<signed char>{
 	public:
 		static constexpr bool is_specialized = true;
@@ -245,7 +245,7 @@ template<> class numeric_limits<signed char>{
 		static constexpr float_round_style round_style = round_toward_zero;
 };
 
-//Short
+/* Short */
 template<> class numeric_limits<short>{
 	public:
 		static constexpr bool is_specialized = true;
@@ -289,7 +289,7 @@ template<> class numeric_limits<short>{
 		static constexpr float_round_style round_style = round_toward_zero;
 };
 
-//Unsigned short
+/* Unsigned short */
 template<> class numeric_limits<unsigned short>{
 	public:
 		static constexpr bool is_specialized = true;
@@ -333,7 +333,7 @@ template<> class numeric_limits<unsigned short>{
 		static constexpr float_round_style round_style = round_toward_zero;
 };
 
-//Int
+/* Int */
 template<> class numeric_limits<int>{
 	public:
 		static constexpr bool is_specialized = true;
@@ -377,7 +377,7 @@ template<> class numeric_limits<int>{
 		static constexpr float_round_style round_style = round_toward_zero;
 };
 
-//Unsigned int
+/* Unsigned int */
 template<> class numeric_limits<unsigned int>{
 	public:
 		static constexpr bool is_specialized = true;
@@ -421,7 +421,7 @@ template<> class numeric_limits<unsigned int>{
 		static constexpr float_round_style round_style = round_toward_zero;
 };
 
-//Long
+/* Long */
 template<> class numeric_limits<long>{
 	public:
 		static constexpr bool is_specialized = true;
@@ -465,7 +465,7 @@ template<> class numeric_limits<long>{
 		static constexpr float_round_style round_style = round_toward_zero;
 };
 
-//Unsigned long
+/* Unsigned long */
 template<> class numeric_limits<unsigned long>{
 	public:
 		static constexpr bool is_specialized = true;
@@ -509,7 +509,7 @@ template<> class numeric_limits<unsigned long>{
 		static constexpr float_round_style round_style = round_toward_zero;
 };
 
-//Long long
+/* Long long */
 template<> class numeric_limits<long long>{
 	public:
 		static constexpr bool is_specialized = true;
@@ -553,7 +553,7 @@ template<> class numeric_limits<long long>{
 		static constexpr float_round_style round_style = round_toward_zero;
 };
 
-//Unsigned long long
+/* Unsigned long long */
 template<> class numeric_limits<unsigned long long>{
 	public:
 		static constexpr bool is_specialized = true;
@@ -599,4 +599,4 @@ template<> class numeric_limits<unsigned long long>{
 
 }
 
-#endif // _LIMITS_H
+#endif /* _LIMITS_H */
