@@ -47,7 +47,7 @@ export LIBDIR=$EXEC_PREFIX/lib
 export INCLUDEDIR=$PREFIX/include
 export CPP_INCLUDEDIR=$PREFIX/include/c++
 
-export CFLAGS='-O0 -g -Werror -Wall -Wextra -pedantic -fstack-protector -mno-red-zone'
+export CFLAGS='-O0 -g -Werror -Wall -Wextra -fstack-protector -fno-omit-frame-pointer -mno-red-zone'
 export CPPFLAGS="$CFLAGS -fno-rtti -fno-exceptions"
 
 # Configure the cross-compiler to use the desired system root.
