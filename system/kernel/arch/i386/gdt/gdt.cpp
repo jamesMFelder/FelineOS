@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2021 James McNaughton Felder */
 #include "gdt.h"
+#include <kernel/vtopmem.h>
 
 /* target is a pointer to the 8-byte GDT entry */
 /* source is an arbitrary structure describing the GDT entry */
@@ -39,5 +40,5 @@ void disable_gdt(){
 	/* These are generated from utils/gdt_create.c */
 	static uint64_t gdt[]={0x0000000000000000,0x00CF9A000000FFFF,\
 		0x00CF92000000FFFF,0x00CFFA000000FFFF,0x00CFF2000000FFFF};
-	setGdt(gdt, sizeof(gdt));
+	setGdt(gdt - VA_OFFSET, sizeof(gdt));
 }

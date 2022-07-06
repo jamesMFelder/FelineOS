@@ -4,6 +4,10 @@
    designated at the entry point. */
 ENTRY(_start)
 
+/* Don't try to understand functions. */
+#define __ASSEMBLER__
+#include <kernel/vtopmem.h>
+
 /* Tell where the various sections of the object files will be put in the final
    kernel image. */
 SECTIONS
@@ -12,32 +16,51 @@ SECTIONS
 	   loaded at by the bootloader. */
 	. = 1M;
 
-	/*Where the kernel starts.*/
-	kernel_start = .;
+	/* Where we need to set up the initial identity map from. */
+	identity_map_from_here = .;
 
 	/* First put the multiboot header, as it is required to be put very early
 	   early in the image or the bootloader won't recognize the file format.
 	   Next we'll put the .text section. */
-	.text : ALIGN(4K)
+	.multiboot.data : ALIGN(4K)
+	{
+		*(.multiboot.data)
+	}
+	.multiboot.text : ALIGN(4K)
+	{
+		*(.multiboot.text)
+	}
+
+	. += VA_OFFSET;
+
+	/* Align the main kernel so that paging works. */
+	. = ALIGN(4K);
+
+	/* Where we will think the kernel starts once paging is turned on. */
+	kernel_start = .;
+	/*Where the kernel starts (what we care abuot after turning paging on).*/
+	phys_kernel_start = . - VA_OFFSET;
+
+	.text ALIGN(4K) : AT (ADDR (.text) - VA_OFFSET)
 	{
 		*(.multiboot)
 		*(.text)
 	}
 
 	/* Read-only data. */
-	.rodata : ALIGN(4K)
+	.rodata ALIGN(4K) : AT ( ADDR(.rodata) - VA_OFFSET)
 	{
 		*(.rodata)
 	}
 
 	/* Read-write data (initialized) */
-	.data : ALIGN(4K)
+	.data ALIGN(4K) : AT ( ADDR(.data) - VA_OFFSET)
 	{
 		*(.data)
 	}
 
 	/* Read-write data (uninitialized) and stack */
-	.bss : ALIGN(4K)
+	.bss ALIGN(4K) : AT ( ADDR(.bss) - VA_OFFSET)
 	{
 		*(COMMON)
 		*(.bss)
@@ -45,6 +68,7 @@ SECTIONS
 
 	/*Where the kernel ends.*/
 	kernel_end = .;
+	phys_kernel_end = . - VA_OFFSET;
 
 	/* The compiler may produce other sections, put them in the proper place in
 	   in this file, if you'd like to include them in the final kernel. */

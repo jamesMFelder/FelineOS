@@ -19,8 +19,10 @@
 .set HEIGHT, 0 /* no preference about pixels or characters per column */
 .set DEPTH,  0 /* no preference about bits per pixel */
 
-/* Declare a header as in the Multiboot Standard. */
-.section .multiboot
+#include <kernel/vtopmem.h>
+
+// Declare a header as in the Multiboot Standard.
+.section .multiboot.data, "aw"
 	.align 4
 	.long MAGIC
 	.long FLAGS
@@ -38,16 +40,82 @@
 	.long DEPTH
 
 /* Reserve a stack for the initial thread. */
-.section .bss
+.section .bss, "aw"
 	.align 16
 	stack_bottom:
 		.skip 16384 /* 16 KiB */
 	stack_top:
 
+/* Reserve initial page tables */
+.section .bss, "aw"
+	.align 4096
+	boot_page_directory:
+	.skip 4096
+	boot_page_table1:
+	.skip 4096
+	boot_page_table2:
+	.skip 4096
+	boot_page_table3:
+	.skip 4096
+	boot_page_table4:
+	.skip 4096
+
 /* The kernel entry point. */
-.section .text
+.section .multiboot.text, "a"
 .global _start
+.type _start, @function
 _start:
+	//Get the physical address of boot_page_table1
+	movl $(boot_page_table1 - VA_OFFSET), %edi
+	//Start mapping at address 0
+	movl $0, %esi
+	//Map 4096 pages
+	movl $4096, %ecx
+
+1:
+	//Only map the kernel
+	cmpl $identity_map_from_here, %esi
+	jl 2f
+	cmpl $phys_kernel_end, %esi
+	jge 3f
+
+	//Map the addresses as "present, writeable". Not secure - get rid of quick
+	movl %esi, %edx
+	orl $0x003, %edx
+	movl %edx, (%edi)
+
+2:
+	//Each page is 4096 bytes
+	addl $4096, %esi
+	//Size of each of the entries is 4 bytes
+	addl $4, %edi
+	//Loop to the next entry if we haven't finished
+	loop 1b
+
+3:
+	//Map the page table to virtual addresses 0x00000000 (identity map)
+	movl $(boot_page_table1 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET
+	movl $(boot_page_table2 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 4
+	movl $(boot_page_table3 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 8
+	movl $(boot_page_table4 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 12
+
+	//Set cr3 to the address of the boot_page_directory
+	movl $(boot_page_directory - VA_OFFSET), %ecx
+	movl %ecx, %cr3
+
+	//Enable paging and the write-protect bit
+	movl %cr0, %ecx
+	orl 0x80010000, %ecx
+	movl %ecx, %cr0
+
+	//Jump to the higher-half with and absolute jump
+	lea 4f, %ecx
+	jmp *%ecx
+
+.section .text
+4:
+	//Paging is fully setup and enabled
+
 	/* Setup the stack and clear ebp so debuggers don't trace further back from here */
 	mov $stack_top, %esp
 	xor %ebp, %ebp

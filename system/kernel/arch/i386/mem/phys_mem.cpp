@@ -4,6 +4,8 @@
 #include <cassert>
 #include <kernel/log.h>
 #include <kernel/paging.h>
+#include <kernel/vtopmem.h>
+#include <kernel/mem.h>
 #include <cstring>
 #include <cstdlib>
 #include <cinttypes>
@@ -28,10 +30,14 @@ static phys_mem_area_t *normal_mem_bitmap=nullptr;
 size_t mem_bitmap_len=0;
 
 /* Setup by the linker to be at the start and end of the kernel. */
+extern const char phys_kernel_start;
+extern const char phys_kernel_end;
 extern const char kernel_start;
 extern const char kernel_end;
 const uintptr_t uint_kernel_start = reinterpret_cast<uintptr_t>(&kernel_start);
 const uintptr_t uint_kernel_end = reinterpret_cast<uintptr_t>(&kernel_end);
+const uintptr_t phys_uint_kernel_start = reinterpret_cast<uintptr_t>(&phys_kernel_start);
+const uintptr_t phys_uint_kernel_end = reinterpret_cast<uintptr_t>(&phys_kernel_end);
 
 /* Start the physical memory manager */
 /* mbp=MultiBoot Pointer (everything grub gives us) */
@@ -39,12 +45,16 @@ const uintptr_t uint_kernel_end = reinterpret_cast<uintptr_t>(&kernel_end);
 /* len=number of memory areas */
 /* Create a stack of pages for use */
 /* Create+fill in the bitmap */
-/* Call before paging is initialized, but after map_range is functional */
-int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
+/* Call after paging is active */
+int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
+	multiboot_info_t mbp=read_pmem<multiboot_info_t>(phys_mbp);
+	assert(mbp.flags & MULTIBOOT_INFO_MEM_MAP);
 	modifying_pmm.aquire_lock();
-	multiboot_memory_map_t *mbmp=reinterpret_cast<multiboot_memory_map_t*>(mbp->mmap_addr);
-	unsigned int mbmp_len=mbp->mmap_length;
 
+	size_t mbmp_len=mbp.mmap_length;
+	multiboot_memory_map_t *mbmp;
+	map_results mbmp_mapping=map_range(reinterpret_cast<multiboot_memory_map_t*>(mbp.mmap_addr), mbmp_len, reinterpret_cast<void**>(&mbmp), 0);
+	assert(mbmp_mapping==map_success);
 
 	klog("Starting bootstrap_phys_mem_manager.");
 
@@ -53,59 +63,93 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 	klogf("Kernel ends at %p", static_cast<void const *>(&kernel_end));
 	klogf("It is %#lx bytes long.", uint_kernel_end-uint_kernel_start);
 
-	/* List all the memory */
-	for(unsigned int i=0;i<mbmp_len/sizeof(multiboot_memory_map_t);i++){
-		mem_bitmap_len+=(mbmp+i)->len/PHYS_MEM_CHUNK_SIZE;
-		klogf("Memory at %p for %llx with type %s.", reinterpret_cast<void const *>((mbmp+i)->addr), (mbmp+i)->len, mem_types[(mbmp+i)->type]);
-	}
+	/* Find the highest amount of memory */
+	unsigned int mem_index=0;
+	unsigned long long max_mem=0;
+	while (mem_index < mbp.mmap_length) {
+		multiboot_memory_map_t *cur_mp=mbmp+mem_index/sizeof(multiboot_memory_map_t);
+		klogf("Memory at %p for %llx with type %d(%s).", reinterpret_cast<void const *>(cur_mp->addr), cur_mp->len, cur_mp->type, mem_types[cur_mp->type]);
 
-	klogf("Using %zd elements in array.", mem_bitmap_len);
+		/* We can only work under 4GiB with 32-bit pointers */
+		if (cur_mp->addr < 4_GiB) {
+			/* If it extends beyond 4GiB, we know we need to keep track of 4GiB */
+			if (cur_mp->addr+cur_mp->len >= 4_GiB) {
+				max_mem = 4_GiB - 1;
+				break;
+			}
+			/* Otherwise, check if we found higher memory and continue looping */
+			else {
+				if (cur_mp->addr+cur_mp->len > max_mem) {
+					max_mem = cur_mp->addr+cur_mp->len;
+				}
+			}
+		}
+		/* We have memory above 4GiB, so we have to deal with everything below it */
+		else {
+			max_mem = 4_GiB - 1;
+			break;
+		}
+
+		mem_index += cur_mp->size;
+	}
+	if (max_mem > 4_GiB-PHYS_MEM_CHUNK_SIZE) {
+		mem_bitmap_len = 4_GiB/PHYS_MEM_CHUNK_SIZE;
+	}
+	else {
+		mem_bitmap_len = (max_mem + PHYS_MEM_CHUNK_SIZE - 1) / PHYS_MEM_CHUNK_SIZE;
+	}
+	printf("%zx = %llx/%llx\n", mem_bitmap_len, max_mem, PHYS_MEM_CHUNK_SIZE);
+
+	klogf("Using %zu elements in array.", mem_bitmap_len);
 
 	/* Find where we can keep track of unused pages */
 	/* Loop through the available memory again */
-	for(size_t i=0;i<mbmp_len/sizeof(multiboot_memory_map_t);i++){
-		if((mbmp+i)->type==MULTIBOOT_MEMORY_AVAILABLE &&
-				(mbmp+i)->len>(mem_bitmap_len*sizeof(phys_mem_area_t)))
-		{
+	mem_index=0;
+	while (mem_index < mbp.mmap_length) {
+		multiboot_memory_map_t *cur_mp=mbmp+mem_index/sizeof(multiboot_memory_map_t);
+
+		if (cur_mp->type == MULTIBOOT_MEMORY_AVAILABLE &&
+				cur_mp->len > (mem_bitmap_len*sizeof(phys_mem_area_t))) {
 			/* If the area starts before the kernel */
-			if(static_cast<uintptr_t>((mbmp+i)->addr)<=uint_kernel_start){
+			if (static_cast<uintptr_t>(cur_mp->addr) <= phys_uint_kernel_start) {
 				/* And has enough space */
-				if(((mbmp+i)->addr)+mem_bitmap_len < ((mbmp+i)->addr+(mbmp+i)->len)) {
-						 /* And has enough space before the kernel */
-						 if(((mbmp+i)->addr+(mem_bitmap_len*sizeof(phys_mem_area_t)))<uint_kernel_start){
-							 klogf("Found memory at %p.", reinterpret_cast<void*>((mbmp+i)->addr));
-							 normal_mem_bitmap=reinterpret_cast<phys_mem_area_t*>((mbmp+i)->addr);
-						 }
-						 /* Or enough space after it */
-						 else if(((mbmp+i)->addr+(mbmp+i)->len)-uint_kernel_end>=(mem_bitmap_len*sizeof(phys_mem_area_t))){
-							 klogf("Found memory at %p.", static_cast<void const *>(&kernel_end));
-							 normal_mem_bitmap=reinterpret_cast<phys_mem_area_t *>(const_cast<char*>(&kernel_end));
-						 }
-						 else{
-							 klog("Reached kernel.");
-						 }
-					 }
-				else{
+				if (cur_mp->addr+mem_bitmap_len < cur_mp->addr+cur_mp->len) {
+					/* And has enough space before the kernel */
+					if (cur_mp->addr+mem_bitmap_len*sizeof(phys_mem_area_t) < phys_uint_kernel_start) {
+						klogf("Found memory at %p.", reinterpret_cast<void*>(cur_mp->addr));
+						normal_mem_bitmap=reinterpret_cast<phys_mem_area_t*>(cur_mp->addr);
+					}
+					/* Or enough space after it */
+					else if (cur_mp->addr+cur_mp->len-uint_kernel_end >= mem_bitmap_len*sizeof(phys_mem_area_t)) {
+						klogf("Found memory at %p.", static_cast<void const *>(&phys_kernel_end));
+						normal_mem_bitmap=reinterpret_cast<phys_mem_area_t*>(const_cast<char*>(&phys_kernel_end));
+					}
+					else {
+						klog("Reached kernel.");
+						continue;
+					}
+				}
+				else {
 					klog("To short area.");
+					continue;
 				}
 			}
 			/* If it is after the kernel */
-			else if(static_cast<uintptr_t>((mbmp+i)->addr)>uint_kernel_end){
+			else if (static_cast<uintptr_t>(cur_mp->addr) > phys_uint_kernel_end) {
 				/* And has enough space */
-				if(((mbmp+i)->addr+
-							(mem_bitmap_len*sizeof(phys_mem_area_t)))<
-						((mbmp+i)->addr+(mbmp+i)->len))
-				{
-					klogf("Found memory at %p.", reinterpret_cast<void*>((mbmp+i)->addr));
-					normal_mem_bitmap=reinterpret_cast<phys_mem_area_t*>((mbmp+i)->addr);
+				if (cur_mp->addr+mem_bitmap_len*sizeof(phys_mem_area_t) < cur_mp->addr+cur_mp->len) {
+					klogf("Found memory at %p.", reinterpret_cast<void*>(cur_mp->addr));
+					normal_mem_bitmap=reinterpret_cast<phys_mem_area_t*>(cur_mp->addr);
 				}
-				else{
+				else {
 					klog("To short area.");
+					continue;
 				}
 			}
 			/* It starts in the middle of the kernel? */
-			else{
-				kwarnf("Memory starts at %p: in the middle of the kernel!", reinterpret_cast<void*>((mbmp+i)->addr));
+			else {
+				kwarnf("Memory starts at %p: in the middle of the kernel!", reinterpret_cast<void*>(cur_mp->addr));
+				continue; /* Don't even try to figure this one out! */
 			}
 			/* Note where we found the memory and stop searching */
 			klog("");
@@ -114,24 +158,12 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 			klog("");
 			break;
 		}
+
+		mem_index += cur_mp->size;
 	}
 
-	/* Loop through the memory again to fill in the bitmap */
-	for(unsigned int i=0;i<mbmp_len/sizeof(multiboot_memory_map_t);i++){
-		bool available = ((mbmp+i)->type == MULTIBOOT_MEMORY_AVAILABLE);
-		/* TODO: delete low-level logging */
-		printf("i=%u, mbmp->len=%llu, mbmp->type=%d, available=%s\n", i, (mbmp+i)->len, (mbmp+i)->type, (available ? "true" : "false"));
-		/* fill in the array (pretend we loop over it) */
-		std::memset(&normal_mem_bitmap[(mbmp+i)->addr/PHYS_MEM_CHUNK_SIZE], static_cast<int>(available), bytes_to_pages(static_cast<uintptr_t>((mbmp+i)->len)));
-	}
-	puts("Bitmap filled...Marking kernel as used.");
-	/* Now mark the kernel as used */
-	std::memset(&normal_mem_bitmap[uint_kernel_start/PHYS_MEM_CHUNK_SIZE], INT_TRUE, bytes_to_pages(uint_kernel_end-uint_kernel_start));
-	/* And the bitmap itself */
-	std::memset(&normal_mem_bitmap[reinterpret_cast<uintptr_t>(normal_mem_bitmap)/PHYS_MEM_CHUNK_SIZE], INT_TRUE, bytes_to_pages(mem_bitmap_len));
-	/* And the first page (so it can be nullptr) */
-	/* normal_mem_bitmap[0].in_use=true; */
-	/* And map it */
+	/* Map it, saving it's address to mark it reserved later. */
+	uintptr_t phys_nmb=reinterpret_cast<uintptr_t>(normal_mem_bitmap);
 	printf("Bitmap points to %p in physical memory...", reinterpret_cast<void*>(normal_mem_bitmap));
 	map_results mapping=map_range(normal_mem_bitmap, mem_bitmap_len*sizeof(phys_mem_area_t), reinterpret_cast<void**>(&normal_mem_bitmap), 0);
 	if(mapping!=map_success){
@@ -140,8 +172,39 @@ int bootstrap_phys_mem_manager(multiboot_info_t *mbp){
 		abort();
 	}
 	printf("and to %p in virtual memory.\n", reinterpret_cast<void*>(normal_mem_bitmap));
-	klog("Ending bootstrap_phys_mem_manager.");
+	/* Quickly mark unknown parts of the bitmap as unuseable */
+	for (size_t index = 0; index<mem_bitmap_len; ++index) {
+		normal_mem_bitmap[index].in_use=true;
+		if (reinterpret_cast<uintptr_t>(&normal_mem_bitmap[index]) % 0x1000 == 0) {
+			printf("%zd: %p\n", index, static_cast<void*>(&normal_mem_bitmap[index]));
+		}
+	}
+	/* Loop through the memory again to fill in the bitmap */
+	mem_index=0;
+	while (mem_index < mbp.mmap_length) {
+		multiboot_memory_map_t *cur_mp=mbmp+mem_index/sizeof(multiboot_memory_map_t);
+
+		bool in_use = (cur_mp->type != MULTIBOOT_MEMORY_AVAILABLE);
+		/* TODO: delete low-level logging */
+		printf("mbmp.addr=%llx, mbmp.type=%s, available=%s\n", cur_mp->addr, mem_types[cur_mp->type], (in_use ? "true" : "false"));
+		/* fill in the array */
+		printf("Setting %p to %d for %" PRIxPTR " bytes.\n", static_cast<void*>(&normal_mem_bitmap[cur_mp->addr/PHYS_MEM_CHUNK_SIZE]), static_cast<int>(in_use), bytes_to_pages(static_cast<uintptr_t>(cur_mp->len)));
+		std::memset(&normal_mem_bitmap[cur_mp->addr/PHYS_MEM_CHUNK_SIZE], static_cast<int>(in_use), bytes_to_pages(static_cast<uintptr_t>(cur_mp->len)));
+		mem_index += cur_mp->size;
+	}
+
+	/* Unmap GRUB's memory info */
+	unmap_range(mbmp, mbmp_len, 0);
+
+	puts("Bitmap filled...Marking kernel as used.");
+	/* Now mark the kernel as used */
+	std::memset(&normal_mem_bitmap[phys_uint_kernel_start/PHYS_MEM_CHUNK_SIZE], INT_TRUE, bytes_to_pages(phys_uint_kernel_end-phys_uint_kernel_start));
+	/* And the bitmap itself */
+	std::memset(&normal_mem_bitmap[phys_nmb/PHYS_MEM_CHUNK_SIZE], INT_TRUE, bytes_to_pages(mem_bitmap_len));
+	/* And the first page (so it can be nullptr) */
+	normal_mem_bitmap[0].in_use=true;
 	modifying_pmm.release_lock();
+	klog("Ending bootstrap_phys_mem_manager.");
 	return 0;
 }
 

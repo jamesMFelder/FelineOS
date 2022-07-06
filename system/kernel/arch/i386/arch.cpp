@@ -12,30 +12,33 @@
 #include <drivers/serial.h>
 #include <cstdlib>
 #include <cinttypes>
+#include <kernel/vtopmem.h>
 
 framebuffer fb;
 
-static void screen_init(multiboot_info_t *mbp){
-	klogf("Framebuffer at %p.", reinterpret_cast<void*>(mbp->framebuffer_addr));
-	klogf("Frame buffer pitch (in bytes): %u.", mbp->framebuffer_pitch);
-	klogf("It is %ux%u (in pixels).", mbp->framebuffer_width, mbp->framebuffer_height);
-	klogf("With %" PRIu8 " bits per pixel.", mbp->framebuffer_bpp);
-	switch(mbp->framebuffer_type){
+static void screen_init(multiboot_info_t *phys_mbp){
+	multiboot_info_t mbp;
+	mbp=read_pmem<multiboot_info_t>(phys_mbp);
+	klogf("Framebuffer at %p.", reinterpret_cast<void*>((mbp).framebuffer_addr));
+	klogf("Frame buffer pitch (in bytes): %u.", mbp.framebuffer_pitch);
+	klogf("It is %ux%u (in pixels).", mbp.framebuffer_width, mbp.framebuffer_height);
+	klogf("With %" PRIu8 " bits per pixel.", mbp.framebuffer_bpp);
+	switch(mbp.framebuffer_type){
 		case MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED:
 			klogf("Framebuffer type: %s.", "indexed");
-			klogf("Palette at %p with %d colors.", reinterpret_cast<void*>(mbp->fb_palette.framebuffer_palette_addr), mbp->fb_palette.framebuffer_palette_num_colors);
+			klogf("Palette at %p with %d colors.", reinterpret_cast<void*>(mbp.fb_palette.framebuffer_palette_addr), mbp.fb_palette.framebuffer_palette_num_colors);
 			break;
 		case MULTIBOOT_FRAMEBUFFER_TYPE_RGB:
 			klogf("Framebuffer type: %s.", "RGB");
-			klogf("Red field position: %" PRIu8 ", mask size: %" PRIu8, mbp->fb_rgb.framebuffer_red_field_position, mbp->fb_rgb.framebuffer_red_mask_size);
-			klogf("Green field position: %" PRIu8 ", mask size: %" PRIu8, mbp->fb_rgb.framebuffer_green_field_position, mbp->fb_rgb.framebuffer_green_mask_size);
-			klogf("Blue field position: %" PRIu8 ", mask size: %" PRIu8, mbp->fb_rgb.framebuffer_blue_field_position, mbp->fb_rgb.framebuffer_blue_mask_size);
+			klogf("Red field position: %" PRIu8 ", mask size: %" PRIu8, mbp.fb_rgb.framebuffer_red_field_position, mbp.fb_rgb.framebuffer_red_mask_size);
+			klogf("Green field position: %" PRIu8 ", mask size: %" PRIu8, mbp.fb_rgb.framebuffer_green_field_position, mbp.fb_rgb.framebuffer_green_mask_size);
+			klogf("Blue field position: %" PRIu8 ", mask size: %" PRIu8, mbp.fb_rgb.framebuffer_blue_field_position, mbp.fb_rgb.framebuffer_blue_mask_size);
 			break;
 		case MULTIBOOT_FRAMEBUFFER_TYPE_EGA_TEXT:
 			klogf("Framebuffer type: %s.", "EGA text");
 			break;
 	}
-	int fb_init_rval=fb.init(reinterpret_cast<pixel_bgr_t*>(mbp->framebuffer_addr), static_cast<uint16_t>(mbp->framebuffer_width), static_cast<uint16_t>(mbp->framebuffer_height), static_cast<uint16_t>(mbp->framebuffer_pitch), mbp->framebuffer_bpp);
+	int fb_init_rval=fb.init(reinterpret_cast<pixel_bgr_t*>(mbp.framebuffer_addr), static_cast<uint16_t>(mbp.framebuffer_width), static_cast<uint16_t>(mbp.framebuffer_height), static_cast<uint16_t>(mbp.framebuffer_pitch), mbp.framebuffer_bpp);
 	if(fb_init_rval!=0){
 		kerrorf("Unable to initialize framebuffer! Failed with error %d.", fb_init_rval);
 		abort();
@@ -61,23 +64,43 @@ static void screen_init(multiboot_info_t *mbp){
 char grub_cmdline[4096]="";
 multiboot_uint32_t grub_flags;
 
-static void save_grub_params(multiboot_info_t *mbp){
+static void save_grub_params(multiboot_info_t * const mbp){
+	void * const tmp_ptr=mbp;
+	map_results grub_mapping=map_range(mbp, sizeof(mbp), tmp_ptr, 0);
+	if (grub_mapping != map_success) {
+		kerrorf("Unable to map information from Grub. Error %d.", grub_mapping);
+		return;
+	}
 	grub_flags=mbp->flags;
 	if(get_flag(grub_flags, MULTIBOOT_INFO_CMDLINE)){
-		size_t len=strlcpy(grub_cmdline, reinterpret_cast<char*>(mbp->cmdline), 4096);
-		if(len>4096){
-			kerror("We were given too long a command line, truncating to 4096 characters before continuing.");
-			kerror("Here is the full command line:");
-			kerrorf("%s", reinterpret_cast<char*>(mbp->cmdline));
+		char *mapped_cmdline;
+		map_results cmdline_mapping=map_range(reinterpret_cast<char*>(mbp->cmdline), 4_KiB, reinterpret_cast<void**>(&mapped_cmdline), 0);
+		if (cmdline_mapping != map_success) {
+			kerrorf("Unable to map information from Grub. Error %d.", cmdline_mapping);
+			goto after_cmdline;
 		}
+		size_t offset=0;
+		for (offset=0; offset < 4096; ++offset) {
+			grub_cmdline[offset]=mapped_cmdline[offset];
+			if (grub_cmdline[offset] == '\0') {
+				break;
+			}
+		}
+		//size_t len=strlcpy(grub_cmdline, reinterpret_cast<char*>(mbp->cmdline), 4096);
+		if(offset==4096){
+			kerror("We were given too long a command line, truncating to 4096 characters.");
+		}
+		unmap_range(mapped_cmdline, 4096, 0);
 	}
+after_cmdline: //Jump here if you need to abort processing the command line.
 	if(get_flag(grub_flags, MULTIBOOT_INFO_FRAMEBUFFER_INFO)){
 		screen_init(mbp);
 	}
 	else{
 		/* TODO: actually do this */
-		kwarn("Not finding screen info GRUB, using serial port only.");
+		kwarn("Not finding screen info from GRUB, using serial port only.");
 	}
+	unmap_range(tmp_ptr, sizeof(mbp), 0);
 	return;
 }
 
@@ -104,10 +127,9 @@ int early_boot_setup(multiboot_info_t *mbp){
 	disable_gdt(); /* We don't use it because it's not cross platform */
 	init_serial(); /* We can't do any logging before this gets setup */
 	idt_init(); /* Actually display an error if we have a problem: don't just triple fault */
-	immediate_paging_initialization(); /* Setup so map_range works */
+	setup_paging(); /* Take control of it from the assembly! */
 	save_grub_params(mbp);
 	bootstrap_phys_mem_manager(mbp); /* Get the physical memory manager working */
-	setup_paging(); /* Turn on paging! */
 	return 0;
 }
 

@@ -15,8 +15,6 @@ map_results map_range(void const * const phys_addr, uintptr_t len, void **virt_a
 map_results map_range(uintptr_t len, void const * const virt_addr, unsigned int opts);
 /* Map len bytes from anywhere to any free virtual address */
 map_results map_range(uintptr_t len, void **virt_addr, unsigned int opts);
-/* Unmap the page containing virt_addr */
-map_results unmap_page(page const virt_addr, unsigned int opts);
 /* Unmap all the pages from virt_addr to virt_addr+len */
 map_results unmap_range(void const * const virt_addr, uintptr_t len, unsigned int opts);
 
