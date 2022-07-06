@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2021 James McNaughton Felder
 DEFAULT_HOST!=../../default-host.sh
-TARGET_HOST?=DEFAULT_HOST
+TARGET_HOST?=$(DEFAULT_HOST)
 HOSTARCH!=../../target-triplet-to-arch.sh $(TARGET_HOST)
 
 ARCHDIR=arch/$(HOSTARCH)
@@ -55,23 +55,23 @@ $(ARCHDIR)/boot/crtn.o \
 all: FelineOS.kernel
 
 FelineOS.kernel: $(OBJS) $(ARCHDIR)/linker.ld
-	$(CPP) -T $(ARCHDIR)/linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
+	$(CPP) -T $(abspath $(ARCHDIR)/linker.ld) -o $@ $(CFLAGS) $(LINK_LIST)
 	grub2-file --is-x86-multiboot FelineOS.kernel
 
 $(ARCHDIR)/linker.ld: $(ARCHDIR)/linker.ldpp
-	$(CPP) $(CFLAGS) $(CPPFLAGS) -CC -E -x c++ $< -o $@
+	$(CPP) $(CFLAGS) $(CPPFLAGS) -CC -E -x c++ $(abspath $<) -o $@
 
 $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" $@
 
 .c.o:
-	$(CC) -MD -o $@ -std=gnu17 $(CFLAGS) -c $<
+	$(CC) -MD -o $@ -std=gnu17 $(CFLAGS) -c $(abspath $<)
 
 .cpp.o:
-	$(CPP) -MD -o $@ -std=gnu++17 $(CPPFLAGS) -c $<
+	$(CPP) -MD -o $@ -std=gnu++17 $(CPPFLAGS) -c $(abspath $<)
 
 .S.o:
-	$(CC) -MD -o $@ $(CPPFLAGS) -c $<
+	$(CC) -MD -o $@ $(CPPFLAGS) -c $(abspath $<)
 
 clean:
 	$(RM) FelineOS.kernel

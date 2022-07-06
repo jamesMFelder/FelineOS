@@ -74,25 +74,25 @@ libk.a: $(LIBK_OBJS)
 	$(AR) rcs $@ $(LIBK_OBJS)
 
 .c.o:
-	$(CC) -MD -o $@ -std=gnu17 $(CFLAGS) -c $<
+	$(CC) -MD -o $@ -std=gnu17 $(CFLAGS) -c $(abspath $<)
 
 .cpp.o:
-	$(CPP) -MD -o $@ -std=gnu++17 $(CPPFLAGS) -c $<
+	$(CPP) -MD -o $@ -std=gnu++17 $(CPPFLAGS) -c $(abspath $<)
 
 .c.S:
-	$(CC) -MD -o $@ $(CFLAGS) -c $<
+	$(CC) -MD -o $@ $(CFLAGS) -c $(abspath $<)
 
 .cpp.S:
-	$(CPP) -MD -o $@ $(CPPFLAGS) -c $<
+	$(CPP) -MD -o $@ $(CPPFLAGS) -c $(abspath $<)
 
 .c.libk.o:
-	$(CC) -MD -o $@ -std=gnu17 $(LIBK_CFLAGS) -c $<
+	$(CC) -MD -o $@ -std=gnu17 $(LIBK_CFLAGS) -c $(abspath $<)
 
 .cpp.libk.o:
-	$(CPP) -MD -o $@ -std=gnu++17 $(LIBK_CPPFLAGS) -c $<
+	$(CPP) -MD -o $@ -std=gnu++17 $(LIBK_CPPFLAGS) -c $(abspath $<)
 
 .S.libk.o:
-	$(CC) -MD -o $@  $(LIBK_CPPFLAGS) -c $<
+	$(CC) -MD -o $@  $(LIBK_CPPFLAGS) -c $(abspath $<)
 
 clean:
 	$(RM) $(BINARIES) *.a

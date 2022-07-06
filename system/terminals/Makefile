@@ -34,13 +34,13 @@ libVGA_text.a: $(VGA_TEXT_OBJS)
 	$(AR) rcs $@ $(VGA_TEXT_OBJS)
 
 .c.o:
-	$(CC) -MD -o $@ -std=gnu17 $(CFLAGS) -c $<
+	$(CC) -MD -o $@ -std=gnu17 $(CFLAGS) -c $(abspath $<)
 
 .cpp.o:
-	$(CPP) -MD -o $@ -std=gnu++17 $(CPPFLAGS) -c $<
+	$(CPP) -MD -o $@ -std=gnu++17 $(CPPFLAGS) -c $(abspath $<)
 
 .S.o:
-	$(CC) -MD -o $@ $(CPPFLAGS) -c $<
+	$(CC) -MD -o $@ $(CPPFLAGS) -c $(abspath $<)
 
 clean:
 	$(RM) $(BINARIES)
