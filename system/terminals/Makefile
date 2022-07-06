@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2021 James McNaughton Felder
 DEFAULT_HOST!=../../default-host.sh
-HOST?=DEFAULT_HOST
-HOSTARCH!=../../target-triplet-to-arch.sh $(HOST)
+TARGET_HOST?=DEFAULT_HOST
+HOSTARCH!=../../target-triplet-to-arch.sh $(TARGET_HOST)
 
 CFLAGS?=-O2 -g
 CPPFLAGS?=-fno-exceptions -fno-rtti

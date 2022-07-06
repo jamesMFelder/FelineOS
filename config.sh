@@ -2,28 +2,28 @@ export SYSTEM_HEADER_PROJECTS="system/libc system/libFeline system/kernel"
 export PROJECTS="system/libc system/libFeline system/kernel"
 
 export MAKE=${MAKE:-make}
-export HOST=${HOST:-$(./default-host.sh)}
+export TARGET_HOST=${TARGET_HOST:-$(./default-host.sh)}
 
 export COMPILER="gcc"
 #export COMPILER="llvm"
 
-export GAR="${HOST}-ar"
+export GAR="${TARGET_HOST}-ar"
 export GAR_OPTS=""
-export GAS="${HOST}-as"
+export GAS="${TARGET_HOST}-as"
 export GAS_OPTS=""
-export GCC="${HOST}-gcc"
+export GCC="${TARGET_HOST}-gcc"
 export GCC_OPTS=""
-export GPP="${HOST}-g++"
+export GPP="${TARGET_HOST}-g++"
 export GPP_OPTS=""
 
 export LAR="llvm-ar"
 export LAR_OPTS=""
 export LAS="llvm-as"
-export LAS_OPTS="-target ${HOST}"
+export LAS_OPTS="-target ${TARGET_HOST}"
 export LCC="clang"
-export LCC_OPTS="-target ${HOST} -march=i386 -Weverything -Wno-c++98-compat -Wno-c++98-compat-extra-semi -Wno-c++98-compat-pedantic -Wno-c++17-extensions -Wno-reserved-identifier -Wno-missing-variable-declarations -Wno-global-constructors -Wno-language-extension-token"
+export LCC_OPTS="-target ${TARGET_HOST} -march=i386 -Weverything -Wno-c++98-compat -Wno-c++98-compat-extra-semi -Wno-c++98-compat-pedantic -Wno-c++17-extensions -Wno-reserved-identifier -Wno-missing-variable-declarations -Wno-global-constructors -Wno-language-extension-token"
 export LPP="clang++"
-export LPP_OPTS="-target ${HOST} -march=i386 -Weverything -Wno-c++98-compat -Wno-c++98-compat-extra-semi -Wno-c++98-compat-pedantic -Wno-c++17-extensions -Wno-reserved-identifier -Wno-missing-variable-declarations -Wno-global-constructors -Wno-language-extension-token"
+export LPP_OPTS="-target ${TARGET_HOST} -march=i386 -Weverything -Wno-c++98-compat -Wno-c++98-compat-extra-semi -Wno-c++98-compat-pedantic -Wno-c++17-extensions -Wno-reserved-identifier -Wno-missing-variable-declarations -Wno-global-constructors -Wno-language-extension-token"
 
 if [[ ${COMPILER} == "gcc" ]]; then
 	export AR="${GAR} ${GAR_OPTS}"
@@ -57,7 +57,7 @@ export CPP="$CPP --sysroot=$SYSROOT"
 
 # Work around that the -elf gcc targets doesn't have a system include directory
 # because it was configured with --without-headers rather than --with-sysroot.
-if echo "$HOST" | grep -Eq -- '-elf($|-)'; then
+if echo "$TARGET_HOST" | grep -Eq -- '-elf($|-)'; then
   export CC="$CC -isystem $SYSROOT/$INCLUDEDIR"
   export CPP="$CPP -isystem $SYSROOT/$INCLUDEDIR -isystem $SYSROOT/$CPP_INCLUDEDIR"
 fi
