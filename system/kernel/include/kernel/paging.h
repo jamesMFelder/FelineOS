@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <feline/fixed_width.h>
 #include <kernel/mem.h>
+#include <kernel/asm_compat.h>
 
 /* Map len bytes from phys_addr to virt_addr */
 map_results map_range(void const * const phys_addr, uintptr_t len, void const * const virt_addr, unsigned int opts);
@@ -31,7 +32,7 @@ int immediate_paging_initialization();
 /* Initialize paging */
 int setup_paging();
 
-extern "C" void enable_paging(uintptr_t cr3);
+ASM void enable_paging(uintptr_t cr3);
 
 /* Invalidates the cpu's TLB for the page containing addr */
 void invlpg(page const addr);

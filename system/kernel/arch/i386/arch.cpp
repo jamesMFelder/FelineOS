@@ -16,10 +16,8 @@
 
 framebuffer fb;
 
-static void screen_init(multiboot_info_t *phys_mbp){
-	multiboot_info_t mbp;
-	mbp=read_pmem<multiboot_info_t>(phys_mbp);
-	klogf("Framebuffer at %p.", reinterpret_cast<void*>((mbp).framebuffer_addr));
+static void screen_init(multiboot_info_t mbp){
+	klogf("Framebuffer at %p.", reinterpret_cast<void*>(mbp.framebuffer_addr));
 	klogf("Frame buffer pitch (in bytes): %u.", mbp.framebuffer_pitch);
 	klogf("It is %ux%u (in pixels).", mbp.framebuffer_width, mbp.framebuffer_height);
 	klogf("With %" PRIu8 " bits per pixel.", mbp.framebuffer_bpp);
@@ -43,38 +41,17 @@ static void screen_init(multiboot_info_t *phys_mbp){
 		kerrorf("Unable to initialize framebuffer! Failed with error %d.", fb_init_rval);
 		abort();
 	}
-	/* Fill each corner with a color */
-#if 0
-	pixel_t p={255, 255, 255}; /* white */
-	uint16_t maxX, maxY;
-	fb.getMax(&maxX, &maxY); /* get the maximum sizes */
-	fb.putRect(0,      0,      maxX/2,   maxY/2, p); /* upper left */
-	p={255, 0, 0}; /* red */
-	fb.putRect(maxX/2, 0,      maxX/2-1, maxY/2, p); /* uppper right */
-	p={0, 255, 0}; /* green */
-	fb.putRect(0,      maxY/2, maxX/2,   maxY/2-1, p); /* lower left */
-	p={0, 0, 255}; /* blue */
-	fb.putRect(maxX/2, maxY/2, maxX/2-1, maxY/2-1, p); /* lower right */
-	fb.putRect(maxX/4, maxY/4-15, maxX/2, 15, p);
-	p={128, 128, 128}; /* black */
-	fb.putRect(maxX/4, maxY/4, maxX/2, maxY/2, p);
-#endif
 }
 
 char grub_cmdline[4096]="";
 multiboot_uint32_t grub_flags;
 
-static void save_grub_params(multiboot_info_t * const mbp){
-	void * const tmp_ptr=mbp;
-	map_results grub_mapping=map_range(mbp, sizeof(mbp), tmp_ptr, 0);
-	if (grub_mapping != map_success) {
-		kerrorf("Unable to map information from Grub. Error %d.", grub_mapping);
-		return;
-	}
-	grub_flags=mbp->flags;
+static void save_grub_params(multiboot_info_t * const phys_mbp){
+	multiboot_info_t mbp=read_pmem(phys_mbp);
+	grub_flags=mbp.flags;
 	if(get_flag(grub_flags, MULTIBOOT_INFO_CMDLINE)){
 		char *mapped_cmdline;
-		map_results cmdline_mapping=map_range(reinterpret_cast<char*>(mbp->cmdline), 4_KiB, reinterpret_cast<void**>(&mapped_cmdline), 0);
+		map_results cmdline_mapping=map_range(reinterpret_cast<char*>(mbp.cmdline), 4_KiB, reinterpret_cast<void**>(&mapped_cmdline), 0);
 		if (cmdline_mapping != map_success) {
 			kerrorf("Unable to map information from Grub. Error %d.", cmdline_mapping);
 			goto after_cmdline;
@@ -100,7 +77,6 @@ after_cmdline: //Jump here if you need to abort processing the command line.
 		/* TODO: actually do this */
 		kwarn("Not finding screen info from GRUB, using serial port only.");
 	}
-	unmap_range(tmp_ptr, sizeof(mbp), 0);
 	return;
 }
 

@@ -86,7 +86,7 @@ pmm_results get_mem_area(void const * const addr, uintptr_t len, unsigned int op
 pmm_results free_mem_area(void const * const addr, uintptr_t len, unsigned int opts);
 
 /* Utility function to turn a number of bytes into a number of pages */
-/* Just a division rounding up */
+/* Just a division rounding up with overflow checking. */
 inline uintptr_t constexpr bytes_to_pages(uintptr_t const bytes){
 	uintptr_t pages=bytes;
 	if (UINTPTR_MAX-pages < PHYS_MEM_CHUNK_SIZE-1) {

@@ -147,9 +147,6 @@ map_results map_page(page const phys_addr, page const virt_addr, unsigned int op
 /* Don't call this function if you haven't locked `modifying_page_tables` */
 map_results unmap_page(page const virt_addr, unsigned int opts);
 
-/* Return the base of the page directory */
-page_directory_entry *get_pd_base();
-
 /* Mark a page table or directory not present */
 void mark_notpresent(page_directory_entry *pd);
 void mark_notpresent(page_table_entry *pt);
@@ -157,7 +154,8 @@ void mark_notpresent(page_table_entry *pt);
 /* get the physical address virt_addr points to */
 /* for now returns a valid address even if the page table isn't "present" */
 inline void *virt_to_phys(void const * const virt_addr){
-	return reinterpret_cast<void*>(addr(reinterpret_cast<page_table_entry*>(addr(get_pd_base()[pde_offset(virt_addr)]))[pte_offset(virt_addr)]));
+	return reinterpret_cast<void*>(addr(reinterpret_cast<page_table_entry*>(0xFFC00000 + (1024*sizeof(page_table_entry)*pde_offset(virt_addr)) + (sizeof(page_table_entry)*pte_offset(virt_addr)))));
+
 }
 
 /* End Private Declarations */
@@ -182,6 +180,7 @@ extern char const kernel_end;
 page_directory_entry bootstrap_page_directory[[gnu::aligned(0x1000)]][1024]={0};
 page_directory_entry *page_directory=bootstrap_page_directory;
 page_table_entry all_page_tables[[gnu::aligned(0x1000)]][1024][1024]={{0}};
+page_table_entry *page_tables=*all_page_tables;
 /* What we use for searching */
 /* True if present, false otherwise */
 /* Keep in sync with the CPU's page tables! */
@@ -193,12 +192,6 @@ bool page_tables_searchable[MAX_VIRT_MEM/PHYS_MEM_CHUNK_SIZE]={false};
 bool isMapped(page const virt_addr){
 	/* If the page table is present */
 	return page_tables_searchable[searchable_page_table_offset(virt_addr)];
-}
-
-/* Keep this incase we do more complicated tricks */
-/* IDEA: function which sets the addr that this returns when switching processes before changing page_directory */
-inline page_directory_entry *get_pd_base(){
-	return page_directory;
 }
 
 /* Not used, but keep for when we are doing stuff dynamically */
@@ -222,6 +215,10 @@ bool free_from_here(page *virt_addr_base, uintptr_t needed){
 		return false;
 	}
 	page last_page_needed=virt_addr_base->getInt()+needed;
+	/* Round up if needed */
+	if (page_offset(needed) != 0) {
+		++last_page_needed;
+	}
 	/* For each page that would be needed */
 	for(page base=*virt_addr_base; base<=last_page_needed; base++) {
 		if(isMapped(base)) {
@@ -263,12 +260,13 @@ map_results map_page(page const phys_addr, page const virt_addr, unsigned int op
 		return map_already_mapped;
 	}
 	/* Get the page directory we are working with */
-	page_directory_entry *cur_pde=reinterpret_cast<page_directory_entry*>(&(get_pd_base()[pde_offset(virt_addr)]));
+	page_directory_entry *cur_pde=reinterpret_cast<page_directory_entry*>(0xFFFFF000 + sizeof(page_directory_entry)*pde_offset(virt_addr));
 	/* If it isn't present */
 	if(!present(cur_pde)){
 		/* Create a new page table and save the address */
 		/* Not using now because everything is statically set */
 		/* set_addr(cur_pde, create_new_page_table() - VA_OFFSET); */
+		set_addr(cur_pde, reinterpret_cast<uintptr_t>(&all_page_tables[pde_offset(virt_addr)]) - VA_OFFSET);
 		/* Set the configuration */
 		unset_bit(cur_pde, GLOBAL);
 		unset_bit(cur_pde, MB_PAGE); /* Page directory, not 4MB page table */
@@ -280,10 +278,7 @@ map_results map_page(page const phys_addr, page const virt_addr, unsigned int op
 		set_bit(cur_pde, WRITEABLE); /* Default writeable */
 		set_bit(cur_pde, PRESENT); /* It is useable */
 	}
-	page_table_entry *cur_pte;
-	/* cur_pte=&reinterpret_cast<page_table_entry*>(addr(cur_pde) + VA_OFFSET)[pte_offset(virt_addr)]; */
-	/* cur_pte=reinterpret_cast<page_table_entry*>(0xFFC00000 + (0x400 * pte_offset(virt_addr))); */
-	cur_pte=&all_page_tables[pde_offset(virt_addr)][pte_offset(virt_addr)];
+	page_directory_entry *cur_pte=reinterpret_cast<page_table_entry*>(0xFFC00000 + (1024*sizeof(page_table_entry)*pde_offset(virt_addr)) + (sizeof(page_table_entry)*pte_offset(virt_addr)));
 	set_addr(cur_pte, phys_addr);
 	unset_bit(cur_pte, GLOBAL); /* Default process local */
 	unset_bit(cur_pte, PAT); /* We don't support PAT for memory types (yet) */
@@ -354,10 +349,6 @@ static map_results internal_map_range(void const * const phys_addr, uintptr_t le
 
 /* Mapping a range with phys_addr and virt_addr specified */
 map_results map_range(void const * const phys_addr, uintptr_t len, void const * const virt_addr, unsigned int opts){
-	/* Round up */
-	if (page_offset(len) != 0) {
-		len += PHYS_MEM_CHUNK_SIZE;
-	}
 	/* Synchronize access */
 	modifying_page_tables.aquire_lock();
 	map_results temp=internal_map_range(phys_addr, len, virt_addr, opts);
@@ -367,15 +358,10 @@ map_results map_range(void const * const phys_addr, uintptr_t len, void const * 
 
 /* Mapping a range with only phys_addr specified */
 map_results map_range(void const * const phys_addr, uintptr_t len, void **virt_addr, unsigned int opts){
-	/* Map an extra page even if we only need one byte of it. Same for the next page. */
-	if (page_offset(phys_addr) + page_offset(len) != 0) {
-		if (page_offset(phys_addr) + page_offset(len) > PHYS_MEM_CHUNK_SIZE) {
-			len += PHYS_MEM_CHUNK_SIZE;
-		}
-		len += PHYS_MEM_CHUNK_SIZE;
-	}
 	modifying_page_tables.aquire_lock();
-	*virt_addr=find_free_virtmem(len+page_offset(phys_addr));
+	/* Round up, instead of down. */
+	len += page_offset(phys_addr);
+	*virt_addr=find_free_virtmem(len);
 	if(*virt_addr==nullptr){
 		return map_no_virtmem;
 	}
@@ -388,13 +374,6 @@ map_results map_range(void const * const phys_addr, uintptr_t len, void **virt_a
 
 /* Mapping a range with only virt_addr specified */
 map_results map_range(uintptr_t len, void const * const virt_addr, unsigned int opts){
-	/* Map an extra page even if we only need one byte of it. Same for the next page. */
-	if (page_offset(virt_addr) + page_offset(len) != 0) {
-		if (page_offset(virt_addr) + page_offset(len) > PHYS_MEM_CHUNK_SIZE) {
-			len += PHYS_MEM_CHUNK_SIZE;
-		}
-		len += PHYS_MEM_CHUNK_SIZE;
-	}
 	modifying_page_tables.aquire_lock();
 	void *phys_addr;
 	/* attempt to get the physical memory */
@@ -415,10 +394,6 @@ map_results map_range(uintptr_t len, void const * const virt_addr, unsigned int 
 
 /* Mapping a range with nothing specified */
 map_results map_range(uintptr_t len, void **virt_addr, unsigned int opts){
-	/* Round up */
-	if (page_offset(len) != 0) {
-		len += PHYS_MEM_CHUNK_SIZE;
-	}
 	modifying_page_tables.aquire_lock();
 	*virt_addr=find_free_virtmem(len);
 	if(*virt_addr==nullptr){
@@ -440,32 +415,15 @@ map_results map_range(uintptr_t len, void **virt_addr, unsigned int opts){
 }
 
 /* TODO; add many checks to avoid unmapping or leaking info about the kernel */
-map_results unmap_page(page const virt_addr, unsigned int opts){
-	modifying_page_tables.aquire_lock();
+map_results unmap_page(page const virt_addr, unsigned int opts [[maybe_unused]]){
 	if(isMapped(virt_addr)){
-		/* If we are managing the physical memory */
-		if((opts & PHYS_ADDR_AUTO) != 0){
-			/* Attempt to free it */
-			pmm_results attempt=free_mem_area(virt_to_phys(virt_addr), PHYS_MEM_CHUNK_SIZE, 0);
-			/* If the attempt failed */
-			if(attempt==pmm_invalid || attempt==pmm_null){
-				/* Call it an invalid option because we shouldn't have been managing it (TODO: stop doing this!) */
-				return map_invalid_option;
-			}
-		}
-		/* Actually unmap it */
-		unset_bit(&reinterpret_cast<page_table_entry*>(addr(get_pd_base()[pde_offset(virt_addr)]))[pte_offset(virt_addr)], PRESENT);
+		unset_bit(reinterpret_cast<page_table_entry*>(0xFFC00000 + (1024*sizeof(page_table_entry)*pde_offset(virt_addr)) + (sizeof(page_table_entry)*pte_offset(virt_addr))), PRESENT);
 		page_tables_searchable[searchable_page_table_offset(virt_addr)]=false;
 		/* Invalidate the cpu's cache */
-		invlpg(get_pd_base());
-		invlpg(addr(get_pd_base()[pde_offset(virt_addr)]));
-		invlpg(&reinterpret_cast<page_table_entry*>(addr(get_pd_base()[pde_offset(virt_addr)]))[pte_offset(virt_addr)]);
 		invlpg(virt_addr);
-		modifying_page_tables.release_lock();
 		return map_success;
 	}
 	else{
-		modifying_page_tables.release_lock();
 		return map_notmapped;
 	}
 }
@@ -496,12 +454,7 @@ map_results unmap_range(void const * const virt_addr, uintptr_t len, unsigned in
 	to_unmap=virt_addr;
 	for(size_t count=0; count<bytes_to_pages(len); count++, to_unmap++){
 		/* Actually unmap it */
-		unset_bit(&reinterpret_cast<page_table_entry*>(addr(get_pd_base()[pde_offset(virt_addr)]))[pte_offset(virt_addr)], PRESENT);
-		page_tables_searchable[searchable_page_table_offset(virt_addr)]=false;
-		/* Invalidate the cpu's cache */
-		invlpg(addr(get_pd_base()[pde_offset(virt_addr)]));
-		invlpg(addr(&reinterpret_cast<page_table_entry*>(addr(get_pd_base()[pde_offset(virt_addr)]))[pte_offset(virt_addr)]));
-		invlpg(virt_addr);
+		unmap_page(to_unmap, 0);
 	}
 	modifying_page_tables.release_lock();
 	return map_success;
@@ -534,22 +487,39 @@ int setup_paging(){
 
 	/* Map the kernel and page directory */
 	/* This makes sure that they haven't been unmapped */
-	map_results map;
-	map=map_range(&phys_kernel_start, reinterpret_cast<uintptr_t>(&phys_kernel_end)-reinterpret_cast<uintptr_t>(&phys_kernel_start), &kernel_start, MAP_OVERWRITE);
-	if(map!=map_success){
-		kerrorf("Error mapping the kernel: %d.", map);
-		abort();
+	modifying_page_tables.aquire_lock();
+	for(page where=&kernel_start; where <= &kernel_end; ++where) {
+		page phys_where=where.getInt() - VA_OFFSET;
+		page_table_entry *cur_pte=&all_page_tables[pde_offset(where)][pte_offset(where)];
+		set_addr(cur_pte, phys_where);
+		unset_bit(cur_pte, GLOBAL); /* Default process local */
+		unset_bit(cur_pte, PAT); /* We don't support PAT for memory types (yet) */
+		unset_bit(cur_pte, WRITTEN); /* Not accessed yet */
+		unset_bit(cur_pte, READ);
+		unset_bit(cur_pte, CACHE_DISABLE); /* Cache this */
+		unset_bit(cur_pte, WRITE_THROUGH); /* Write-back caching */
+		unset_bit(cur_pte, USER); /* Default kernelspace */
+		set_bit(cur_pte, WRITEABLE); /* Default writeable */
+		set_bit(cur_pte, PRESENT); /* It is useable */
+		page_tables_searchable[searchable_page_table_offset(where)]=true;
+		assert(isMapped(where));
+		invlpg(where);
 	}
-	map=map_range(bootstrap_page_directory, 0x400000, reinterpret_cast<void*>(0xffc00000), 0);
-	if(map!=map_success){
-		kerrorf("Error mapping the paging tables: %d.", map);
-		abort();
-	}
+	set_addr(&bootstrap_page_directory[1023], reinterpret_cast<uintptr_t>(bootstrap_page_directory) - VA_OFFSET);
+	unset_bit(&bootstrap_page_directory[1023], GLOBAL);
+	unset_bit(&bootstrap_page_directory[1023], PAT);
+	unset_bit(&bootstrap_page_directory[1023], GLOBAL);
+	unset_bit(&bootstrap_page_directory[1023], WRITTEN);
+	unset_bit(&bootstrap_page_directory[1023], READ);
+	unset_bit(&bootstrap_page_directory[1023], CACHE_DISABLE);
+	unset_bit(&bootstrap_page_directory[1023], WRITE_THROUGH);
+	unset_bit(&bootstrap_page_directory[1023], USER);
+	set_bit(&bootstrap_page_directory[1023], WRITEABLE);
+	set_bit(&bootstrap_page_directory[1023], PRESENT);
 	/* Basic sanity check */
 	/* If this fails, we probably would crash on the instruction after enabling paging */
-	modifying_page_tables.aquire_lock();
 	assert(isMapped(&kernel_start));
-	assert(isMapped(&kernel_end-1));
+	assert(isMapped(&kernel_end));
 	modifying_page_tables.release_lock();
 	/* Writeback instead of writethrough (PWT==1<<3) */
 	/* cr3 |= (1<<3); */

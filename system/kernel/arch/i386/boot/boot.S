@@ -93,11 +93,16 @@ _start:
 	loop 1b
 
 3:
-	//Map the page table to virtual addresses 0x00000000 (identity map)
-	movl $(boot_page_table1 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET
-	movl $(boot_page_table2 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 4
-	movl $(boot_page_table3 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 8
-	movl $(boot_page_table4 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 12
+	//Map the page table to virtual addresses 0x00000000 (identity map)/* and VA_OFFSET (higher-half)*/
+	movl $(boot_page_table1 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 0
+	movl $(boot_page_table2 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 0 + 4
+	movl $(boot_page_table3 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 0 + 8
+	movl $(boot_page_table4 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 0 + 12
+
+	/*movl $(boot_page_table1 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 768*4
+	movl $(boot_page_table2 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 768*4 + 4
+	movl $(boot_page_table3 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 768*4 + 8
+	movl $(boot_page_table4 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 768*4 + 12*/
 
 	//Set cr3 to the address of the boot_page_directory
 	movl $(boot_page_directory - VA_OFFSET), %ecx
@@ -105,7 +110,7 @@ _start:
 
 	//Enable paging and the write-protect bit
 	movl %cr0, %ecx
-	orl 0x80010000, %ecx
+	orl $0x80010000, %ecx
 	movl %ecx, %cr0
 
 	//Jump to the higher-half with and absolute jump
@@ -115,6 +120,13 @@ _start:
 .section .text
 4:
 	//Paging is fully setup and enabled
+	/*//Unmap the identity mapping as it is is no-longer necessary
+	movl $0, boot_page_directory + 0
+	movl $0, boot_page_directory + 4
+	movl $0, boot_page_directory + 8
+	movl $0, boot_page_directory + 12
+	movl %cr3, %ecx
+	movl %ecx, %cr3*/
 
 	/* Setup the stack and clear ebp so debuggers don't trace further back from here */
 	mov $stack_top, %esp

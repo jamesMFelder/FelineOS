@@ -175,9 +175,6 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 	/* Quickly mark unknown parts of the bitmap as unuseable */
 	for (size_t index = 0; index<mem_bitmap_len; ++index) {
 		normal_mem_bitmap[index].in_use=true;
-		if (reinterpret_cast<uintptr_t>(&normal_mem_bitmap[index]) % 0x1000 == 0) {
-			printf("%zd: %p\n", index, static_cast<void*>(&normal_mem_bitmap[index]));
-		}
 	}
 	/* Loop through the memory again to fill in the bitmap */
 	mem_index=0;
@@ -213,11 +210,12 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 /* returns nullptr if no RAM is available */
 static page find_free_pages(size_t num){
 	/* Abort if we don't have enough total RAM */
-	if(num>mem_bitmap_len){
+	if(num>=mem_bitmap_len){
 		abort();
 	}
 	/* Loop through the page table stopping when there can't be enough free space */
-	for(size_t where=0; where<mem_bitmap_len-num; where++){
+	/* Start at 1, because nullptr is 0 and means not enough space was available */
+	for(size_t where=1; where<mem_bitmap_len-num; where++){
 		/* If it is free */
 		if(!normal_mem_bitmap[where].in_use){
 			/* Start counting up to the number we need */
