@@ -32,4 +32,4 @@ EOF
 #Create the iso
 grub2-mkrescue -o FelineOS.iso isodir
 #Create a symbol file for bochs
-nm -C isodir/boot/FelineOS.kernel | sed -n 's/ T / /p' > kernel.sym
+nm -Cg isodir/boot/FelineOS.kernel | sed -n 's/^\([[:xdigit:]]\+\) [[:alpha:]] /0x\1 /p' > kernel.sym
