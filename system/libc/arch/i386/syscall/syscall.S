@@ -9,10 +9,10 @@ syscall:
 	push %ebp /* Create a stack frame (for debugging) */
 	mov %esp, %ebp
 
-	mov 4(%ebp), %eax /* Move the first argument to eax (to select the syscall) */
+	mov 8(%ebp), %eax /* Move the first argument to eax (to select the syscall) */
 
 	cmpl $0, %eax /* Compare against the max syscall number (0 because we don't support any) */
-	jle valid
+	jl valid
 	movl $-1, %eax /* Return -1 */
 	jmp done /* Jump to cleanup */
 	valid:
