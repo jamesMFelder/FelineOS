@@ -6,7 +6,7 @@
 
 
 /* How far is the kernel in virtual memory from where it is in physical memory */
-#define VA_OFFSET 0x0
+#define VA_OFFSET 0xc0000000
 
 /* Only define templates for C++, but don't error if another language includes this file */
 #if defined(__cplusplus) && !defined(__ASSEMBLER__)

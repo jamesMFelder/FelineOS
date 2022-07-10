@@ -93,16 +93,18 @@ _start:
 	loop 1b
 
 3:
-	//Map the page table to virtual addresses 0x00000000 (identity map)/* and VA_OFFSET (higher-half)*/
-	movl $(boot_page_table1 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 0
-	movl $(boot_page_table2 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 0 + 4
-	movl $(boot_page_table3 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 0 + 8
-	movl $(boot_page_table4 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 0 + 12
+	//Map the page table to virtual addresses 0x00000000 (identity map) and VA_OFFSET (higher-half)
+	movl $(boot_page_table1 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + PD_SIZE*0
+	movl $(boot_page_table2 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + PD_SIZE*1
+	movl $(boot_page_table3 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + PD_SIZE*2
+	movl $(boot_page_table4 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + PD_SIZE*3
 
-	/*movl $(boot_page_table1 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 768*4
-	movl $(boot_page_table2 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 768*4 + 4
-	movl $(boot_page_table3 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 768*4 + 8
-	movl $(boot_page_table4 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + 768*4 + 12*/
+.set PD_OFFSET, VA_OFFSET >> 22 /* How far into the page directories to map the kernel. */
+.equ PD_SIZE, 4
+	movl $(boot_page_table1 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + PD_OFFSET*PD_SIZE + PD_SIZE*0
+	movl $(boot_page_table2 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + PD_OFFSET*PD_SIZE + PD_SIZE*1
+	movl $(boot_page_table3 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + PD_OFFSET*PD_SIZE + PD_SIZE*2
+	movl $(boot_page_table4 - VA_OFFSET + 0x003), boot_page_directory - VA_OFFSET + PD_OFFSET*PD_SIZE + PD_SIZE*3
 
 	//Set cr3 to the address of the boot_page_directory
 	movl $(boot_page_directory - VA_OFFSET), %ecx
@@ -120,13 +122,13 @@ _start:
 .section .text
 4:
 	//Paging is fully setup and enabled
-	/*//Unmap the identity mapping as it is is no-longer necessary
+	//Unmap the identity mapping as it is is no-longer necessary
 	movl $0, boot_page_directory + 0
 	movl $0, boot_page_directory + 4
 	movl $0, boot_page_directory + 8
 	movl $0, boot_page_directory + 12
 	movl %cr3, %ecx
-	movl %ecx, %cr3*/
+	movl %ecx, %cr3
 
 	/* Setup the stack and clear ebp so debuggers don't trace further back from here */
 	mov $stack_top, %esp
