@@ -2,7 +2,6 @@
 # Copyright (c) 2021 James McNaughton Felder
 DEFAULT_HOST!=../../default-host.sh
 TARGET_HOST?=$(DEFAULT_HOST)
-HOSTARCH!=../../target-triplet-to-arch.sh $(TARGET_HOST)
 
 CFLAGS?=-O2 -g
 CPPFLAGS?=-fno-exceptions -fno-rtti
@@ -24,22 +23,11 @@ LIBFELINE_CFLAGS:=$(CFLAGS) -D__is_libfeline
 LIBFELINE_CPPFLAGS:=$(CPPFLAGS) -D__is_libfeline
 LIBS:=$(LIBS) -nostdlib -lgcc
 
-ARCHDIR=arch/$(HOSTARCH)
-
-include $(ARCHDIR)/make.config
-
-CFLAGS:=$(CFLAGS) $(ARCH_CFLAGS)
-CPPFLAGS:=$(CPPFLAGS) $(ARCH_CPPFLAGS)
-LIBFELINE_CFLAGS:=$(LIBFELINE_CFLAGS) $(LIB_FELINE_ARCH_CFLAGS)
-LIBFELINE_CPPFLAGS:=$(LIBFELINE_CPPFLAGS) $(LIB_FELINE_ARCH_CPPFLAGS)
-
 FREEOBJS=\
-$(ARCH_FREEOBJS) \
 src/string/itostr.o \
 src/locking/spinlock.o
 
 HOSTEDOBJS=\
-$(ARCH_HOSTEDOBJS) \
 
 OBJS=\
 $(FREEOBJS) \

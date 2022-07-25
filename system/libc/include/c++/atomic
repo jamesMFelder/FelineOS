@@ -66,6 +66,6 @@ template <class T> struct atomic{
 } /* namespace std */
 
 /* Instantiate the template */
-#include <templates/arch/atomic.tpp>
+#include <templates/atomic.tpp>
 
 #endif /* _ATOMIC_H */
