@@ -25,10 +25,7 @@ T read_pmem(T const * const addr) {
 		kerrorf ("Cannot map physical memory %p. Error %d.", static_cast<void const * const>(addr), type_mapping);
 		abort();
 	}
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wuninitialized" /* Actually, map_range makes tmp_ptr valid */
 	value = *tmp_ptr;
-#pragma GCC diagnostic pop
 	unmap_range(tmp_ptr, sizeof(T), 0);
 	return value;
 }
@@ -42,10 +39,7 @@ void read_pmem(T const * const addr, size_t num, T * result) {
 		kerrorf ("Cannot map physical memory %p. Error %d.", static_cast<void const * const>(addr), type_mapping);
 		abort();
 	}
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wuninitialized" /* Actually, map_range makes tmp_ptr valid */
 	memmove(result, tmp_ptr, sizeof(T) * num);
-#pragma GCC diagnostic pop
 	unmap_range(tmp_ptr, sizeof(T) * num, 0);
 }
 

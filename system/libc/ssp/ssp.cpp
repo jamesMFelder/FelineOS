@@ -26,7 +26,7 @@ void __stack_chk_fail(void)
 	__builtin_unreachable();
 #else
 	kcritical("Stack smashing detected");
-	__asm__ ("hlt");
+	abort();
 	__builtin_unreachable();
 #endif
 }

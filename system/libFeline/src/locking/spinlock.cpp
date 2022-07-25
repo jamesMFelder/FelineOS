@@ -8,10 +8,10 @@ void Spinlock::aquire_lock(){
 	while(!lock.compare_exchange_weak(temp, true, std::memory_order_seq_cst)){
 		temp=false;
 		/* If it wasn't 0, relax the CPU so hyperthreading is more efficient */
-		asm("pause");
+		asm("nop");
 	}
 	/* Once it was 0 (released by someone else) */
-	/* 	We already set it to 1 */
+	/*	We already set it to 1 */
 	return;
 }
 

@@ -61,7 +61,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 	/* Print debugging information */
 	klogf("Kernel starts at %p", static_cast<void const *>(&kernel_start));
 	klogf("Kernel ends at %p", static_cast<void const *>(&kernel_end));
-	klogf("It is %#lx bytes long.", uint_kernel_end-uint_kernel_start);
+	klogf("It is %#" PRIxPTR " bytes long.", uint_kernel_end-uint_kernel_start);
 
 	/* Find the highest amount of memory */
 	unsigned int mem_index=0;
@@ -96,7 +96,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 		mem_bitmap_len = 4_GiB/PHYS_MEM_CHUNK_SIZE;
 	}
 	else {
-		mem_bitmap_len = (max_mem + PHYS_MEM_CHUNK_SIZE - 1) / PHYS_MEM_CHUNK_SIZE;
+		mem_bitmap_len = static_cast<size_t>((max_mem + PHYS_MEM_CHUNK_SIZE - 1) / PHYS_MEM_CHUNK_SIZE);
 	}
 	printf("%zx = %llx/%llx\n", mem_bitmap_len, max_mem, PHYS_MEM_CHUNK_SIZE);
 
@@ -180,6 +180,9 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 	mem_index=0;
 	while (mem_index < mbp.mmap_length) {
 		multiboot_memory_map_t *cur_mp=mbmp+mem_index/sizeof(multiboot_memory_map_t);
+		if (cur_mp->addr >= 4_GiB) {
+			break;
+		}
 
 		bool in_use = (cur_mp->type != MULTIBOOT_MEMORY_AVAILABLE);
 		/* TODO: delete low-level logging */

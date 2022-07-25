@@ -165,7 +165,11 @@ int vprintf(const char* format, va_list parameters){
 					case 'H':
 					{
 						char num=static_cast<char>(va_arg(parameters, unsigned int));
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"
+#pragma GCC diagnostic ignored "-Wtautological-unsigned-char-zero-compare" //When char is unsigned, this is meaningless. However, it is sometimes signed.
 						if(num<0){
+#pragma GCC diagnostic pop
 							*bufPtr++='-';
 						} else if(always_signed){
 							*bufPtr++='+';

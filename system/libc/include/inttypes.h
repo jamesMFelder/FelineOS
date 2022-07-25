@@ -14,7 +14,11 @@
 #define PRI16 "h"
 #define PRI32 "l"
 #define PRI64 "ll"
+#ifdef __clang__ /*It complains about uintptr not being int.*/
+#define PRIPTR
+#else
 #define PRIPTR PRI32
+#endif
 
 #define PRId8 PRI8 PRId
 #define PRId16 PRI16 PRId

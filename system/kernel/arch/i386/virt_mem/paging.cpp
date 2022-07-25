@@ -472,7 +472,11 @@ int setup_paging(){
 
 	for(size_t pdindex=0; pdindex<1024; pdindex++){
 		/* Setup the page directory */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas" //GCC doesn't know the next warning, but Clang does and needs it suppressed with -Werror
+#pragma GCC diagnostic ignored "-Warray-bounds-pointer-arithmetic" //Converting virtual to physical memory will require going outside of the array
 		set_addr(&bootstrap_page_directory[pdindex], all_page_tables[pdindex] - VA_OFFSET/sizeof(page_table_entry));
+#pragma GCC diagnostic pop
 		unset_bit(&bootstrap_page_directory[pdindex], MB_PAGE); /* Page directory, not 4MB page table */
 		unset_bit(&bootstrap_page_directory[pdindex], WRITTEN); /* Not accessed yet */
 		unset_bit(&bootstrap_page_directory[pdindex], READ);
