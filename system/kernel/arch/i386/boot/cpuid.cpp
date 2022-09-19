@@ -2,26 +2,26 @@
 /* Copyright (c) 2021 James McNaughton Felder */
 #include <kernel/cpuid.h>
 
-static bool __cpuid_supported=false;
+static bool cpuid_is_supported=false;
 
 bool cpuid_supported(){
 	if(__get_cpuid_max(0, nullptr)==0){
-		__cpuid_supported=false;
+		cpuid_is_supported=false;
 		return false;
 	}
-	__cpuid_supported=true;
+	cpuid_is_supported=true;
 	return true;
 }
 
 int cpuid_max(){
-	if(!__cpuid_supported){
+	if(!cpuid_is_supported){
 		return -1;
 	}
 	return __get_cpuid_max(0x80000000, nullptr);
 }
 
 unsigned int cpuid_vendor(unsigned char regs[13]){
-	if(!__cpuid_supported){
+	if(!cpuid_is_supported){
 		memset(regs, 0, 13);
 		return 0;
 	}

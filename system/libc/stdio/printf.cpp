@@ -164,12 +164,8 @@ int vprintf(const char* format, va_list parameters){
 					/* char */
 					case 'H':
 					{
-						char num=static_cast<char>(va_arg(parameters, unsigned int));
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpragmas"
-#pragma GCC diagnostic ignored "-Wtautological-unsigned-char-zero-compare" //When char is unsigned, this is meaningless. However, it is sometimes signed.
+						signed char num=static_cast<signed char>(va_arg(parameters, signed int));
 						if(num<0){
-#pragma GCC diagnostic pop
 							*bufPtr++='-';
 						} else if(always_signed){
 							*bufPtr++='+';
@@ -193,7 +189,7 @@ int vprintf(const char* format, va_list parameters){
 					/* int */
 					case '\0':
 					{
-						int num=static_cast<int>(va_arg(parameters, unsigned int));
+						signed int num=static_cast<signed int>(va_arg(parameters, signed int));
 						if(num<0){
 							*bufPtr++='-';
 						} else if(always_signed){
@@ -205,7 +201,7 @@ int vprintf(const char* format, va_list parameters){
 					/* long */
 					case 'l':
 					{
-						long num=static_cast<long>(va_arg(parameters, unsigned long));
+						signed long num=static_cast<signed long>(va_arg(parameters, signed long));
 						if(num<0){
 							*bufPtr++='-';
 						} else if(always_signed){
@@ -217,7 +213,7 @@ int vprintf(const char* format, va_list parameters){
 					/* long long */
 					case 'q':
 					{
-						long long num=static_cast<long long>(va_arg(parameters, unsigned long long));
+						signed long long num=static_cast<signed long long>(va_arg(parameters, signed long long));
 						if(num<0){
 							*bufPtr++='-';
 						} else if(always_signed){
@@ -262,35 +258,35 @@ int vprintf(const char* format, va_list parameters){
 					/* char */
 					case 'H':
 					{
-						char num=static_cast<char>(va_arg(parameters, unsigned int));
+						unsigned char num=static_cast<unsigned char>(va_arg(parameters, unsigned int));
 						otostr(num, bufPtr);
 						break;
 					}
 					/* short */
 					case 'h':
 					{
-						short num=static_cast<short>(va_arg(parameters, signed int));
+						unsigned short num=static_cast<unsigned short>(va_arg(parameters, unsigned int));
 						otostr(num, bufPtr);
 						break;
 					}
 					/* int */
 					case '\0':
 					{
-						int num=static_cast<int>(va_arg(parameters, unsigned int));
+						unsigned int num=static_cast<unsigned int>(va_arg(parameters, unsigned int));
 						otostr(num, bufPtr);
 						break;
 					}
 					/* long */
 					case 'l':
 					{
-						long num=static_cast<long>(va_arg(parameters, unsigned long));
+						unsigned long num=static_cast<unsigned long>(va_arg(parameters, unsigned long));
 						otostr(num, bufPtr);
 						break;
 					}
 					/* long long */
 					case 'q':
 					{
-						long long num=static_cast<long long>(va_arg(parameters, unsigned long long));
+						unsigned long long num=static_cast<unsigned long long>(va_arg(parameters, unsigned long long));
 						otostr(num, bufPtr);
 						break;
 					}
@@ -318,7 +314,7 @@ int vprintf(const char* format, va_list parameters){
 					/* char */
 					case 'H':
 					{
-						char num=static_cast<char>(va_arg(parameters, unsigned int));
+						unsigned char num=static_cast<unsigned char>(va_arg(parameters, unsigned int));
 						if(always_signed){
 							*bufPtr++='+';
 						}
@@ -328,7 +324,7 @@ int vprintf(const char* format, va_list parameters){
 					/* short */
 					case 'h':
 					{
-						short num=static_cast<short>(va_arg(parameters, signed int));
+						unsigned short num=static_cast<unsigned short>(va_arg(parameters, unsigned int));
 						if(always_signed){
 							*bufPtr++='+';
 						}
@@ -338,7 +334,7 @@ int vprintf(const char* format, va_list parameters){
 					/* int */
 					case '\0':
 					{
-						int num=static_cast<int>(va_arg(parameters, unsigned int));
+						unsigned int num=static_cast<unsigned int>(va_arg(parameters, unsigned int));
 						if(always_signed){
 							*bufPtr++='+';
 						}
@@ -348,7 +344,7 @@ int vprintf(const char* format, va_list parameters){
 					/* long */
 					case 'l':
 					{
-						long num=static_cast<long>(va_arg(parameters, unsigned long));
+						unsigned long num=static_cast<unsigned long>(va_arg(parameters, unsigned long));
 						if(always_signed){
 							*bufPtr++='+';
 						}
@@ -358,7 +354,7 @@ int vprintf(const char* format, va_list parameters){
 					/* long long */
 					case 'q':
 					{
-						long long num=static_cast<long long>(va_arg(parameters, unsigned long long));
+						unsigned long long num=static_cast<unsigned long long>(va_arg(parameters, unsigned long long));
 						if(always_signed){
 							*bufPtr++='+';
 						}
@@ -400,35 +396,35 @@ int vprintf(const char* format, va_list parameters){
 					/* char */
 					case 'H':
 					{
-						char num=static_cast<char>(va_arg(parameters, unsigned int));
+						unsigned char num=static_cast<unsigned char>(va_arg(parameters, unsigned int));
 						xtostr(num, bufPtr, false);
 						break;
 					}
 					/* short */
 					case 'h':
 					{
-						short num=static_cast<short>(va_arg(parameters, signed int));
+						unsigned short num=static_cast<unsigned short>(va_arg(parameters, unsigned int));
 						xtostr(num, bufPtr, false);
 						break;
 					}
 					/* int */
 					case '\0':
 					{
-						int num=static_cast<int>(va_arg(parameters, unsigned int));
+						unsigned int num=static_cast<unsigned int>(va_arg(parameters, unsigned int));
 						xtostr(num, bufPtr, false);
 						break;
 					}
 					/* long */
 					case 'l':
 					{
-						long num=static_cast<long>(va_arg(parameters, unsigned long));
+						unsigned long num=static_cast<unsigned long>(va_arg(parameters, unsigned long));
 						xtostr(num, bufPtr, false);
 						break;
 					}
 					/* long long */
 					case 'q':
 					{
-						long long num=static_cast<long long>(va_arg(parameters, unsigned long long));
+						unsigned long long num=static_cast<unsigned long long>(va_arg(parameters, unsigned long long));
 						xtostr(num, bufPtr, false);
 						break;
 					}
@@ -461,35 +457,35 @@ int vprintf(const char* format, va_list parameters){
 					/* char */
 					case 'H':
 					{
-						char num=static_cast<char>(va_arg(parameters, unsigned int));
+						unsigned char num=static_cast<unsigned char>(va_arg(parameters, unsigned int));
 						xtostr(num, bufPtr);
 						break;
 					}
 					/* short */
 					case 'h':
 					{
-						short num=static_cast<short>(va_arg(parameters, signed int));
+						unsigned short num=static_cast<unsigned short>(va_arg(parameters, unsigned int));
 						xtostr(num, bufPtr);
 						break;
 					}
 					/* int */
 					case '\0':
 					{
-						int num=static_cast<int>(va_arg(parameters, unsigned int));
+						unsigned int num=static_cast<unsigned int>(va_arg(parameters, unsigned int));
 						xtostr(num, bufPtr);
 						break;
 					}
 					/* long */
 					case 'l':
 					{
-						long num=static_cast<long>(va_arg(parameters, unsigned long));
+						unsigned long num=static_cast<unsigned long>(va_arg(parameters, unsigned long));
 						xtostr(num, bufPtr);
 						break;
 					}
 					/* long long */
 					case 'q':
 					{
-						long long num=static_cast<long long>(va_arg(parameters, unsigned long long));
+						unsigned long long num=static_cast<unsigned long long>(va_arg(parameters, unsigned long long));
 						xtostr(num, bufPtr);
 						break;
 					}
