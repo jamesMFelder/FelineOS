@@ -6,7 +6,6 @@
 #include <cinttypes>
 #include <kernel/arch.h>
 #include <kernel/log.h>
-#include <kernel/cpuid.h>
 #include <kernel/multiboot.h>
 #include <kernel/misc.h>
 #include <drivers/serial.h>
@@ -16,6 +15,9 @@
 #include <feline/str.h>
 #include <kernel/mem.h>
 #include <kernel/asm_compat.h>
+#ifdef __i686__
+#include <kernel/cpuid.h>
+#endif
 
 /* Setup by the linker to be at the start and end of the kernel. */
 extern const char kernel_start;
@@ -29,11 +31,13 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 	/* Announce that we are loaded */
 	klog("Hello kernel world!");
 
+#ifdef __i686__
 	if(cpuid_supported()){
 		unsigned char vendor[13];
 		cpuid_vendor(vendor);
 		printf("Your cpu is %s.\n", vendor);
 	}
+#endif
 
 	printf("Kernel starts at %p\n", static_cast<const void *>(&kernel_start));
 	printf("Kernel ends at %p\n", static_cast<const void *>(&kernel_end));

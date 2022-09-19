@@ -1,7 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2021 James McNaughton Felder */
 #include <drivers/serial.h>
-#include <kernel/asm.h>
+
+#ifdef __i686__
+
+#include <kernel/io.h>
 
 #define PORT 0x3f8 /* COM1 */
 
@@ -60,3 +63,13 @@ void writestr_serial(const char *str){
 	}
 	return;
 }
+
+#else // __i686__
+
+int init_serial(){return -1;}
+char read_serial(){return '\0';}
+void put_serial(char a [[maybe_unused]]){return;}
+void write_serial(const char *str [[maybe_unused]], const size_t len [[maybe_unused]]){return;}
+void writestr_serial(const char *str [[maybe_unused]]){return;}
+
+#endif // __i686__ (else)
