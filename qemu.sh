@@ -10,7 +10,7 @@ if [ "$1" = "-g" ]; then
 fi
 
 if [ "$(./target-triplet-to-arch.sh "$TARGET_HOST")" = "arm" ]; then
-	EXTRA_DEVICES="-dtb rpi-boot/boot/bcm2708-rpi-b.dtb"
+	EXTRA_DEVICES="-dtb bcm2708-rpi-b.dtb"
 	BOOT="-kernel system/kernel/FelineOS.kernel"
 elif [ "$(./target-triplet-to-arch.sh "$TARGET_HOST")" = "i386" ]; then
 	BOOT="-cdrom FelineOS.iso"
