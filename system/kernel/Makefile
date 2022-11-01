@@ -56,7 +56,9 @@ all: FelineOS.kernel
 
 FelineOS.kernel: $(OBJS) $(ARCHDIR)/linker.ld
 	$(CPP) -T $(abspath $(ARCHDIR)/linker.ld) -o $@ $(CFLAGS) $(LINK_LIST)
+ifeq ($(HOSTARCH), i368)
 	grub2-file --is-x86-multiboot FelineOS.kernel
+endif
 
 $(ARCHDIR)/linker.ld: $(ARCHDIR)/linker.ldpp
 	$(CPP) $(CFLAGS) $(CPPFLAGS) -CC -E -x c++ $(abspath $<) -o $@

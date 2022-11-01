@@ -1,3 +1,4 @@
 *.a
 *.d
 *.o
+docs/doxygen_html

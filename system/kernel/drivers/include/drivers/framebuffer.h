@@ -54,10 +54,10 @@ class framebuffer{
 		int putPixel_bgr(uint16_t x, uint16_t y, pixel_bgr_t p);
 		int putRect_bgr(uint16_t x, uint16_t y, uint16_t width, uint16_t height, pixel_bgr_t p);
 		/* Returns: */
-		/* 	00 if everything is good */
-		/* 	bit 1 is set if the framebuffer is not setup */
-		/* 	bit 2 is set if the padding for the pixel is non-zero (optional, support or zero) */
-		/* 	bit 3 is set if the size would put it off-screen (optional, truncate) */
+		/*	00 if everything is good */
+		/*	bit 1 is set if the framebuffer is not setup */
+		/*	bit 2 is set if the padding for the pixel is non-zero (optional, support or zero) */
+		/*	bit 3 is set if the size would put it off-screen (optional, truncate) */
 		unsigned int checkParms(uint16_t maxRight, uint16_t maxDown, pixel_bgr_t p);
 };
 

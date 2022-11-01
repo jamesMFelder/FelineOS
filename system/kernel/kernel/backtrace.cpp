@@ -10,6 +10,7 @@
 
 /* Do a backtrace showing up to BT_STATIC_LEN functions */
 void backtrace(){
+#ifndef __arm__ //Temporary measure while arm doesn't have this function
 	/* Create an array of pointers. */
 	void* backtrace[BT_STATIC_LEN]={nullptr};
 	/* How far back we actuall got. */
@@ -22,4 +23,5 @@ void backtrace(){
 	for(uint32_t i=0; i<stored && backtrace[i]!=nullptr; i++){
 		printf("%p\n", backtrace[i]);
 	}
+#endif // ! __arm__
 }
