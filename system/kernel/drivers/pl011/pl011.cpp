@@ -64,8 +64,12 @@ int init_serial() {
 	/* Clear all old interrupts */
 	set(pl011_icr, 0b0); /* Everything is either "write 0 to clear", "unsupported - write 0" or "reserved - write 0" */
 	/* Set sending rate to highest possible */
-	set(pl011_ibrd, 0b1); //Integer divisor=1
-	set(pl011_fbrd, 0b0); //Fractional divisor=0
+	/* Set to 115200 baud (with a 48MHz uart clock [https://forums.raspberrypi.com/viewtopic.php?t=226881#p1391755]) */
+	/* Baud Rate Divisor=(48*10^6)/(16*115200)=26.041666*/
+	/* BRD[i]=26 */
+	/* BRD[f]=integer((0.041666*64)+0.5)=3*/
+	set(pl011_ibrd, 26);
+	set(pl011_fbrd, 3);
 	/* General setup */
 	set(pl011_lcrh, 0b001110000);
 	//                ┃┃┃┃┃┃┃┃┗━ don't send break
