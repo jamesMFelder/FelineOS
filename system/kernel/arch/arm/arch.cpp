@@ -62,12 +62,11 @@ Flexibility:
 		be able to log anything until the IDT is setup (attempts will triple-fault)
 		Also note that the interrupts actually log stuff, so watch out!
 After this we should be good to go! */
-int early_boot_setup(multiboot_info_t *mbp){
+int early_boot_setup(multiboot_info_t *mbp [[maybe_unused]]){
 	init_serial(); /* We can't do any logging before this gets setup */
-	writestr_serial("Hello world!\r\n");
-	idt_init(); /* Actually display an error if we have a problem: don't just triple fault */
-	setup_paging(); /* Take control of it from the assembly! */
-	bootstrap_phys_mem_manager(mbp); /* Get the physical memory manager working */
+	//idt_init(); /* Actually display an error if we have a problem: don't just triple fault */
+	//setup_paging(); /* Take control of it from the assembly! */
+	//bootstrap_phys_mem_manager(mbp); /* Get the physical memory manager working */
 	screen_init(); /* Initialize the framebuffer */
 	return 0;
 }

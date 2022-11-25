@@ -24,6 +24,11 @@
 	boot_page_table4:
 	.skip 4096
 
+.section .rodata
+	.align 16
+	test_str:
+	.asciz "Hello world!\r\n"
+
 /* The kernel entry point. */
 .section .startup.text, "ax"
 .global _start
@@ -42,9 +47,13 @@ _start:
 	.extern _init
 	bl _init
 
+	.extern writestr_serial
+	ldr r0, =test_str
+	bl writestr_serial
+
 	/* Transfer control to the main kernel. */
 	.extern kernel_main
-	bl kernel_main
+	//bl kernel_main
 
 	/* Call destructors (shouldn't reach here) */
 	mov r0, #0
@@ -54,5 +63,4 @@ _start:
 	/* Hang if kernel_main unexpectedly returns. */
 	//cli
 .hang:
-	hlt
 	bl .hang
