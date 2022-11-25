@@ -11,7 +11,7 @@ fi
 
 if [ "$(./target-triplet-to-arch.sh "$TARGET_HOST")" = "arm" ]; then
 	EXTRA_DEVICES="-dtb bcm2708-rpi-b.dtb"
-	BOOT="-kernel system/kernel/FelineOS.kernel"
+	BOOT="-device loader,file=sysroot/boot/kernel.bin,addr=0x8000,cpu-num=0"
 elif [ "$(./target-triplet-to-arch.sh "$TARGET_HOST")" = "i386" ]; then
 	BOOT="-cdrom FelineOS.iso"
 else

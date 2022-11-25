@@ -90,6 +90,11 @@ install-headers:
 
 install-kernel: FelineOS.kernel
 	mkdir -p $(DESTDIR)$(BOOTDIR)
+ifeq ($(HOSTARCH), i368)
 	cp FelineOS.kernel $(DESTDIR)$(BOOTDIR)
+else ifeq ($(HOSTARCH), arm)
+	objcopy -O binary FelineOS.kernel $(DESTDIR)$(BOOTDIR)/kernel.bin
+	objcopy --only-keep-debug FelineOS.kernel $(DESTDIR)$(BOOTDIR)/kernel.sym
+endif
 
 -include $(OBJS:.o=.d)
