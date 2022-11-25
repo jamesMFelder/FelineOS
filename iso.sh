@@ -5,6 +5,10 @@ set -e
 #shellcheck disable=SC1091
 . ./build.sh
 
+if [ "$(./target-triplet-to-arch.sh "$TARGET_HOST")" != "i386" ]; then
+	return 0
+fi
+
 mkdir -p isodir
 mkdir -p isodir/boot
 mkdir -p isodir/boot/grub
