@@ -11,6 +11,8 @@ fi
 
 if [ "$(./target-triplet-to-arch.sh "$TARGET_HOST")" = "arm" ]; then
 	EXTRA_DEVICES="-dtb bcm2708-rpi-b.dtb"
+	# Load at 0x8000, where the Raspberry Pi does
+	# Use cpu-num so QEMU starts executing at 0x8000 instead of 0x0
 	BOOT="-device loader,file=sysroot/boot/kernel.bin,addr=0x8000,cpu-num=0"
 elif [ "$(./target-triplet-to-arch.sh "$TARGET_HOST")" = "i386" ]; then
 	BOOT="-cdrom FelineOS.iso"
