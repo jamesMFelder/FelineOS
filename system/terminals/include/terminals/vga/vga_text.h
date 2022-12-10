@@ -62,7 +62,7 @@ class vga_text_term:public terminal{
 		static void getMaxPosition(unsigned char &maxX, unsigned char &maxY);
 
 		/* Put them at the current cursor position with current color */
-		/* 	updates the cursor position */
+		/* Updates the cursor position */
 		int putchar(char const c);
 
 		/* Sets the color */

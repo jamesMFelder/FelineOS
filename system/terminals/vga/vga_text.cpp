@@ -67,10 +67,10 @@ int vga_text_term::putchar(char const c){
 			/* Tab */
 			case '\t':
 				/* I think this gets all cases */
-				/* 	normal: go until a tab stop */
-				/* 	at tab stop: goes to the next (increments before check) */
-				/* 	approaching end of line: leaves you just before the end of the line */
-				/* 	at end of line: stays one before the end of the line */
+				/*	normal: go until a tab stop */
+				/*	at tab stop: goes to the next (increments before check) */
+				/*	approaching end of line: leaves you just before the end of the line */
+				/*	at end of line: stays one before the end of the line */
 				/* source https://vt100.net/docs/vt05-rm/chapter3.html#S3.5.6 */
 				x+=TABSTOP-(x%TABSTOP);
 				if(x>=VGA_TEXT_WIDTH){

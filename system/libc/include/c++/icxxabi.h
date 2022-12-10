@@ -9,10 +9,10 @@ typedef unsigned int uarch_t;
 
 struct atexit_func_entry_t
 {
-	/*
-	 * 	* Each member is at least 4 bytes large. Such that each entry is 12bytes.
-	 * 		* 128 * 12 = 1.5KB exact.
-	 * 			**/
+	/**
+	 * Each member is at least 4 bytes large. Such that each entry is 12bytes.
+	 *	* 128 * 12 = 1.5KB exact.
+	 **/
 	void (*destructor_func)(void *);
 	void *obj_ptr;
 	void *dso_handle;

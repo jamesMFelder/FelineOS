@@ -309,8 +309,8 @@ static map_results internal_map_range(void const * const phys_addr, uintptr_t le
 	if((opts & MAP_OVERWRITE) != 0 || free_from_here(virt_to_map, len)){
 		/* Figure out how many pages we need to map */
 		/* The only way this doesn't work is if we round down to get the base page */
-		/* 	more than this rounds up to get an amount of pages */
-		/* 	since this only results in an extra page being mapped, don't worry about it for now */
+		/*	more than this rounds up to get an amount of pages */
+		/*	since this only results in an extra page being mapped, don't worry about it for now */
 		size_t numPages=bytes_to_pages(len);
 		/* Create this outside of the for loop */
 		map_results attempt;
@@ -329,8 +329,8 @@ static map_results internal_map_range(void const * const phys_addr, uintptr_t le
 					/* Unmap the page */
 					if(unmap_page(virt_to_map, 0)!=map_success){
 						/* The only reason I can think for this to fail is if the spinlock is broken and someone else has: */
-						/* 	a: mapped something where we are trying to and */
-						/* 	b: unmapped one of our previously mapped pages */
+						/*	a: mapped something where we are trying to and */
+						/*	b: unmapped one of our previously mapped pages */
 						/* So it is safe to say our code isn't working and someone is trying to cause a crash. */
 						/* Abort should be pretty safe */
 						abort();
