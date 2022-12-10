@@ -30,6 +30,10 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 
 	/* Announce that we are loaded */
 	klog("Hello kernel world!");
+#ifdef __arm__ //Things don't work beyond here yet
+	kcritical("Nothing else works yet, halting.");
+	abort();
+#endif
 
 #ifdef __i686__
 	if(cpuid_supported()){

@@ -49,6 +49,9 @@ export INCLUDEDIR=$PREFIX/include
 export CPP_INCLUDEDIR=$PREFIX/include/c++
 
 export CFLAGS='-O0 -g -Werror -Wall -Wextra -fstack-protector -fno-omit-frame-pointer'
+case "$TARGET_HOST" in
+	*arm*) CFLAGS="$CFLAGS -mapcs-frame";;
+esac
 export CPPFLAGS="$CFLAGS -fno-rtti -fno-exceptions"
 
 # Configure the cross-compiler to use the desired system root.
