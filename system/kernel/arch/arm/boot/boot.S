@@ -24,6 +24,10 @@
 	boot_page_table4:
 	.skip 4096
 
+.section .rodata, "a"
+	boot_msg:
+	.asciz "Running at %p.\n"
+
 /* The kernel entry point. */
 .section .startup.text, "ax"
 .global _start
@@ -39,6 +43,12 @@ _start:
 	/* Call the global constructors. */
 	.extern _init
 	bl _init
+
+	.extern printf
+	ldr r0, =boot_msg
+	mov r1, pc
+	bl printf
+	svc #0
 
 	/* Transfer control to the main kernel. */
 	.extern kernel_main

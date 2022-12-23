@@ -36,7 +36,7 @@ SECTIONS
 	.text ALIGN(4K) : AT (ADDR(.text) - VA_OFFSET)
 	{
 		*(.multiboot)
-		*(.text)
+		*(.text*)
 	}
 
 	/* Read-only data. */
@@ -61,6 +61,15 @@ SECTIONS
 	/*Where the kernel ends.*/
 	kernel_end = .;
 	phys_kernel_end = . - VA_OFFSET;
+
+	/* Interrupts need to get loaded. Since they can't be loaded to 0x0 by default, put them at the end and relocate at runtime. */
+	isr_source = .;
+	isr_dest = 0x0;
+	.interrupt.text 0 : AT (phys_kernel_end)
+	{
+		KEEP(*(.interrupt.text))
+	}
+	isr_end = isr_source + SIZEOF(.interrupt.text);
 
 	/* The compiler may produce other sections, put them in the proper place in
 	   in this file, if you'd like to include them in the final kernel. */

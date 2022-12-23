@@ -64,7 +64,7 @@ Flexibility:
 After this we should be good to go! */
 int early_boot_setup(multiboot_info_t *mbp [[maybe_unused]]){
 	init_serial(); /* We can't do any logging before this gets setup */
-	//idt_init(); /* Actually display an error if we have a problem: don't just triple fault */
+	idt_init(); /* Actually display an error if we have a problem: don't just triple fault */
 	//setup_paging(); /* Take control of it from the assembly! */
 	//bootstrap_phys_mem_manager(mbp); /* Get the physical memory manager working */
 	screen_init(); /* Initialize the framebuffer */
