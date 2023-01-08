@@ -8,5 +8,5 @@
 /* Increase this if you need more functions showing. */
 #define BT_STATIC_LEN 15
 
-void backtrace();
+ASM void backtrace();
 ASM uint32_t walk_stack(void* array[], uint32_t max_len);
