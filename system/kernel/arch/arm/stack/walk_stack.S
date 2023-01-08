@@ -41,7 +41,7 @@ walk_stack:
 
 .done:
 	/* Clear our stack frame and return. */
-	push {r4, r5, r6}
+	pop {r4, r5, r6}
 	sub sp, fp, #12
 	ldm sp, {fp, sp, lr}
 	bx lr
