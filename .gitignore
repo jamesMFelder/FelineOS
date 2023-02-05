@@ -1,9 +1,9 @@
 #The final iso
 *.iso
 #The binaries+GRUB conf
-isodir
+isodir/
 #The compiled programs+headers
-sysroot
+sysroot/
 #Bochs logging
 bochslog.txt
 serial.txt
