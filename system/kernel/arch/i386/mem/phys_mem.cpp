@@ -6,12 +6,13 @@
 #include <kernel/paging.h>
 #include <kernel/vtopmem.h>
 #include <kernel/mem.h>
+#include <kernel/phys_mem.h>
 #include <cstring>
 #include <cstdlib>
 #include <cinttypes>
 #include <feline/fixed_width.h>
-#include <feline/spinlock.h>
 #include <feline/bool_int.h>
+#include <feline/minmax.h>
 
 /* An array of strings for all types of memory */
 /* The subscript should be the type field from GRUB's memory map */
@@ -24,10 +25,10 @@ char const  * const mem_types[]={
 	"BADRAM"
 };
 
-Spinlock modifying_pmm;
-
-static phys_mem_area_t *normal_mem_bitmap=nullptr;
-size_t mem_bitmap_len=0;
+/* Advance to the next multiboot memory map entry */
+inline multiboot_memory_map_t *next_mmap_entry(multiboot_memory_map_t *mmap_entry){
+	return reinterpret_cast<typeof(mmap_entry)>(reinterpret_cast<uintptr_t>(mmap_entry) + mmap_entry->size + sizeof(mmap_entry->size));
+}
 
 /* Setup by the linker to be at the start and end of the kernel. */
 extern const char phys_kernel_start;
@@ -49,7 +50,6 @@ const uintptr_t phys_uint_kernel_end = reinterpret_cast<uintptr_t>(&phys_kernel_
 int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 	multiboot_info_t mbp=read_pmem<multiboot_info_t>(phys_mbp);
 	assert(mbp.flags & MULTIBOOT_INFO_MEM_MAP);
-	modifying_pmm.aquire_lock();
 
 	size_t mbmp_len=mbp.mmap_length;
 	multiboot_memory_map_t *mbmp;
@@ -63,266 +63,149 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 	klogf("Kernel ends at %p", static_cast<void const *>(&kernel_end));
 	klogf("It is %#" PRIxPTR " bytes long.", uint_kernel_end-uint_kernel_start);
 
-	/* Find the highest amount of memory */
-	unsigned int mem_index=0;
-	unsigned long long max_mem=0;
-	while (mem_index < mbp.mmap_length) {
-		multiboot_memory_map_t *cur_mp=mbmp+mem_index/sizeof(multiboot_memory_map_t);
-		klogf("Memory at %p for %llx with type %d(%s).", reinterpret_cast<void const *>(cur_mp->addr), cur_mp->len, cur_mp->type, mem_types[cur_mp->type]);
+	/* Find the number of entries */
+	size_t num_entries=mbmp_len/sizeof(multiboot_memory_map_t);
+	size_t sorted_length=num_entries*sizeof(bootloader_mem_region);
+	klogf("There are %zu memory ranges, so we will need a maximum of %zu bytes of memory to sort them.", num_entries, sorted_length);
 
-		/* We can only work under 4GiB with 32-bit pointers */
-		if (cur_mp->addr < 4_GiB) {
-			/* If it extends beyond 4GiB, we know we need to keep track of 4GiB */
-			if (cur_mp->addr+cur_mp->len >= 4_GiB) {
-				max_mem = 4_GiB - 1;
-				break;
-			}
-			/* Otherwise, check if we found higher memory and continue looping */
-			else {
-				if (cur_mp->addr+cur_mp->len > max_mem) {
-					max_mem = cur_mp->addr+cur_mp->len;
-				}
-			}
-		}
-		/* We have memory above 4GiB, so we have to deal with everything below it */
-		else {
-			max_mem = 4_GiB - 1;
+	/*
+	 * MASSIVE HACK ALERT!!!
+	 * nullptr is 0x0, and 0x0 is a valid location before we enable paging
+	 * we can't set found_space to nullptr as default,
+	 * because we check it against its default at the end to see if we
+	 * * jumped out of the loop (so we should continue, using 0x0 for storage)
+	 * * or reached the end of it (so we should abort)
+	 * so we don't want to abort just because there is enough free space at 0x0
+	 */
+#define IN_USE_LOCATION reinterpret_cast<bootloader_mem_region*>(const_cast<char*>(&phys_kernel_start))
+	bootloader_mem_region *found_space=IN_USE_LOCATION;
+	/* Search for a space large enough to sort them that isn't being used already */
+	multiboot_memory_map_t *current_multiboot_memory=mbmp;
+	while (current_multiboot_memory < mbmp+(mbmp_len/sizeof(multiboot_memory_map_t))){
+		/* Check if it's available from the hardware/firmware (as reported by GRUB) */
+		bool hardware_available = current_multiboot_memory->type==MULTIBOOT_MEMORY_AVAILABLE;
+		/* Check if it's large enough */
+		bool large_enough = current_multiboot_memory->len>=sorted_length;
+		/* Because x86_64 computers can have more than 4GiB of memory installed,
+		 * while running 32-bit software (that can only access the first 4GiB normally)
+		 * check that we won't overflow a pointer by incrementing it */
+		bool no_pointer_wrapping = current_multiboot_memory->addr+sorted_length < (4_GiB-1);
+		/* Check if we overlap any data structure that we need to preserve
+		 * nb. the commandline is already saved so we don't need to check for it
+		 * TODO: what else should we be avoiding */
+		/* TODO: can we fit before or after in the same memory region */
+		bool overlapping_kernel=current_multiboot_memory->addr>phys_uint_kernel_end || current_multiboot_memory->addr+current_multiboot_memory->len<phys_uint_kernel_end;
+		bool overlapping_module=false; //TODO: check when we support modules
+		bool overlapping_data=overlapping_kernel || overlapping_module;
+		/* Can we use the space */
+		if (hardware_available && large_enough && no_pointer_wrapping && !overlapping_data){
+			found_space=reinterpret_cast<bootloader_mem_region*>(current_multiboot_memory->addr);
 			break;
 		}
-
-		mem_index += cur_mp->size;
+		current_multiboot_memory=next_mmap_entry(current_multiboot_memory);
 	}
-	if (max_mem > 4_GiB-PHYS_MEM_CHUNK_SIZE) {
-		mem_bitmap_len = 4_GiB/PHYS_MEM_CHUNK_SIZE;
-	}
-	else {
-		mem_bitmap_len = static_cast<size_t>((max_mem + PHYS_MEM_CHUNK_SIZE - 1) / PHYS_MEM_CHUNK_SIZE);
-	}
-	printf("%zx = %llx/%llx\n", mem_bitmap_len, max_mem, PHYS_MEM_CHUNK_SIZE);
-
-	klogf("Using %zu elements in array.", mem_bitmap_len);
-
-	/* Find where we can keep track of unused pages */
-	/* Loop through the available memory again */
-	mem_index=0;
-	while (mem_index < mbp.mmap_length) {
-		multiboot_memory_map_t *cur_mp=mbmp+mem_index/sizeof(multiboot_memory_map_t);
-
-		if (cur_mp->type == MULTIBOOT_MEMORY_AVAILABLE &&
-				cur_mp->len > (mem_bitmap_len*sizeof(phys_mem_area_t))) {
-			/* If the area starts before the kernel */
-			if (static_cast<uintptr_t>(cur_mp->addr) <= phys_uint_kernel_start) {
-				/* And has enough space */
-				if (cur_mp->addr+mem_bitmap_len < cur_mp->addr+cur_mp->len) {
-					/* And has enough space before the kernel */
-					if (cur_mp->addr+mem_bitmap_len*sizeof(phys_mem_area_t) < phys_uint_kernel_start) {
-						klogf("Found memory at %p.", reinterpret_cast<void*>(cur_mp->addr));
-						normal_mem_bitmap=reinterpret_cast<phys_mem_area_t*>(cur_mp->addr);
-					}
-					/* Or enough space after it */
-					else if (cur_mp->addr+cur_mp->len-uint_kernel_end >= mem_bitmap_len*sizeof(phys_mem_area_t)) {
-						klogf("Found memory at %p.", static_cast<void const *>(&phys_kernel_end));
-						normal_mem_bitmap=reinterpret_cast<phys_mem_area_t*>(const_cast<char*>(&phys_kernel_end));
-					}
-					else {
-						klog("Reached kernel.");
-						continue;
-					}
-				}
-				else {
-					klog("To short area.");
-					continue;
-				}
-			}
-			/* If it is after the kernel */
-			else if (static_cast<uintptr_t>(cur_mp->addr) > phys_uint_kernel_end) {
-				/* And has enough space */
-				if (cur_mp->addr+mem_bitmap_len*sizeof(phys_mem_area_t) < cur_mp->addr+cur_mp->len) {
-					klogf("Found memory at %p.", reinterpret_cast<void*>(cur_mp->addr));
-					normal_mem_bitmap=reinterpret_cast<phys_mem_area_t*>(cur_mp->addr);
-				}
-				else {
-					klog("To short area.");
-					continue;
-				}
-			}
-			/* It starts in the middle of the kernel? */
-			else {
-				kwarnf("Memory starts at %p: in the middle of the kernel!", reinterpret_cast<void*>(cur_mp->addr));
-				continue; /* Don't even try to figure this one out! */
-			}
-			/* Note where we found the memory and stop searching */
-			klog("");
-			klogf("Bitmap at %p.", static_cast<void*>(normal_mem_bitmap));
-			klogf("Ends at %p.", static_cast<void*>(normal_mem_bitmap+mem_bitmap_len));
-			klog("");
-			break;
-		}
-
-		mem_index += cur_mp->size;
-	}
-
-	/* Map it, saving it's address to mark it reserved later. */
-	uintptr_t phys_nmb=reinterpret_cast<uintptr_t>(normal_mem_bitmap);
-	printf("Bitmap points to %p in physical memory...", reinterpret_cast<void*>(normal_mem_bitmap));
-	map_results mapping=map_range(normal_mem_bitmap, mem_bitmap_len*sizeof(phys_mem_area_t), reinterpret_cast<void**>(&normal_mem_bitmap), 0);
-	if(mapping!=map_success){
-		puts("");
-		kcriticalf("Unable to map the physical memory manager (error code %d).", mapping);
+	/* See above hack alert for we we don't use (!found_space) */
+	if (found_space==IN_USE_LOCATION) {
+		kcriticalf("Cannot find enough memory.");
 		abort();
 	}
-	printf("and to %p in virtual memory.\n", reinterpret_cast<void*>(normal_mem_bitmap));
-	/* Quickly mark unknown parts of the bitmap as unuseable */
-	for (size_t index = 0; index<mem_bitmap_len; ++index) {
-		normal_mem_bitmap[index].in_use=true;
-	}
-	/* Loop through the memory again to fill in the bitmap */
-	mem_index=0;
-	while (mem_index < mbp.mmap_length) {
-		multiboot_memory_map_t *cur_mp=mbmp+mem_index/sizeof(multiboot_memory_map_t);
-		if (cur_mp->addr >= 4_GiB) {
-			break;
-		}
 
-		bool in_use = (cur_mp->type != MULTIBOOT_MEMORY_AVAILABLE);
-		/* TODO: delete low-level logging */
-		printf("mbmp.addr=%llx, mbmp.type=%s, available=%s\n", cur_mp->addr, mem_types[cur_mp->type], (in_use ? "true" : "false"));
-		/* fill in the array */
-		printf("Setting %p to %d for %" PRIxPTR " bytes.\n", static_cast<void*>(&normal_mem_bitmap[cur_mp->addr/PHYS_MEM_CHUNK_SIZE]), static_cast<int>(in_use), bytes_to_pages(static_cast<uintptr_t>(cur_mp->len)));
-		std::memset(&normal_mem_bitmap[cur_mp->addr/PHYS_MEM_CHUNK_SIZE], static_cast<int>(in_use), bytes_to_pages(static_cast<uintptr_t>(cur_mp->len)));
-		mem_index += cur_mp->size;
-	}
-
-	/* Unmap GRUB's memory info */
-	unmap_range(mbmp, mbmp_len, 0);
-
-	puts("Bitmap filled...Marking kernel as used.");
-	/* Now mark the kernel as used */
-	std::memset(&normal_mem_bitmap[phys_uint_kernel_start/PHYS_MEM_CHUNK_SIZE], INT_TRUE, bytes_to_pages(phys_uint_kernel_end-phys_uint_kernel_start));
-	/* And the bitmap itself */
-	std::memset(&normal_mem_bitmap[phys_nmb/PHYS_MEM_CHUNK_SIZE], INT_TRUE, bytes_to_pages(mem_bitmap_len));
-	/* And the first page (so it can be nullptr) */
-	normal_mem_bitmap[0].in_use=true;
-	modifying_pmm.release_lock();
-	klog("Ending bootstrap_phys_mem_manager.");
-	return 0;
-}
-
-/* Find num unused (contiguous) pages */
-/* modifying_pmm must be locked before calling this! */
-/* returns nullptr if no RAM is available */
-static page find_free_pages(size_t num){
-	/* Abort if we don't have enough total RAM */
-	if(num>=mem_bitmap_len){
+	/* Actually map the found space. */
+	enum map_results mapping=map_range(found_space, sorted_length, reinterpret_cast<void**>(&found_space), 0);
+	if (mapping!=map_success) {
+		kcriticalf("Unable to map the needed memory for the PMM boostrapping!");
 		abort();
 	}
-	/* Loop through the page table stopping when there can't be enough free space */
-	/* Start at 1, because nullptr is 0 and means not enough space was available */
-	for(size_t where=1; where<mem_bitmap_len-num; where++){
-		/* If it is free */
-		if(!normal_mem_bitmap[where].in_use){
-			/* Start counting up to the number we need */
-			for(size_t count=0; count<num; count++){
-				/* If one isn't free */
-				if(normal_mem_bitmap[where+count].in_use){
-					/* Go back to searching for a free one after this */
-					where+=count;
+
+	/* Copy the multiboot information into our cross-platform setup
+	 * For keeping track of where various arrays begin/end
+	 * Don't forget to add new variables here when adding a new memory type */
+	struct bootloader_mem_region *unavailable_memory=found_space;
+	size_t num_unavailable_regions=0;
+
+	/* First, copy the number of unavailable entries over */
+	current_multiboot_memory=mbmp;
+	struct bootloader_mem_region *new_memory=found_space;
+	while (current_multiboot_memory<mbmp+(mbmp_len/sizeof(multiboot_memory_map_t))){
+		if (current_multiboot_memory->type!=MULTIBOOT_MEMORY_AVAILABLE){
+			//If the list is out of order/has overlaps just abort (TODO: sort it)
+			if (
+							new_memory>found_space &&
+							(current_multiboot_memory->addr)<
+							reinterpret_cast<uintptr_t>((new_memory-1)->addr)+
+							reinterpret_cast<uintptr_t>((new_memory-1)->len)
+			   ) {
+				kcriticalf("Memory map out of order (new start: %#llx < last end: %#" PRIxPTR "). Sorting required but I haven't coded that yet.",
+						current_multiboot_memory->addr,
+						reinterpret_cast<uintptr_t>((new_memory-1)->addr)
+						+reinterpret_cast<uintptr_t>((new_memory-1)->len)
+					  );
+				abort();
+			}
+			if (!(current_multiboot_memory->addr>=4_GiB)) {
+				new_memory->addr=reinterpret_cast<void*>(current_multiboot_memory->addr);
+				new_memory->len=min(current_multiboot_memory->len, 4_GiB-current_multiboot_memory->addr);
+				++num_unavailable_regions;
+				klogf("Unavailable memory region: at %p\t| length: %#zx", new_memory->addr, new_memory->len);
+				new_memory++;
+			}
+		}
+
+		current_multiboot_memory=next_mmap_entry(current_multiboot_memory);
+	}
+
+	/* Finally, copy the number of available entries over
+	 * nb. resetting current_multiboot_memory because we skipped available entries
+	 *   but not resetting new_memory because we don't want to overwrite the previous lists
+	 * TOOD: check consistency with the other list */
+	struct bootloader_mem_region *available_memory=new_memory;
+	size_t num_available_regions=0;
+	current_multiboot_memory=mbmp;
+	while (current_multiboot_memory<mbmp+(mbmp_len/sizeof(multiboot_memory_map_t))){
+		if (current_multiboot_memory->type==MULTIBOOT_MEMORY_AVAILABLE){
+			//If the list is out of order/has overlaps just abort (TODO: sort it)
+			if ((current_multiboot_memory->addr)<reinterpret_cast<uintptr_t>((new_memory-1)->addr)+reinterpret_cast<uintptr_t>((new_memory-1)->len)) {
+				kcriticalf("Memory map out of order (new start: %#llx < last end: %#" PRIxPTR "). Sorting required but I haven't coded that yet.",
+						current_multiboot_memory->addr,
+						reinterpret_cast<uintptr_t>((new_memory-1)->addr)
+						+reinterpret_cast<uintptr_t>((new_memory-1)->len)
+					  );
+			}
+			//check for overlap with unavailable memory (in which case this region is at least partially invalid)
+			//TODO: save the valid areas of the overlapping region
+			struct bootloader_mem_region *unavailable_memory_region=unavailable_memory;
+			bool should_drop_region=false; //If a region should be dropped (eg. conflicts with an unavailable region)
+			for (size_t i=0; i<num_unavailable_regions; ++i) {
+				if (
+						current_multiboot_memory->addr > reinterpret_cast<uintptr_t>(unavailable_memory_region->addr) &&
+						current_multiboot_memory->addr+current_multiboot_memory->len <
+						reinterpret_cast<uintptr_t>(unavailable_memory_region->addr) + unavailable_memory_region->len
+				   ){
+					kerrorf("Available memory region %#llx-%#llx overlaps with unavailable memory region %p-%#" PRIxPTR ".",
+							current_multiboot_memory->addr, current_multiboot_memory->addr+current_multiboot_memory->len,
+							unavailable_memory_region->addr, reinterpret_cast<uintptr_t>(unavailable_memory_region->addr)+unavailable_memory_region->len
+					       );
+					kerror("Dropping available region.");
+					should_drop_region=true;
 					break;
 				}
+				++unavailable_memory_region;
 			}
-			/* If the free space wasn't long enough */
-			if(normal_mem_bitmap[where].in_use){
-				/* continue looking */
-				continue;
-			}
-			/* There is enough free space!! */
-			/* Loop through again */
-			else{
-				return where*PHYS_MEM_CHUNK_SIZE;
+
+			if (!should_drop_region){
+				new_memory->addr=reinterpret_cast<void*>(current_multiboot_memory->addr);
+				new_memory->len=current_multiboot_memory->len;
+				++num_available_regions;
+				klogf("Available memory region: at %p\t| length: %#zx", new_memory->addr, new_memory->len);
+				new_memory++;
 			}
 		}
-	}
-	/* There isn't enough memory */
-	return nullptr;
-}
 
-/* Reserve num pages starting at addr */
-/* modifying_pmm must be locked before calling this! */
-static pmm_results internal_claim_mem_area(page const addr, size_t num, unsigned int opts [[maybe_unused]]){
-	/* Make sure we are given a valid pointer */
-	if(addr.isNull()){
-		return pmm_null;
+		current_multiboot_memory=next_mmap_entry(current_multiboot_memory);
 	}
-	/* Get the offset into the bitmap */
-	size_t offset=bytes_to_pages(addr);
-	/* Check if someone is trying to access beyond the end of RAM */
-	if(offset>mem_bitmap_len-num){
-		return pmm_nomem;
-	}
-	/* Double check that everything is free and claim it */
-	for(size_t count=0; count<num; count++){
-		/* If it is in use */
-		if(normal_mem_bitmap[offset+count].in_use){
-			/* Roll back our changes */
-			while(count>0){
-				normal_mem_bitmap[offset+count-1].in_use=false;
-				count--;
-			}
-			/* And return an error */
-			return pmm_invalid;
-		}
-		/* It is free */
-		else{
-			/* Claim it */
-			normal_mem_bitmap[offset+count].in_use=true;
-		}
-	}
-	return pmm_success;
-}
 
-/* Reserve len unused bytes from addr (if available) */
-pmm_results get_mem_area(void const * const addr, uintptr_t len, unsigned int opts){
-	modifying_pmm.aquire_lock();
-	pmm_results temp=internal_claim_mem_area(addr, bytes_to_pages(len), opts);
-	modifying_pmm.release_lock();
-	return temp;
-}
+	unmap_range(mbmp, mbmp_len, 0);
 
-/* Aquire len unused bytes */
-pmm_results get_mem_area(void **addr, uintptr_t len, unsigned int opts){
-	modifying_pmm.aquire_lock();
-	*addr=find_free_pages(bytes_to_pages(len));
-	if(*addr==nullptr){
-		modifying_pmm.release_lock();
-		return pmm_nomem;
-	}
-	pmm_results result=internal_claim_mem_area(*addr, bytes_to_pages(len), opts);
-	modifying_pmm.release_lock();
-	return result;
-}
-
-/* Free len bytes from addr */
-pmm_results free_mem_area(void const * const addr, uintptr_t len, unsigned int opts [[maybe_unused]]){
-	modifying_pmm.aquire_lock();
-	/* Figure out how many pages to mark free */
-	size_t num=bytes_to_pages(len);
-	page base_page=addr;
-	size_t base_index=base_page.getInt()/PHYS_MEM_CHUNK_SIZE;
-	/* Loop through all the pages */
-	for(size_t count=0; count<num; count++){
-		/* And make sure that none of them are already free */
-		if(!normal_mem_bitmap[base_index+count].in_use){
-			/* If any are, quit immediatly */
-			modifying_pmm.release_lock();
-			return pmm_invalid;
-		}
-	}
-	/* Loop through again */
-	for(size_t count=0; count<num; count++){
-		/* And unmap everything */
-		/* TODO: zero the pages? */
-		normal_mem_bitmap[base_index+count].in_use=false;
-	}
-	modifying_pmm.release_lock();
-	return pmm_success;
+	/* Setup the actual physical memory manager*/
+	return start_phys_mem_manager(unavailable_memory, num_unavailable_regions, available_memory, num_available_regions);
 }
