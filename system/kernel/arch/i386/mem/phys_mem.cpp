@@ -14,17 +14,6 @@
 #include <feline/bool_int.h>
 #include <feline/minmax.h>
 
-/* An array of strings for all types of memory */
-/* The subscript should be the type field from GRUB's memory map */
-char const  * const mem_types[]={
-	"Invalid",
-	"Available",
-	"Reserved",
-	"ACPI Reclaimable",
-	"ACPI NVS",
-	"BADRAM"
-};
-
 /* Advance to the next multiboot memory map entry */
 inline multiboot_memory_map_t *next_mmap_entry(multiboot_memory_map_t *mmap_entry){
 	return reinterpret_cast<typeof(mmap_entry)>(reinterpret_cast<uintptr_t>(mmap_entry) + mmap_entry->size + sizeof(mmap_entry->size));

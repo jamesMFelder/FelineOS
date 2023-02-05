@@ -14,11 +14,6 @@
 #include <kernel/phys_mem.h>
 #include <kernel/vtopmem.h>
 
-/* An array of strings for all types of memory */
-/* The subscript should be the type field from GRUB's memory map */
-char const *const mem_types[] = {"Invalid",          "Available", "Reserved",
-	"ACPI Reclaimable", "ACPI NVS",  "BADRAM"};
-
 /* Setup by the linker to be at the start and end of the kernel. */
 extern const char phys_kernel_start;
 extern const char phys_kernel_end;
