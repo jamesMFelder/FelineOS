@@ -14,15 +14,15 @@ unsigned char volatile * const PL011_BASE_ADDR=reinterpret_cast<unsigned char vo
 
 typedef uint32_t volatile pl011_reg;
 
-void set(pl011_reg &reg, uint32_t const value) {
+static void set(pl011_reg &reg, uint32_t const value) {
 	reg=value;
 }
 
-uint32_t get(pl011_reg const &reg) {
+static uint32_t get(pl011_reg const &reg) {
 	return reg;
 }
 
-bool is_set(pl011_reg const &reg, unsigned which_bit) {
+static bool is_set(pl011_reg const &reg, unsigned which_bit) {
 	return reg & (0b1 << which_bit);
 }
 

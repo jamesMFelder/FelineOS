@@ -12,7 +12,13 @@
 
 #define PRI8 "hh"
 #define PRI16 "h"
+
+#if defined(__clang__) /* For some reason, clang in insistent that uint32_t is unsigned int instead of unsigned long */
+#define PRI32
+#else
 #define PRI32 "l"
+#endif
+
 #define PRI64 "ll"
 #if defined(__arm__) || defined(__clang__) /* Uintptr is somehow int. */
 #define PRIPTR

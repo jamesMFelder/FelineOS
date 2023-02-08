@@ -12,7 +12,7 @@ syscall:
 	movlt r0, #-1 /* Return -1 for an illegal syscall. */
 	blt done /* Jump to cleanup if it is an illegal syscall */
 
-	svc $0 /* Call the kernel */
+	svc #0 /* Call the kernel */
 	/* Return value is in r0, where it should be */
 
 	done: /* The syscall is over (used for errors in arguments) */

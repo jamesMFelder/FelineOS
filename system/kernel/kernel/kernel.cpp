@@ -23,17 +23,17 @@
 extern const char kernel_start;
 extern const char kernel_end;
 
-ASM void kernel_main(multiboot_info_t *mbp, unsigned int magic);
+ASM [[noreturn]] void kernel_main(multiboot_info_t *mbp, unsigned int magic);
 
 void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[maybe_unused]]){
 	boot_setup();
 
 	/* Announce that we are loaded */
 	klog("Hello kernel world!");
-#ifdef __arm__ //Things don't work beyond here yet
-	kcritical("Nothing else works yet, halting.");
-	abort();
-#endif
+	if (__arm__) {
+		kcritical("Nothing else works yet, halting.");
+		abort();
+	}
 
 #ifdef __i686__
 	if(cpuid_supported()){
