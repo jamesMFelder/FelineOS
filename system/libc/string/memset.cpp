@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2021 James McNaughton Felder */
+/* Copyright (c) 2023 James McNaughton Felder */
 #include <cstring>
 
 void* memset(void* bufptr, int value, size_t size) {

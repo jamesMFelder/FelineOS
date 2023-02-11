@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2021 James McNaughton Felder */
+/* Copyright (c) 2023 James McNaughton Felder */
 
 /* Quickly check that we are using a c++ compiler */
 /* TODO: check a macro for a filename to use in the error? */

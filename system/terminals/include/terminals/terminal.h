@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2021 James McNaughton Felder */
+/* Copyright (c) 2023 James McNaughton Felder */
 #ifndef _TERMINAL_H
 #define _TERMINAL_H 1
 

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2021 James McNaughton Felder */
+/* Copyright (c) 2023 James McNaughton Felder */
 #ifndef _KERN_CPUID_H
 #define _KERN_CPUID_H 1
 

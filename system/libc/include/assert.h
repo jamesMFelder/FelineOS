@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2021 James McNaughton Felder */
+/* Copyright (c) 2023 James McNaughton Felder */
 
 /* Only guard the function definition because the macro can be un/redefined by including this header file again. */
 #ifndef _ASSERT_H

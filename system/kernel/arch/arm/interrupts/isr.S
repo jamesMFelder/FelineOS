@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2022 James McNaughton Felder */
+/* Copyright (c) 2023 James McNaughton Felder */
 
 //All possible exceptions (will be moved to 0x0 at runtime)
 .section .interrupt.text, "ax"

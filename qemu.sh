@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2021 James McNaughton Felder
+# Copyright (c) 2023 James McNaughton Felder
 set -e
 cd /home/james/src/FelineOS/
 . ./iso.sh

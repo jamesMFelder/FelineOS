@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2021 James McNaughton Felder
+# Copyright (c) 2023 James McNaughton Felder
 DEFAULT_HOST!=../../default-host.sh
 TARGET_HOST?=$(DEFAULT_HOST)
 

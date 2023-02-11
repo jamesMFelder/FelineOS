@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2021 James McNaughton Felder */
+/* Copyright (c) 2023 James McNaughton Felder */
 #ifndef FELINE_BOOL_COMPAT_H
 #define FELINE_BOOL_COMPAT_H 1
 

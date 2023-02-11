@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2022 James McNaughton Felder */
+/* Copyright (c) 2023 James McNaughton Felder */
 #include <drivers/serial.h>
 #include <cstddef>
 #include <feline/fixed_width.h>

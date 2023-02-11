@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2021 James McNaughton Felder */
+/* Copyright (c) 2023 James McNaughton Felder */
 .extern kcriticalf /* Log an critical error printf(3) style */
 .extern kerrorf /* Log an error printf(3) style */
 .extern klogf /* Logging printf(3) style */

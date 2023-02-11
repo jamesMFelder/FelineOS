@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2021 James McNaughton Felder */
+/* Copyright (c) 2023 James McNaughton Felder */
 
 /* You can use a cross compiler, but make sure to grab the asm file so you can see these numbers
  Compile without optimizations or it might just be `ret $num`
