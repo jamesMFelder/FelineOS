@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <kernel/mem.h>
 
 page::page(void const * const virt_addr){
@@ -55,6 +56,25 @@ page page::operator--(int){
 	operator--();
 	/* Return the copy */
 	return temp;
+}
+
+/* Self-addition */
+page& page::operator+=(const page &rhs){
+	/* Make sure we won't overflow */
+	if (addr<UINTPTR_MAX-rhs.getInt()){
+		addr+=rhs.getInt();
+	}
+	else{
+		addr=UINTPTR_MAX;
+		abort();
+	}
+	return *this;
+}
+
+/* Addition */
+page operator+(page lhs, const page &rhs){
+	lhs += rhs;
+	return lhs;
 }
 
 /* Return the address */

@@ -24,6 +24,10 @@ class page{
 		page& operator--();
 		page operator--(int);
 
+		/* And sometimes we need to do arithmetic */
+		page& operator+=(const page& rhs);
+		friend page operator+(page lhs, const page& rhs);
+
 		/* Quickly get and set */
 		void *get() const;
 		uintptr_t getInt() const;

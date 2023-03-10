@@ -110,6 +110,7 @@ int early_boot_setup(multiboot_info_t *mbp){
 }
 
 int boot_setup(){
+	dump_pagetables();
 	klogf("Command line: %s", grub_cmdline);
 	return 0;
 }

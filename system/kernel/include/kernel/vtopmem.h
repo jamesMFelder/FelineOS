@@ -75,6 +75,9 @@ void write_pmem(T * addr, size_t num, T * value) {
 	unmap_range(tmp_ptr, sizeof(T) * num, 0);
 }
 
+/* Prints the page tables */
+void dump_pagetables();
+
 #endif /* __cplusplus && !__ASSEMBLER__*/
 
 #endif /* _KERN_VTOPMEM_H */
