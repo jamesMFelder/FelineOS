@@ -30,10 +30,11 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 
 	/* Announce that we are loaded */
 	klog("Hello kernel world!");
-	if (__arm__) {
-		kcritical("Nothing else works yet, halting.");
-		abort();
-	}
+#ifdef __arm__
+	kcritical("Nothing else works yet, halting.");
+	abort();
+#endif
+
 
 #ifdef __i686__
 	if(cpuid_supported()){
@@ -85,4 +86,5 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 	printf("Testing an syscall...\n");
 	printf("It returned %ld.\n", syscall(0));
 	kcritical("Nothing to do... Pausing now."); /* boot.S should hang if we return */
+	abort();
 }
