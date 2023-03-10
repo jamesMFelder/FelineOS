@@ -34,6 +34,6 @@ cat > isodir/startup.nsh << EOF
 FS0:\System\Library\CoreServices\boot.efi
 EOF
 #Create the iso
-grub2-mkrescue -o FelineOS.iso isodir
+grub-mkrescue -o FelineOS.iso isodir
 #Create a symbol file for bochs
 nm -Cg isodir/boot/FelineOS.kernel | sed -n 's/^\([[:xdigit:]]\+\) [[:alpha:]] /0x\1 /p' > kernel.sym

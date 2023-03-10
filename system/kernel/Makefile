@@ -57,7 +57,7 @@ all: FelineOS.kernel
 FelineOS.kernel: $(OBJS) $(ARCHDIR)/linker.ld
 	$(CPP) -T $(abspath $(ARCHDIR)/linker.ld) -o $@ $(CFLAGS) $(LINK_LIST)
 ifeq ($(HOSTARCH), i386)
-	grub2-file --is-x86-multiboot FelineOS.kernel
+	grub-file --is-x86-multiboot FelineOS.kernel
 endif
 
 $(ARCHDIR)/linker.ld: $(ARCHDIR)/linker.ldpp
@@ -93,8 +93,8 @@ install-kernel: FelineOS.kernel
 ifeq ($(HOSTARCH), i386)
 	cp FelineOS.kernel $(DESTDIR)$(BOOTDIR)
 else ifeq ($(HOSTARCH), arm)
-	objcopy -O binary FelineOS.kernel $(DESTDIR)$(BOOTDIR)/kernel.bin
-	objcopy --only-keep-debug FelineOS.kernel $(DESTDIR)$(BOOTDIR)/kernel.sym
+	$(TARGET_HOST)-objcopy -O binary FelineOS.kernel $(DESTDIR)$(BOOTDIR)/kernel.bin
+	$(TARGET_HOST)-objcopy --only-keep-debug FelineOS.kernel $(DESTDIR)$(BOOTDIR)/kernel.sym
 else
 	@echo "Unknown architecture $(HOSTARCH)!"
 	exit 1
