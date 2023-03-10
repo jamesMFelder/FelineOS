@@ -35,7 +35,4 @@ static idtr_t idtr __attribute__((used)); /* For use with the lidt instruction *
 
 extern void* isr_stub_table[];
 
-/* Jump to the entry here for each interrupt (if it exists) */
-void *isr_handler_table[IDT_MAX_DESCRIPTORS];
-
 #endif /* _KERN_IDT_H */

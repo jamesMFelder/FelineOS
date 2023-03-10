@@ -452,9 +452,11 @@ map_results unmap_range(void const * const virt_addr, uintptr_t len, unsigned in
 	}
 	/* Loop through again */
 	to_unmap=virt_addr;
+	size_t searchable_offset=searchable_page_table_offset(virt_addr);
 	for(size_t count=0; count<bytes_to_pages(len); count++, to_unmap++){
 		/* Actually unmap it */
 		unmap_page(to_unmap, 0);
+		page_tables_searchable[searchable_offset+count]=false;
 	}
 	modifying_page_tables.release_lock();
 	return map_success;
@@ -520,6 +522,8 @@ int setup_paging(){
 	unset_bit(&bootstrap_page_directory[1023], USER);
 	set_bit(&bootstrap_page_directory[1023], WRITEABLE);
 	set_bit(&bootstrap_page_directory[1023], PRESENT);
+	/* Mark the recursive page table mapping as used */
+	memset(&page_tables_searchable[0xffc00], true, sizeof(*page_tables_searchable)*(0x100000-0xffc00));
 	/* Basic sanity check */
 	/* If this fails, we probably would crash on the instruction after enabling paging */
 	assert(isMapped(&kernel_start));
