@@ -37,6 +37,7 @@ _start:
 	eor fp, fp
 
 	/* Setup what C(++) has no idea of */
+	mov r0, r2
 	.extern early_boot_setup
 	bl early_boot_setup
 

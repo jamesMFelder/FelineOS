@@ -6,6 +6,7 @@
 #include <kernel/paging.h>
 #include <kernel/vtopmem.h>
 #include <kernel/mem.h>
+#include <kernel/devicetree.h>
 #include <cstring>
 #include <cstdlib>
 #include <cinttypes>
@@ -26,6 +27,6 @@ extern const char kernel_end;
 /* Create a stack of pages for use */
 /* Create+fill in the bitmap */
 /* Call after paging is active */
-int bootstrap_phys_mem_manager(multiboot_info_t*){
+int bootstrap_phys_mem_manager(fdt_header*){
 	return 0;
 }
