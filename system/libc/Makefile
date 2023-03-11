@@ -48,6 +48,7 @@ string/memset.o \
 string/strlen.o \
 string/strcat.o \
 string/strcpy.o \
+string/strcmp.o \
 ssp/ssp.o
 
 HOSTEDOBJS=\

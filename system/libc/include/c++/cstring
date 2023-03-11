@@ -25,6 +25,9 @@ namespace std {
 	using ::strncat;
 	using ::strlcat;
 
+	using ::strcmp;
+	using ::strncmp;
+
 } /* namespace std */
 
 #endif /* _CSTRING */

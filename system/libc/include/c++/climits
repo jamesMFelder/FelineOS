@@ -2,4 +2,7 @@
 /* Copyright (c) 2023 James McNaughton Felder */
 
 /* All macros, don't duplicate include guard */
+//Hack to get LLONG_{MIN,MAX} even when in c++ mode
+#define __STDC_VERSION__ 199901L
 #include <limits.h>
+#undef __STDC_VERSION__
