@@ -80,12 +80,13 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 		 * check that we won't overflow a pointer by incrementing it */
 		bool no_pointer_wrapping = current_multiboot_memory->addr+sorted_length < (4_GiB-1);
 		/* Check if we overlap any data structure that we need to preserve
-		 * nb. the commandline is already saved so we don't need to check for it
+		 * the commandline is already saved so we don't need to check for it
 		 * TODO: what else should we be avoiding */
 		/* TODO: can we fit before or after in the same memory region */
-		bool overlapping_kernel=current_multiboot_memory->addr>phys_uint_kernel_end || current_multiboot_memory->addr+current_multiboot_memory->len<phys_uint_kernel_end;
-		bool overlapping_module=false; //TODO: check when we support modules
-		bool overlapping_data=overlapping_kernel || overlapping_module;
+		bool avoiding_kernel=current_multiboot_memory->addr>phys_uint_kernel_end || current_multiboot_memory->addr+current_multiboot_memory->len<phys_uint_kernel_end;
+		bool avoiding_grub_memmap=reinterpret_cast<multiboot_memory_map_t*>(current_multiboot_memory->addr)>mbmp+(mbmp_len/sizeof(multiboot_memory_map_t)) || reinterpret_cast<multiboot_memory_map_t*>(current_multiboot_memory->addr+current_multiboot_memory->len)<mbmp;
+		bool avoiding_module=true; //TODO: check when we support modules
+		bool overlapping_data=avoiding_kernel && avoiding_grub_memmap && avoiding_module;
 		/* Can we use the space */
 		if (hardware_available && large_enough && no_pointer_wrapping && !overlapping_data){
 			found_space=reinterpret_cast<bootloader_mem_region*>(current_multiboot_memory->addr);
@@ -100,7 +101,8 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 	}
 
 	/* Actually map the found space. */
-	enum map_results mapping=map_range(found_space, sorted_length, reinterpret_cast<void**>(&found_space), 0);
+	struct bootloader_mem_region *unavailable_memory;
+	enum map_results mapping=map_range(found_space, sorted_length, reinterpret_cast<void**>(&unavailable_memory), 0);
 	if (mapping!=map_success) {
 		kcriticalf("Unable to map the needed memory for the PMM boostrapping!");
 		abort();
@@ -109,35 +111,75 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 	/* Copy the multiboot information into our cross-platform setup
 	 * For keeping track of where various arrays begin/end
 	 * Don't forget to add new variables here when adding a new memory type */
-	struct bootloader_mem_region *unavailable_memory=found_space;
-	size_t num_unavailable_regions=0;
+	unavailable_memory[0].addr=found_space;
+	unavailable_memory[0].len=sorted_length;
+	klogf("Unavailable memory region: at %p\t| length: %#zx", unavailable_memory[0].addr, unavailable_memory[0].len);
+	unavailable_memory[1].addr=const_cast<char*>(&phys_kernel_start);
+	unavailable_memory[1].len=phys_uint_kernel_end-phys_uint_kernel_start;
+	klogf("Unavailable memory region: at %p\t| length: %#zx", unavailable_memory[1].addr, unavailable_memory[1].len);
+	size_t num_unavailable_regions=2;
 
 	/* First, copy the number of unavailable entries over */
 	current_multiboot_memory=mbmp;
-	struct bootloader_mem_region *new_memory=found_space;
+	struct bootloader_mem_region *new_memory=&unavailable_memory[num_unavailable_regions];
 	while (current_multiboot_memory<mbmp+(mbmp_len/sizeof(multiboot_memory_map_t))){
 		if (current_multiboot_memory->type!=MULTIBOOT_MEMORY_AVAILABLE){
-			//If the list is out of order/has overlaps just abort (TODO: sort it)
+			//If the list is out of order/has overlaps add it in
 			if (
-							new_memory>found_space &&
+							new_memory > unavailable_memory &&
 							(current_multiboot_memory->addr)<
 							reinterpret_cast<uintptr_t>((new_memory-1)->addr)+
 							reinterpret_cast<uintptr_t>((new_memory-1)->len)
 			   ) {
-				kcriticalf("Memory map out of order (new start: %#llx < last end: %#" PRIxPTR "). Sorting required but I haven't coded that yet.",
-						current_multiboot_memory->addr,
-						reinterpret_cast<uintptr_t>((new_memory-1)->addr)
-						+reinterpret_cast<uintptr_t>((new_memory-1)->len)
-					  );
-				abort();
+				//The list must be sorted up until now, or this breaks
+				bool merged=false;
+				for (size_t memory_region_index=0; memory_region_index < num_unavailable_regions; ++memory_region_index) {
+					/* If the new region starts before the old region ends, and it ends after the old region begins, they can merge. */
+					if ((
+								(current_multiboot_memory->addr)
+								<=
+								reinterpret_cast<uintptr_t>(unavailable_memory[memory_region_index].addr)+unavailable_memory[memory_region_index].len
+						) && (
+								current_multiboot_memory->addr+current_multiboot_memory->len
+								>=
+								reinterpret_cast<uintptr_t>(unavailable_memory[memory_region_index].addr)
+						)) {
+						unavailable_memory[memory_region_index].addr = min(reinterpret_cast<void*>(current_multiboot_memory->addr), unavailable_memory[memory_region_index].addr);
+						unavailable_memory[memory_region_index].len = max(
+								current_multiboot_memory->addr+current_multiboot_memory->len,
+								reinterpret_cast<uintptr_t>(unavailable_memory[memory_region_index].addr)+static_cast<unsigned long long>(unavailable_memory[memory_region_index].len)
+								)-reinterpret_cast<uintptr_t>(unavailable_memory[memory_region_index].addr);
+						merged=true;
+						klogf("merged regions");
+						break;
+					}
+				}
+				if (!merged) {
+					for (size_t memory_region_index=0; memory_region_index < num_unavailable_regions; ++memory_region_index) {
+						/* Move this and everything after it back one spot to put the new memory in here */
+						if (reinterpret_cast<uintptr_t>(unavailable_memory[memory_region_index].addr) < current_multiboot_memory->addr) {
+							for (size_t moved_index=num_unavailable_regions; moved_index > memory_region_index; --moved_index) {
+								unavailable_memory[moved_index]=unavailable_memory[moved_index-1];
+							}
+							unavailable_memory[memory_region_index].addr=reinterpret_cast<void*>(current_multiboot_memory->addr);
+							unavailable_memory[memory_region_index].len=current_multiboot_memory->len;
+							++num_unavailable_regions;
+							break;
+						}
+					}
+				}
 			}
-			if (!(current_multiboot_memory->addr>=4_GiB)) {
+			//Otherwise, simply append it
+			else if (current_multiboot_memory->addr<4_GiB) {
 				new_memory->addr=reinterpret_cast<void*>(current_multiboot_memory->addr);
 				new_memory->len=min(current_multiboot_memory->len, 4_GiB-current_multiboot_memory->addr);
 				++num_unavailable_regions;
-				klogf("Unavailable memory region: at %p\t| length: %#zx", new_memory->addr, new_memory->len);
-				new_memory++;
 			}
+			else {
+				kwarnf("Ignoring memory region starting at %#llx.", current_multiboot_memory->addr);
+			}
+			klogf("Unavailable memory region: at %p\t| length: %#zx", new_memory->addr, new_memory->len);
+			++new_memory;
 		}
 
 		current_multiboot_memory=next_mmap_entry(current_multiboot_memory);
@@ -162,23 +204,21 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 			}
 			//check for overlap with unavailable memory (in which case this region is at least partially invalid)
 			//TODO: save the valid areas of the overlapping region
-			struct bootloader_mem_region *unavailable_memory_region=unavailable_memory;
 			bool should_drop_region=false; //If a region should be dropped (eg. conflicts with an unavailable region)
 			for (size_t i=0; i<num_unavailable_regions; ++i) {
 				if (
-						current_multiboot_memory->addr > reinterpret_cast<uintptr_t>(unavailable_memory_region->addr) &&
+						current_multiboot_memory->addr > reinterpret_cast<uintptr_t>(unavailable_memory[i].addr) &&
 						current_multiboot_memory->addr+current_multiboot_memory->len <
-						reinterpret_cast<uintptr_t>(unavailable_memory_region->addr) + unavailable_memory_region->len
+						reinterpret_cast<uintptr_t>(unavailable_memory[i].addr) + unavailable_memory[i].len
 				   ){
 					kerrorf("Available memory region %#llx-%#llx overlaps with unavailable memory region %p-%#" PRIxPTR ".",
 							current_multiboot_memory->addr, current_multiboot_memory->addr+current_multiboot_memory->len,
-							unavailable_memory_region->addr, reinterpret_cast<uintptr_t>(unavailable_memory_region->addr)+unavailable_memory_region->len
+							unavailable_memory[i].addr, reinterpret_cast<uintptr_t>(unavailable_memory[i].addr)+unavailable_memory[i].len
 					       );
 					kerror("Dropping available region.");
 					should_drop_region=true;
 					break;
 				}
-				++unavailable_memory_region;
 			}
 
 			if (!should_drop_region){

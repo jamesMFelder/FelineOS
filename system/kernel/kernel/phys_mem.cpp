@@ -21,10 +21,6 @@ extern const char kernel_start;
 extern const char kernel_end;
 const uintptr_t uint_kernel_start = reinterpret_cast<uintptr_t>(&kernel_start);
 const uintptr_t uint_kernel_end = reinterpret_cast<uintptr_t>(&kernel_end);
-const uintptr_t phys_uint_kernel_start =
-reinterpret_cast<uintptr_t>(&phys_kernel_start);
-const uintptr_t phys_uint_kernel_end =
-reinterpret_cast<uintptr_t>(&phys_kernel_end);
 
 Spinlock modifying_pmm;
 
@@ -36,10 +32,10 @@ size_t mem_bitmap_len = 0;
 /* Create+fill in the bitmap */
 /* Call after paging is active */
 int start_phys_mem_manager(
-		struct bootloader_mem_region *unavailable_memory_regions [[maybe_unused]],
-		size_t num_unavailable_memory_regions [[maybe_unused]],
-		struct bootloader_mem_region *available_memory_regions [[maybe_unused]],
-		size_t num_available_memory_regions [[maybe_unused]]) {
+		struct bootloader_mem_region *unavailable_memory_regions,
+		size_t num_unavailable_memory_regions,
+		struct bootloader_mem_region *available_memory_regions,
+		size_t num_available_memory_regions) {
 
 	modifying_pmm.aquire_lock();
 	klog("Starting bootstrap_phys_mem_manager.");
@@ -59,43 +55,85 @@ int start_phys_mem_manager(
 		reinterpret_cast<uintmax_t>(unavailable_memory_regions[num_unavailable_memory_regions - 1].addr) +
 		unavailable_memory_regions[num_unavailable_memory_regions - 1].len;
 	uintmax_t max_mem=max(avail_max_mem, unavail_max_mem);
-	max_mem=max(max_mem, 4_GiB);
+	max_mem=min(max_mem, 4_GiB-1);
 
-	mem_bitmap_len=min(4_GiB/PHYS_MEM_CHUNK_SIZE, (max_mem+PHYS_MEM_CHUNK_SIZE-1)/PHYS_MEM_CHUNK_SIZE);
-	printf("%#zx = min(%#llx, %#llx)\n", mem_bitmap_len, 4_GiB/PHYS_MEM_CHUNK_SIZE, (max_mem+PHYS_MEM_CHUNK_SIZE-1)/PHYS_MEM_CHUNK_SIZE);
+	mem_bitmap_len=bytes_to_pages(max_mem);
+	printf("%#zx = min(%#" PRIxPTR ", %#" PRIxPTR ")\n", mem_bitmap_len, bytes_to_pages(4_GiB-1), bytes_to_pages(max_mem));
 
 	klogf("Using %zu elements in array.", mem_bitmap_len);
-	auto needed_size=mem_bitmap_len*sizeof(phys_mem_area_t);
+	size_t needed_size=(mem_bitmap_len+1)*sizeof(phys_mem_area_t);
 
-	/* Find where we can keep track of unused pages
-	 * Does not return if it can't find space */
-	auto find_bitmap_space = [&available_memory_regions, &num_available_memory_regions, &needed_size](){
-		/* Loop through the available memory */
-		for (size_t mem_index=0; mem_index<num_available_memory_regions; ++mem_index) {
-			auto cur_mem_region = available_memory_regions[mem_index];
-			/* If the area is large enough */
-			bool area_large_enough=cur_mem_region.len >= needed_size;
-			/* If things are in the same region */
-			bool kernel_in_region=&phys_kernel_start > cur_mem_region.addr && &phys_kernel_start < reinterpret_cast<typeof(&phys_kernel_start)>(cur_mem_region.addr)+cur_mem_region.len;
-			/* If the area fits before things */
-			bool before_kernel=reinterpret_cast<char const*>(cur_mem_region.addr)+needed_size < &phys_kernel_start;
-			bool fits_before_everything=(!kernel_in_region || before_kernel);
-			/* If the area fits after things */
-			bool after_kernel=&phys_kernel_end+needed_size<=reinterpret_cast<typeof(&phys_kernel_end)>(cur_mem_region.addr)+cur_mem_region.len;
-			bool fits_after_everything=area_large_enough && after_kernel;
-
-			if (area_large_enough && fits_before_everything) {
-				return reinterpret_cast<typeof(normal_mem_bitmap)>(cur_mem_region.addr);
+	/* Is it possible to fit size_needed bytes into location..end_of_available without overlapping something important
+	 * If so, where in the area can we go; if not, nullptr */
+	auto find_space_in_area = [&unavailable_memory_regions, &num_unavailable_memory_regions](void const *location, void const *end_of_available, size_t size_needed, auto& recursive_self) -> phys_mem_area_t* {
+		enum find_actions {
+			fail, /* There is no way to make it work */
+			success, /* It works perfectley */
+			after, /* Try at the end of the current reserved area */
+		};
+		/* Check if a location works */
+		auto is_overlap = [location, size_needed, end_of_available](void const *start_reserved, void const *end_reserved) -> find_actions {
+			/* See if there is no overlap */
+			if (
+					location > end_reserved ||
+					reinterpret_cast<unsigned char const*>(location)+size_needed < start_reserved
+			   ) {
+				return success;
 			}
-			else if (area_large_enough && fits_after_everything) {
-				/* NOTE: remember to take the max of all regions checked */
-				return reinterpret_cast<typeof(normal_mem_bitmap)>(const_cast<char *>(&phys_kernel_end));
+			/* Otherwise, see if there is enough room after */
+			else if (reinterpret_cast<unsigned char const*>(end_reserved)+size_needed < end_of_available) {
+				return after;
+			}
+			/* If nothing worked, return failure */
+			else {
+				return fail;
+			}
+		};
+		/* For each possible conflict */
+		for (size_t i=0; i<num_unavailable_memory_regions; ++i) {
+			/* Check if they overlap */
+			switch (is_overlap(
+						unavailable_memory_regions[i].addr,
+						reinterpret_cast<void*>(
+							reinterpret_cast<uintptr_t>(unavailable_memory_regions[i].addr)
+							+unavailable_memory_regions[i].len)
+						)
+				   ) {
+				/* If they don't overlap, check the next possible conflict */
+				case success:
+					continue;
+				/* If they do overlap, and there isn't space after, there isn't space at all */
+				case fail:
+					return nullptr;
+				/* If they do overlap, but there is space after, try again starting after the conflict */
+				case after:
+					return recursive_self(
+							reinterpret_cast<void*>(
+								reinterpret_cast<uintptr_t>(unavailable_memory_regions[i].addr)
+								+unavailable_memory_regions[i].len+1
+								),
+							end_of_available, size_needed, recursive_self
+							);
 			}
 		}
-		kcritical("Cannot find enough space to start the PMM! Aborting!");
-		abort();
+		/* Because we reached the end of the loop
+		 * nothing conflicted with the address, so it works */
+		return reinterpret_cast<phys_mem_area_t*>(const_cast<void*>(location));
 	};
-	normal_mem_bitmap=find_bitmap_space();
+	/* For each available memory region, check if we can use it */
+	for (size_t i=0; i<num_available_memory_regions; ++i) {
+		normal_mem_bitmap=find_space_in_area(
+				available_memory_regions[i].addr,
+				reinterpret_cast<void*>(
+					reinterpret_cast<uintptr_t>(available_memory_regions[i].addr)
+					+available_memory_regions[i].len
+					),
+				needed_size, find_space_in_area);
+		/* If it's not nullptr, we don't need to check anywhere else because it points to a good place */
+		if (normal_mem_bitmap) {
+			break;
+		}
+	}
 
 	/* Note where we found the memory and stop searching */
 	klog("");
@@ -108,8 +146,8 @@ int start_phys_mem_manager(
 	printf("Bitmap points to %p in physical memory...",
 			reinterpret_cast<void*>(normal_mem_bitmap));
 	map_results mapping=map_range(normal_mem_bitmap,
-				mem_bitmap_len*sizeof(phys_mem_area_t),
-				reinterpret_cast<void**>(&normal_mem_bitmap), 0);
+			mem_bitmap_len*sizeof(phys_mem_area_t),
+			reinterpret_cast<void**>(&normal_mem_bitmap), 0);
 	if(mapping!=map_success){
 		puts("");
 		kcriticalf("Unable to map the physical memory manager (error code %d).", mapping);
@@ -120,6 +158,10 @@ int start_phys_mem_manager(
 	auto set_region_to = [max_mem](void *addr, size_t len, bool in_use) {
 		size_t max_trackable_len=max_mem-reinterpret_cast<uintptr_t>(addr);
 		len=min(len, max_trackable_len);
+		if (bytes_to_pages(len) > mem_bitmap_len) {
+			kerrorf("Requesting %#zx pages of memory (max %#zx).", bytes_to_pages(len), mem_bitmap_len);
+			abort();
+		}
 
 		/* TODO: delete low-level logging */
 		printf("Setting %p to %s for %" PRIxPTR " bytes.\n",
@@ -129,7 +171,7 @@ int start_phys_mem_manager(
 		/* fill in the array */
 		std::memset(&normal_mem_bitmap[bytes_to_pages(addr)],
 				in_use,
-				bytes_to_pages(len));
+				bytes_to_pages(len)/sizeof(*normal_mem_bitmap));
 	};
 	/* Quickly mark unknown parts of the bitmap as unuseable */
 	set_region_to(0x0, max_mem, true);
@@ -146,10 +188,7 @@ int start_phys_mem_manager(
 			sizeof(struct bootloader_mem_region), 0);
 
 	puts("Bitmap filled...Marking kernel as used.");
-	/* Now mark the kernel as used */
-	std::memset(&normal_mem_bitmap[phys_uint_kernel_start/PHYS_MEM_CHUNK_SIZE],
-			INT_TRUE, bytes_to_pages(phys_uint_kernel_end-phys_uint_kernel_start));
-	/* And the bitmap itself */
+	/* Now mark the bitmap as used */
 	std::memset(&normal_mem_bitmap[phys_nmb/PHYS_MEM_CHUNK_SIZE], INT_TRUE, bytes_to_pages(mem_bitmap_len));
 	/* And the first page (so it can be nullptr) */
 	normal_mem_bitmap[0].in_use=true;
