@@ -17,7 +17,7 @@ case "$(./default-host.sh)" in
 	*i686*) ARCH_MACRO=__i686__ ;;
 	*) echo "Unknown architecture $TARGET_HOST, please add." ;;
 esac
-sed "/i686-elf-g../a\      \"-D${ARCH_MACRO}\"," compile_commands.json -i
+sed "/\(i686-elf\|arm-none-eabi\)-g../a\      \"-D${ARCH_MACRO}\"," compile_commands.json -i
 
 #Create a symbol file for bochs
 nm -Cg system/kernel/FelineOS.kernel | sed -n 's/^\([[:xdigit:]]\+\) [[:alpha:]] /0x\1 /p' > kernel.sym
