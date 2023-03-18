@@ -65,7 +65,7 @@ int start_phys_mem_manager(
 
 	/* Is it possible to fit size_needed bytes into location..end_of_available without overlapping something important
 	 * If so, where in the area can we go; if not, nullptr */
-	auto find_space_in_area = [&unavailable_memory_regions, &num_unavailable_memory_regions](void const *location, void const *end_of_available, size_t size_needed, auto& recursive_self) -> phys_mem_area_t* {
+	auto find_space_in_area = [&unavailable_memory_regions, &num_unavailable_memory_regions, &available_memory_regions, &num_available_memory_regions](void const *location, void const *end_of_available, size_t size_needed, auto& recursive_self) -> phys_mem_area_t* {
 		enum find_actions {
 			fail, /* There is no way to make it work */
 			success, /* It works perfectley */
@@ -116,7 +116,30 @@ int start_phys_mem_manager(
 							);
 			}
 		}
-		/* Because we reached the end of the loop
+		/* And the bootloader_mem_regions */
+		switch (is_overlap(unavailable_memory_regions, unavailable_memory_regions+num_unavailable_memory_regions)) {
+			/* If they don't overlap, check the next possible conflict */
+			case success:
+				break;
+			/* If they do overlap, and there isn't space after, there isn't space at all */
+			case fail:
+				return nullptr;
+			/* If they do overlap, but there is space after, try again starting after the conflict */
+			case after:
+				return recursive_self(unavailable_memory_regions+num_unavailable_memory_regions+1, end_of_available, size_needed, recursive_self);
+		}
+		switch (is_overlap(available_memory_regions, available_memory_regions+num_available_memory_regions)) {
+			/* If they don't overlap, check the next possible conflict */
+			case success:
+				break;
+			/* If they do overlap, and there isn't space after, there isn't space at all */
+			case fail:
+				return nullptr;
+			/* If they do overlap, but there is space after, try again starting after the conflict */
+			case after:
+				return recursive_self(available_memory_regions+num_available_memory_regions+1, end_of_available, size_needed, recursive_self);
+		}
+		/* Because we reached the end of the loop and did the switch for everything else,
 		 * nothing conflicted with the address, so it works */
 		return reinterpret_cast<phys_mem_area_t*>(const_cast<void*>(location));
 	};
