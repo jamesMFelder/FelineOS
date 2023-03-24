@@ -508,6 +508,67 @@ int vprintf(const char* format, va_list parameters){
 				bufPtr+=width;
 				/* precision=0; */
 				break;
+			case 'b':
+				/* Prefix with 0x if we need to */
+				if(alt_form){
+					*bufPtr++='0';
+					*bufPtr++='b';
+				}
+				switch(length){
+					/* char */
+					case 'H':
+					{
+						unsigned char num=static_cast<unsigned char>(va_arg(parameters, unsigned int));
+						btostr(num, bufPtr);
+						break;
+					}
+					/* short */
+					case 'h':
+					{
+						unsigned short num=static_cast<unsigned short>(va_arg(parameters, unsigned int));
+						btostr(num, bufPtr);
+						break;
+					}
+					/* int */
+					case '\0':
+					{
+						unsigned int num=static_cast<unsigned int>(va_arg(parameters, unsigned int));
+						btostr(num, bufPtr);
+						break;
+					}
+					/* long */
+					case 'l':
+					{
+						unsigned long num=static_cast<unsigned long>(va_arg(parameters, unsigned long));
+						btostr(num, bufPtr);
+						break;
+					}
+					/* long long */
+					case 'q':
+					{
+						unsigned long long num=static_cast<unsigned long long>(va_arg(parameters, unsigned long long));
+						btostr(num, bufPtr);
+						break;
+					}
+					/* size_t */
+					case 'z':
+					{
+						size_t num=static_cast<size_t>(va_arg(parameters, size_t));
+						btostr(num, bufPtr);
+						break;
+					}
+					/* ptrdiff_t */
+					case 't':
+					{
+						ptrdiff_t num=static_cast<ptrdiff_t>(va_arg(parameters, ptrdiff_t));
+						btostr(num, bufPtr);
+						break;
+					}
+				}
+				width=strlen(bufPtr);
+				bufPtr+=width;
+				/* precision=0; */
+				break;
 			case 'p':
 			{
 				unsigned long num=static_cast<unsigned long>(va_arg(parameters, unsigned long));

@@ -26,6 +26,12 @@ int xtostr(const T num, char str[9], bool const upper=true){
 }
 
 template<class T>
+int btostr(const T num, char str[9]){
+	/* Do the conversion */
+	return ntostr(num, str, 2);
+}
+
+template<class T>
 int otostr(const T num, char str[9]){
 	/* Do the conversion */
 	return ntostr(num, str, 8);
