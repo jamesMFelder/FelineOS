@@ -8,7 +8,6 @@
 /* Return value: The number of addresses stored in the array. */
 /* Calling convention: eabi */
 .global walk_stack
-
 walk_stack:
 	/* Create a stack frame so our caller (backtrace()) shows up in the stack). */
 	mov ip, sp
@@ -22,6 +21,32 @@ walk_stack:
 	/* Maximum array size in r1. */
 	mov r5, fp /* current frame pointer in r5 */
 	/* current return addr in r6 */
+
+	/* Jump past the intro to walk_stack_from */
+	b .walk
+
+/* Walks backwards through the call stack from a specific point and builds a list of return addresses. */
+/* Args: */
+/*  * Array of 32-bit addresses (in r0). */
+/*  * Maximum number of elements in array (in r1). */
+/*  * Frame pointer (in r2). */
+/* Return value: The number of addresses stored in the array. */
+/* Calling convention: eabi */
+.global walk_stack_from
+walk_stack_from:
+	/* Create a stack frame so our caller (backtrace()) shows up in the stack). */
+	mov ip, sp
+	push {fp, ip, lr, pc}
+	sub fp, ip, #4
+	push {r4, r5, r6}
+
+	/* Set up local registers. */
+	mov r4, r0 /* r4 = destination array pointer */
+	eor  r0, r0 /* r0 = return value (number of stack frames found). */
+	/* Maximum array size in r1. */
+	mov r5, r2 /* current frame pointer in r5 */
+	/* current return addr in r6 */
+
 
 .walk:
 	/* Walk backwards through fp linked list, storing return addresses in r4 array. */

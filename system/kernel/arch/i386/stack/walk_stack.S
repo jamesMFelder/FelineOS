@@ -5,9 +5,11 @@
 /* Args: */
 /*  * Array of 32-bit addresses. */
 /*  * Maximum number of elements in array. */
+/*  * (walk_stack_from only) Value of ebp (frame pointer) to use. */
 /* Return value: The number of addresses stored in the array. */
 /* Calling convention: cdecl */
 .global walk_stack
+.global walk_stack_from
 
 walk_stack:
     /* Create stack frame & save caller's EDI and EBX. */
@@ -21,6 +23,21 @@ walk_stack:
     mov  (%ebp),     %ebx    /* EBX = old EBP. */
     mov  8(%ebp),    %edi    /* Destination array pointer in EDI. */
     mov  12(%ebp),   %ecx    /* Maximum array size in ECX. */
+
+	jmp .walk
+
+walk_stack_from:
+    /* Create stack frame & save caller's EDI and EBX. */
+    push %ebp
+    mov  %esp,   %ebp
+	push %edi
+	push %ebx
+
+    /* Set up local registers. */
+    xor  %eax,       %eax    /* EAX = return value (number of stack frames found). */
+    mov  8(%ebp),    %edi    /* Destination array pointer in EDI. */
+    mov  12(%ebp),   %ecx    /* Maximum array size in ECX. */
+    mov  16(%ebp),     %ebx    /* EBX = old EBP. */
 
 .walk:
     /* Walk backwards through EBP linked list, storing return addresses in EDI array. */
