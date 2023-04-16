@@ -9,6 +9,7 @@
 #define PRIu "u"
 #define PRIx "x"
 #define PRIX "X"
+#define PRIb "b"
 
 #define PRI8 "hh"
 #define PRI16 "h"
@@ -63,5 +64,10 @@
 #define PRIX32 PRI32 PRIX
 #define PRIX64 PRI64 PRIX
 #define PRIXPTR PRIPTR PRIX
+
+#define PRIb8 PRI8 PRIb
+#define PRIb16 PRI16 PRIb
+#define PRIb32 PRI32 PRIb
+#define PRIb64 PRI64 PRIb
 
 #endif /* _INTTYPES_H */
