@@ -208,10 +208,7 @@ map_results map_range(void const * const phys_addr, uintptr_t len, void **virt_a
 		*virt_addr=const_cast<void*>(phys_addr);
 	}
 	else {
-		virt_addr=nullptr;
-	}
-	// *virt_addr=find_free_virtmem(len);
-	if(*virt_addr==nullptr){
+		*virt_addr=nullptr;
 		return map_no_virtmem;
 	}
 	/* Set it to the correct offset in the page */
