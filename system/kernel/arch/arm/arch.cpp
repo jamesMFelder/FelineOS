@@ -1,8 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
-#include <feline/reverse_endian.h>
-#include <kernel/arch.h>
 
+#include <kernel/arch.h>
 #include <kernel/interrupts.h>
 #include <kernel/paging.h>
 #include "mem/mem.h"
@@ -42,8 +41,8 @@ int early_boot_setup(fdt_header *devicetree){
 		 );
 	//Print all the structures
 	init_devicetree(devicetree);
-	bootstrap_phys_mem_manager(devicetree); /* Get the physical memory manager working */
 	idt_init(); /* Actually display an error if we have a problem: don't just triple fault */
+	bootstrap_phys_mem_manager(devicetree); /* Get the physical memory manager working */
 	//setup_paging(); /* Take control of it from the assembly! */
 	screen_init(); /* Initialize the framebuffer */
 	return 0;

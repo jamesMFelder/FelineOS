@@ -4,6 +4,7 @@
 #include <cinttypes>
 #include <cstdlib>
 #include <cstring>
+#include <feline/align.h>
 #include <feline/bool_int.h>
 #include <feline/fixed_width.h>
 #include <feline/minmax.h>
@@ -66,6 +67,8 @@ int start_phys_mem_manager(
 	/* Is it possible to fit size_needed bytes into location..end_of_available without overlapping something important
 	 * If so, where in the area can we go; if not, nullptr */
 	auto find_space_in_area = [&unavailable_memory_regions, &num_unavailable_memory_regions, &available_memory_regions, &num_available_memory_regions](void const *location, void const *end_of_available, size_t size_needed, auto& recursive_self) -> phys_mem_area_t* {
+		/* Align the area (faster on x86, required on arm) */
+		location=round_up_to_alignment(location, alignof(phys_mem_area_t));
 		enum find_actions {
 			fail, /* There is no way to make it work */
 			success, /* It works perfectley */
@@ -158,6 +161,11 @@ int start_phys_mem_manager(
 		}
 	}
 
+	if (normal_mem_bitmap==nullptr) {
+		kcritical("Unable to find space for the memory bitmap. Aborting!");
+		abort();
+	}
+
 	/* Note where we found the memory and stop searching */
 	klog("");
 	klogf("Bitmap at %p.", static_cast<void*>(normal_mem_bitmap));
@@ -187,7 +195,7 @@ int start_phys_mem_manager(
 		}
 
 		/* TODO: delete low-level logging */
-		printf("Setting %p to %s for %" PRIxPTR " bytes.\n",
+		printf("Setting %p to %s for %#" PRIxPTR " bytes.\n",
 				static_cast<void*>(addr),
 				in_use?"unavailable":"available",
 				bytes_to_pages(len));

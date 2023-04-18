@@ -2,7 +2,6 @@
 /* Copyright (c) 2023 James McNaughton Felder */
 #include "mem.h"
 #include <cassert>
-#include <feline/reverse_endian.h>
 #include <kernel/log.h>
 #include <kernel/paging.h>
 #include <kernel/vtopmem.h>
@@ -12,6 +11,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cinttypes>
+#include <feline/align.h>
 #include <feline/fixed_width.h>
 #include <feline/bool_int.h>
 #include <feline/minmax.h>
@@ -38,7 +38,6 @@ struct reserved_mem {
 
 reserved_mem to_avoid[] = {
 	{&isr_dest, &isr_dest+(&isr_end-&isr_source)}, /* Dynamically rewrite the end of this, because _init hasn't been called yet! */
-	{&isr_source, &isr_end},
 	{&phys_kernel_start, &phys_kernel_end},
 	{nullptr, nullptr}, /* Dynamically populate with the devicetree's boundaries */
 };
@@ -49,7 +48,7 @@ enum find_actions {
 	after, /* Try at the end of the current reserved area */
 };
 
-void* find_space_in_area (void const *location, void const *end_of_available, size_t size_needed) {
+void* find_space_in_area (void const *location, void const *end_of_available, size_t size_needed, size_t alignment_needed) {
 	auto is_overlap = [location, size_needed, end_of_available](void const *start_reserved, void const *end_reserved) -> find_actions {
 		/* If there is any overlap */
 		if (
@@ -74,13 +73,18 @@ void* find_space_in_area (void const *location, void const *end_of_available, si
 		 * However, something else might be in the way, so keep checking */
 		return success;
 	};
+	/* Don't use unaligned memory (unpredictable results) */
+	location=round_up_to_alignment(location, alignment_needed);
 	/* Check hardcoded obstacles */
 	for (auto avoid : to_avoid) {
 		switch (is_overlap(avoid.start, avoid.end)) {
 			case fail:
 				return nullptr;
 			case after:
-				return find_space_in_area(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(avoid.end)+1), end_of_available, size_needed);
+				return find_space_in_area(
+						reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(avoid.end)+1),
+						end_of_available, size_needed, alignment_needed
+						);
 			case success:
 				break;
 		}
@@ -95,7 +99,10 @@ void* find_space_in_area (void const *location, void const *end_of_available, si
 			case fail:
 				return nullptr;
 			case after:
-				return find_space_in_area(reinterpret_cast<void*>(static_cast<uintptr_t>(reserved_mem->address+reserved_mem->size)+1), end_of_available, size_needed);
+				return find_space_in_area(
+						reinterpret_cast<void*>(static_cast<uintptr_t>(reserved_mem->address+reserved_mem->size)+1),
+						end_of_available, size_needed, alignment_needed
+						);
 			case success:
 				break;
 		}
@@ -114,9 +121,10 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 
 	klog("Starting bootstrap_phys_mem_manager.");
 	devicetree_header = devicetree;
-	to_avoid[0].end=reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(&isr_dest)+(reinterpret_cast<uintptr_t>(&isr_end)-reinterpret_cast<uintptr_t>(&isr_source)));
-	to_avoid[3].start=devicetree;
-	to_avoid[3].end=devicetree+(devicetree->totalsize/sizeof(*devicetree));
+	to_avoid[0].end=reinterpret_cast<void*>(&isr_dest+(reinterpret_cast<uintptr_t>(&isr_end)-reinterpret_cast<uintptr_t>(&isr_source)));
+	to_avoid[2].start=devicetree;
+	to_avoid[2].end=devicetree+(devicetree->totalsize/sizeof(*devicetree));
+	klogf("reinterpret_cast<void*>(&isr_dest+(reinterpret_cast<uintptr_t>(&isr_end)-reinterpret_cast<uintptr_t>(&isr_source))): %p", reinterpret_cast<void*>(&isr_dest+(reinterpret_cast<uintptr_t>(&isr_end)-reinterpret_cast<uintptr_t>(&isr_source))));
 
 	/* Print debugging information */
 	klogf("Kernel starts at %p", static_cast<void const *>(&kernel_start));
@@ -157,7 +165,7 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 			klogf("Memory at %p for %#zx bytes.", addr, len);
 			if (!memory_map_location->where) {
 				/* Check if we overlap any data structure that we need to preserve */
-				memory_map_location->where=find_space_in_area(addr, reinterpret_cast<char const*>(addr)+len, memory_map_location->len_needed);
+				memory_map_location->where=find_space_in_area(addr, reinterpret_cast<char const*>(addr)+len, memory_map_location->len_needed, alignof(bootloader_mem_region));
 			}
 		}
 		// klogf("Sizes: addresses=%#" PRIx32 ", sizes=%#" PRIx32, sizes.address_cells, sizes.size_cells);
@@ -181,6 +189,11 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 		unavailable_regions[num_unavailable_regions].len=reserved_mem->size;
 		++num_unavailable_regions;
 		++reserved_mem;
+	}
+	for (auto &&curr_avoid: to_avoid) {
+		unavailable_regions[num_unavailable_regions].addr=const_cast<void*>(curr_avoid.start);
+		unavailable_regions[num_unavailable_regions].len = reinterpret_cast<size_t>(curr_avoid.end)-reinterpret_cast<size_t>(curr_avoid.start);
+		++num_unavailable_regions;
 	}
 	unavailable_regions[num_unavailable_regions].addr=const_cast<char*>(&phys_kernel_start);
 	unavailable_regions[num_unavailable_regions].len=&phys_kernel_end-&phys_kernel_start;
