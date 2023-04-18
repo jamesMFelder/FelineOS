@@ -2,39 +2,52 @@
 /* Copyright (c) 2023 James McNaughton Felder */
 
 #include <kernel/vtopmem.h>
+#include <kernel/arch/arm/modes.inc>
 
-/* Reserve a stack for the initial thread. */
 .section .bss, "aw"
+	/* Reserve stacks all modes */
 	.align 16
-	stack_bottom:
+	fiq_stack_bottom:
+		.skip 1024 /* 1 KiB */
+	fiq_stack_top:
+	irq_stack_bottom:
+		.skip 1024 /* 1 KiB */
+	irq_stack_top:
+	svc_stack_bottom:
+		.skip 1024 /* 1 KiB */
+	svc_stack_top:
+	abt_stack_bottom:
+		.skip 1024 /* 1 KiB */
+	abt_stack_top:
+	und_stack_bottom:
+		.skip 1024 /* 1 KiB */
+	und_stack_top:
+	sys_stack_bottom:
 		.skip 16384 /* 16 KiB */
-	stack_top:
-
-/* Reserve initial page tables */
-.section .bss, "aw"
-	.balign 512
-	boot_page_directory:
-	.skip 4096
-	boot_page_table1:
-	.skip 4096
-	boot_page_table2:
-	.skip 4096
-	boot_page_table3:
-	.skip 4096
-	boot_page_table4:
-	.skip 4096
+	sys_stack_top:
 
 .section .rodata, "a"
 	boot_msg:
 	.asciz "Running at %p.\n"
 
+.macro reset mode
+cps #\mode\()_mode
+ldr sp, =\mode\()_stack_top
+eor fp, fp
+.endm
+
 /* The kernel entry point. */
 .section .startup.text, "ax"
 .global _start
 _start:
-	/* Setup the stack and clear the frame pointer so debuggers don't trace further back from here */
-	ldr sp, =stack_top
-	eor fp, fp
+	/* Setup the stack and clear the frame pointer so debuggers don't trace further back from here for all stacks */
+	reset abt
+	reset und
+	reset sys
+	reset irq
+	reset fiq
+	reset svc
+	cps #sys_mode
 
 	/* Setup what C(++) has no idea of */
 	mov r0, r2
