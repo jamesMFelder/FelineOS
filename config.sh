@@ -50,7 +50,7 @@ export CPP_INCLUDEDIR=$PREFIX/include/c++
 
 export CFLAGS='-O0 -g -Werror -Wall -Wextra -fstack-protector -fno-omit-frame-pointer'
 case "$TARGET_HOST" in
-	*arm*) CFLAGS="$CFLAGS -mapcs-frame";;
+	*arm*) CFLAGS="$CFLAGS -mapcs-frame -mno-unaligned-access";;
 esac
 export CPPFLAGS="$CFLAGS -fno-rtti -fno-exceptions"
 
