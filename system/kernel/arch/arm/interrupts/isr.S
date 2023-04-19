@@ -39,9 +39,7 @@ isr_handler:
 	ldr r0, =register_dump_msg
 	bl printf
 
-	//Print an error and backtrace
-	ldr r0, =isr_backtrace_apology
-	bl printf
+	//Print backtrace and hang
 	bl abort
 
 // Handle an undefined instruction
@@ -106,9 +104,10 @@ swi:
 	add fp, sp, #0xc
 
 	//Get the instruction that called the interrupt
-	// (not the one we will return to).
+	// store the one we will return to, and use the one that called us
 	ldr r1, [fp]
-	sub r1, #4
+	str r1, [fp, #-4]
+	sub r1, lr, #4
 
 	//Get what the instruction is (r3) and the interrupt number (r2)
 	//TODO: should we always expect 0, or should we use this as the actual system call selector
@@ -134,9 +133,7 @@ isr_msg:
 	.asciz "Unknown exception called occured at instruction %p! Mode is now %#b.\n"
 register_dump_msg:
 	.asciz "r0: %#x\nr1: %#x\nr2: %#x\nr3: %#x\nr4: %#x\nr5: %#x\nr6: %#x\nr7: %#x\nr8: %#x\nr9: %#x\nr10: %#x\nr11: %#x\nr12: %#x\n"
-isr_backtrace_apology:
-	.asciz "The backtrace unfortunately might show the instruction after the one that caused the exception.\n"
 undef_msg:
 	.asciz "Undefined instruction (%#x) executed at %p.\n"
 swi_msg:
-	.asciz "Instruction %p made system call %u. The instruction is %#x.\nNote that the backtrace will show the instruction after the one that made the system call.\n"
+	.asciz "Instruction %p made system call %u. The instruction is %#x.\n"

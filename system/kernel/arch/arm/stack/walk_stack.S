@@ -57,6 +57,7 @@ walk_stack_from:
 
 	/* Add the address to the array. */
 	ldr r6, [r5, #-4]
+	sub r6, r6, #4 /* Get the address making the call, not the one we would return to. */
 	str r6, [r4]
 
 	add r0, #1 /* Increment the number of entries added. */
