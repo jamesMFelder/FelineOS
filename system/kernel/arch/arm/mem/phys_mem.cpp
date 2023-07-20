@@ -48,7 +48,7 @@ enum find_actions {
 	after, /* Try at the end of the current reserved area */
 };
 
-void* find_space_in_area (void const *location, void const *end_of_available, size_t size_needed, size_t alignment_needed) {
+static void* find_space_in_area (void const *location, void const *end_of_available, size_t size_needed, size_t alignment_needed) {
 	auto is_overlap = [location, size_needed, end_of_available](void const *start_reserved, void const *end_reserved) -> find_actions {
 		/* If there is any overlap */
 		if (

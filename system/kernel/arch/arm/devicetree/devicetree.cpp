@@ -51,7 +51,7 @@ inline void increment_fdt_struct(fdt_struct_entry **entry) {
 	}
 }
 
-void for_each_prop_in_node(
+static void for_each_prop_in_node(
 		char const *prefix,
 		fdt_struct_entry **node,
 		void callback(fdt_struct_entry*, devicetree_cell_size curr_cell_size, char*, void*),

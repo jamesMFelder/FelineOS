@@ -6,8 +6,10 @@
 #include <kernel/log.h>
 #include <kernel/halt.h>
 
+ASM [[noreturn]] void handle_abort(void *executing_address, uint32_t fault_status, void *fault_address);
+
 /* Handle an ARM data abort */
-ASM void handle_abort(void *executing_address, uint32_t fault_status, void *fault_address) {
+void handle_abort(void *executing_address, uint32_t fault_status, void *fault_address) {
 	/* The reason is encoded in DFSR[10,3:0] (seriously) */
 	auto cause = fault_status & 0b1111;
 	if (fault_status & 0b1'00000'00000) {
