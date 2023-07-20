@@ -49,14 +49,14 @@ int start_phys_mem_manager(
 
 	/* Find the required size of the bitmap (maximum physical memory we can use) */
 	// TODO: how to safely not overflow
-	uintmax_t avail_max_mem =
-		reinterpret_cast<uintmax_t>(available_memory_regions[num_available_memory_regions - 1].addr) +
+	uintptr_t avail_max_mem =
+		reinterpret_cast<uintptr_t>(available_memory_regions[num_available_memory_regions - 1].addr) +
 		available_memory_regions[num_available_memory_regions - 1].len;
-	uintmax_t unavail_max_mem =
-		reinterpret_cast<uintmax_t>(unavailable_memory_regions[num_unavailable_memory_regions - 1].addr) +
+	uintptr_t unavail_max_mem =
+		reinterpret_cast<uintptr_t>(unavailable_memory_regions[num_unavailable_memory_regions - 1].addr) +
 		unavailable_memory_regions[num_unavailable_memory_regions - 1].len;
-	uintmax_t max_mem=max(avail_max_mem, unavail_max_mem);
-	max_mem=min(max_mem, 4_GiB-1);
+	uintptr_t max_mem=max(avail_max_mem, unavail_max_mem);
+	max_mem=min(max_mem, static_cast<uintptr_t>(4_GiB-1));
 
 	mem_bitmap_len=bytes_to_pages(max_mem);
 	printf("%#zx = min(%#" PRIxPTR ", %#" PRIxPTR ")\n", mem_bitmap_len, bytes_to_pages(4_GiB-1), bytes_to_pages(max_mem));

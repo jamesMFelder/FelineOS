@@ -186,7 +186,10 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 	reserved_mem=reinterpret_cast<fdt_reserve_entry*>(devicetree_header+devicetree_header->off_mem_rsvmap/sizeof(*devicetree_header));
 	while (reserved_mem->address!=0 || reserved_mem->size!=0) {
 		unavailable_regions[num_unavailable_regions].addr=reinterpret_cast<void*>(static_cast<uintptr_t>(reserved_mem->address));
-		unavailable_regions[num_unavailable_regions].len=reserved_mem->size;
+		if (reserved_mem->size > SIZE_MAX) {
+			abort();
+		}
+		unavailable_regions[num_unavailable_regions].len=static_cast<size_t>(reserved_mem->size);
 		++num_unavailable_regions;
 		++reserved_mem;
 	}
@@ -199,13 +202,13 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 	/* Since isr_source and isr_end are setup in the linker file,
 	 * parsing the c++ code makes them look unrelated */
 	/* cppcheck-suppress comparePointers */
-	unavailable_regions[num_unavailable_regions].len=&phys_kernel_end-&phys_kernel_start;
+	unavailable_regions[num_unavailable_regions].len=static_cast<size_t>(&phys_kernel_end-&phys_kernel_start);
 	++num_unavailable_regions;
 	unavailable_regions[num_unavailable_regions].addr=(&isr_dest);
 	/* Since isr_source and isr_end are setup in the linker file,
 	 * parsing the c++ code makes them look unrelated */
 	/* cppcheck-suppress comparePointers */
-	unavailable_regions[num_unavailable_regions].len=&isr_end-&isr_source;
+	unavailable_regions[num_unavailable_regions].len=static_cast<size_t>(&isr_end-&isr_source);
 	++num_unavailable_regions;
 	unavailable_regions[num_unavailable_regions].addr=(&devicetree);
 	unavailable_regions[num_unavailable_regions].len=devicetree->totalsize;
