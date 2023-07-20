@@ -205,7 +205,11 @@ int start_phys_mem_manager(
 				bytes_to_pages(len)/sizeof(*normal_mem_bitmap));
 	};
 	/* Quickly mark unknown parts of the bitmap as unuseable */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+	/* I'm actually using it as a pointer to 0, not as a null pointer */
 	set_region_to(0x0, max_mem, true);
+#pragma GCC diagnostic pop
 	for (size_t mem_index=0; mem_index < num_available_memory_regions; ++mem_index) {
 		set_region_to(available_memory_regions[mem_index].addr, available_memory_regions[mem_index].len, false);
 	}
