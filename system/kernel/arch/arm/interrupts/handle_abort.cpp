@@ -41,7 +41,7 @@ void handle_abort(void *executing_address, uint32_t fault_status, void *fault_ad
 			/* Instruction Cache Maintainance Fault (TODO: flush instruction cache?) */
 			kcriticalf("Instruction cache corrupted! TODO: fix it! (note: exception occured while executing %p)", executing_address);
 			halt();
-			break;
+			// break;
 
 		case 0b1100:
 			/* External Abort on Translation on first level */
@@ -70,7 +70,7 @@ void handle_abort(void *executing_address, uint32_t fault_status, void *fault_ad
 			/* Precise External Abort */
 			kerrorf("Instruction %p aborted trying to access %p", executing_address, fault_address);
 			abort();
-			return;
+			// return;
 
 		case 0b0010:
 			/* Instruction Debug Event */

@@ -34,6 +34,7 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 	kcritical("Nothing else works yet, halting.");
 	abort();
 #endif
+#pragma GCC diagnostic ignored "-Wunreachable-code"
 
 
 #ifdef __i686__
