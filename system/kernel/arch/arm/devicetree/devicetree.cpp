@@ -45,7 +45,14 @@ inline void increment_fdt_struct(fdt_struct_entry **entry) {
 					);
 			break;
 		case FDT_END:
+#pragma GCC diagnostic push
+			// We need to cover the default case because we're reading this from
+			// raw memory that is only 99% likely to have the correct enum value
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wcovered-switch-default"
+#endif // __clang__
 		default:
+#pragma GCC diagnostic pop
 			kcritical("Attempted to move past the end of the device tree, or are working with an invalid one.");
 			abort();
 	}
@@ -92,7 +99,14 @@ static void for_each_prop_in_node(
 				return;
 			case FDT_END:
 				return;
+#pragma GCC diagnostic push
+			// We need to cover the default case because we're reading this from
+			// raw memory that is only 99% likely to have the correct enum value
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wcovered-switch-default"
+#endif // __clang__
 			default:
+#pragma GCC diagnostic pop
 				kcritical("Invalid device tree! Halting.");
 				abort();
 		}
