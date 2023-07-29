@@ -1,3 +1,4 @@
+#!/bin/bash
 export SYSTEM_HEADER_PROJECTS="system/libc system/libFeline system/kernel"
 export PROJECTS="system/libc system/libFeline system/kernel"
 
