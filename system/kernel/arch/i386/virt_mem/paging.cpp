@@ -548,7 +548,7 @@ void invlpg(page const addr){
  * Print the paging tables similar to how Bochs does it
  * It stops before the paging tables, because otherwise the output is crazy long
  *   (which is what bochs does)
- * If you need to see it, change the oxffc00000 in the loop test to UINTPTR_MAX
+ * If you need to see it, change the 0xffc00000 in the loop test to UINTPTR_MAX
  *   and redirect to a file.
  */
 void dump_pagetables() {
