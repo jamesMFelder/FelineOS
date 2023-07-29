@@ -25,6 +25,11 @@
 	sys_stack_bottom:
 		.skip 16384 /* 16 KiB */
 	sys_stack_top:
+	/* Reserve space for paging tables */
+	/* Reserve the paging tables */
+	.align 14 /* 16KiB (change if enabling ttbr1) */
+	translation_table_0:
+		.skip 0x20000 /* 4GiB/(1MiB*4B) = address range/(first level descriptor range*descriptor size) */
 
 .section .rodata, "a"
 	boot_msg:
@@ -48,6 +53,64 @@ _start:
 	reset fiq
 	reset svc
 	cps #sys_mode
+
+	/* Map everything, which means starting at 0x0 */
+	mov r7, #0
+	/* Set options */
+	bic r7, #0b10000000000000000000 // should be zero
+	bic r7,  #0b1000000000000000000 // regular section, not supersection
+	bic r7,   #0b100000000000000000 // (backwards-compat) global (we are the OS)
+	bic r7,    #0b10000000000000000 // (backwards-compat) not shared (TODO: change if needed for multiprocessor bringup)
+	bic r7,     #0b1000000000000000 // allow full access/maintain backwards compatibility
+	bic r7,      #0b111000000000000 // TEX bits (combine with caching and bufferable for memory type)
+	orr r7,         #0b110000000000 // full access
+	bic r7,           #0b1000000000 // implimentation-defined (ARM1176JZF-S: no ECC)
+	bic r7,            #0b111100000 // domain
+	bic r7,                #0b10000 // allow execution
+	orr r7,                 #0b1000 // cached (write-through)
+	bic r7,                  #0b100 // not buffered
+	orr r7,                   #0b10 // section (use this, not a further page table)
+
+	/* Setup a loop to map everything */
+	mov r5, #0
+	/* translation_table_0 should already be aligned */
+	ldr r8, =translation_table_0
+
+	.fld_loop:
+	/* Store the section */
+	str r7, [r8]
+	/* Go to the next MiB without touching any of the status bits */
+	add r7, #0x100000
+	/* The section will be stored 4 bytes (1 word) later */
+	add r8, #4
+
+	/* Do this until we've covered the entire address space */
+	add r5, #0x1
+	cmp r5, #4096
+	bne .fld_loop
+
+	ldr r8, =translation_table_0
+	// ttbr0
+	bic r8, #0b11111
+	//         ┃┃┃┃┗ inner-noncacheable
+	//         ┃┃┃┗━ non-shared
+	//         ┃┃┗━━ no ECC
+	//         ┗┻━━━ outer-noncacheable
+	mcr p15, 0, r8, c2, c0, 0
+	// ttbr1
+	mov r8, #0
+	mcr p15, 0, r8, c2, c0, 1
+	// ttbc (translation table base control)
+	mov r8, #0 // always use ttbr0
+	mcr p15, 0, r8, c2, c0, 2
+
+	/* Enable acces to domain 0 as a "client" (use access permissions) */
+	mov   r8, #1
+	mcr   p15, 0, r8, c3, c0, 0
+
+	mrc p15, 0, r8, c1, c0, 0
+	orr r8, #0b1 // enable MMU
+	mcr p15, 0, r8, c1, c0, 0
 
 	/* Setup what C(++) has no idea of */
 	mov r0, r2
