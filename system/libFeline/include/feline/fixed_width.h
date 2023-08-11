@@ -23,7 +23,7 @@ constexpr inline intptr_t __attribute((always_inline)) operator"" _intptr_t(unsi
 constexpr inline uintptr_t __attribute((always_inline)) operator"" _uintptr_t(unsigned long long num) noexcept {return static_cast<uintptr_t>(num);}
 
 constexpr inline unsigned long long __attribute((always_inline)) operator"" _KiB(unsigned long long KiB) noexcept {return KiB*1024ull;}
-constexpr inline unsigned long long __attribute((always_inline)) operator"" _MiB(unsigned long long MiB) noexcept {return MiB*1024ull*1024ull*1024ull;}
+constexpr inline unsigned long long __attribute((always_inline)) operator"" _MiB(unsigned long long MiB) noexcept {return MiB*1024ull*1024ull;}
 constexpr inline unsigned long long __attribute((always_inline)) operator"" _GiB(unsigned long long GiB) noexcept {return GiB*1024ull*1024ull*1024ull;}
 
 #endif /* _FELINE_FIXED_WIDTH_H */
