@@ -4,10 +4,11 @@
 #define _KERN_INTERRUPTS_H 1
 
 #include <stdint.h>
+#include <kernel/asm_compat.h>
 
 void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags);
 
 /* Setup the IDT */
-void idt_init(void);
+ASM void idt_init(void);
 
 #endif /* _KERN_INTERRUPTS_H */

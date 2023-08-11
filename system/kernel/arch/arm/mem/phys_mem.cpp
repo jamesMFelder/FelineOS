@@ -25,9 +25,6 @@ const uintptr_t uint_kernel_start = reinterpret_cast<uintptr_t>(&kernel_start);
 const uintptr_t uint_kernel_end = reinterpret_cast<uintptr_t>(&kernel_end);
 // const uintptr_t phys_uint_kernel_start = reinterpret_cast<uintptr_t>(&phys_kernel_start);
 // const uintptr_t phys_uint_kernel_end = reinterpret_cast<uintptr_t>(&phys_kernel_end);
-extern unsigned char* isr_end;
-extern unsigned char* isr_source;
-extern unsigned char* isr_dest;
 fdt_header *devicetree_header;
 
 /* TODO: make a generic system for registering reserved memory */
@@ -37,7 +34,6 @@ struct reserved_mem {
 };
 
 reserved_mem to_avoid[] = {
-	{&isr_dest, &isr_dest+(&isr_end-&isr_source)}, /* Dynamically rewrite the end of this, because _init hasn't been called yet! */
 	{&phys_kernel_start, &phys_kernel_end},
 	{nullptr, nullptr}, /* Dynamically populate with the devicetree's boundaries */
 };
@@ -121,10 +117,8 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 
 	klog("Starting bootstrap_phys_mem_manager.");
 	devicetree_header = devicetree;
-	to_avoid[0].end=reinterpret_cast<void*>(&isr_dest+(reinterpret_cast<uintptr_t>(&isr_end)-reinterpret_cast<uintptr_t>(&isr_source)));
-	to_avoid[2].start=devicetree;
-	to_avoid[2].end=devicetree+(devicetree->totalsize/sizeof(*devicetree));
-	klogf("reinterpret_cast<void*>(&isr_dest+(reinterpret_cast<uintptr_t>(&isr_end)-reinterpret_cast<uintptr_t>(&isr_source))): %p", reinterpret_cast<void*>(&isr_dest+(reinterpret_cast<uintptr_t>(&isr_end)-reinterpret_cast<uintptr_t>(&isr_source))));
+	to_avoid[1].start=devicetree;
+	to_avoid[1].end=devicetree+(devicetree->totalsize/sizeof(*devicetree));
 
 	/* Print debugging information */
 	klogf("Kernel starts at %p", static_cast<void const *>(&kernel_start));
@@ -199,16 +193,10 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 		++num_unavailable_regions;
 	}
 	unavailable_regions[num_unavailable_regions].addr=const_cast<char*>(&phys_kernel_start);
-	/* Since isr_source and isr_end are setup in the linker file,
+	/* Since phys_kernel_start and phys_kernel_end are setup in the linker file,
 	 * parsing the c++ code makes them look unrelated */
 	/* cppcheck-suppress comparePointers */
 	unavailable_regions[num_unavailable_regions].len=static_cast<size_t>(&phys_kernel_end-&phys_kernel_start);
-	++num_unavailable_regions;
-	unavailable_regions[num_unavailable_regions].addr=(&isr_dest);
-	/* Since isr_source and isr_end are setup in the linker file,
-	 * parsing the c++ code makes them look unrelated */
-	/* cppcheck-suppress comparePointers */
-	unavailable_regions[num_unavailable_regions].len=static_cast<size_t>(&isr_end-&isr_source);
 	++num_unavailable_regions;
 	unavailable_regions[num_unavailable_regions].addr=(&devicetree);
 	unavailable_regions[num_unavailable_regions].len=devicetree->totalsize;

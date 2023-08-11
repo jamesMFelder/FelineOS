@@ -3,8 +3,9 @@
 
 #include <kernel/arch/arm/modes.inc>
 
-//All possible exceptions (will be moved to 0x0 at runtime)
+//All possible exceptions
 .section .interrupt.text, "ax"
+.align 5
 .global isr_stub_table
 isr_stub_table:
 	ldr pc,=isr_handler
