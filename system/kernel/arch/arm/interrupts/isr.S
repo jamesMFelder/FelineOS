@@ -108,7 +108,7 @@ swi:
 	// store the one we will return to, and use the one that called us
 	ldr r1, [fp]
 	str r1, [fp, #-4]
-	sub r1, lr, #4
+	sub r1, r1, #4
 
 	//Get what the instruction is (r3) and the interrupt number (r2)
 	//TODO: should we always expect 0, or should we use this as the actual system call selector
