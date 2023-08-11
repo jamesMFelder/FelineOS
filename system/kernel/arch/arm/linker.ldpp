@@ -37,9 +37,6 @@ SECTIONS
 	{
 		*(.multiboot)
 		*(.text*)
-		isr_start = .;
-		KEEP(*(.interrupt.text))
-		isr_end = .;
 	}
 
 	/* Read-only data. */

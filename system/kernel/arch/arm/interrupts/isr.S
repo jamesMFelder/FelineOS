@@ -4,8 +4,10 @@
 #include <kernel/arch/arm/modes.inc>
 
 //All possible exceptions
-.section .interrupt.text, "ax"
+.section .text
 .align 5
+.global isr_start
+isr_start:
 .global isr_stub_table
 isr_stub_table:
 	ldr pc,=isr_handler
@@ -16,9 +18,10 @@ isr_stub_table:
 	ldr pc,=isr_handler
 	ldr pc,=isr_handler
 	ldr pc,=isr_handler
+.global isr_end
+isr_end:
 
 //Handle an unknown exception. Don't do anything fancy because we can't assume anything.
-.section .text
 .global isr_handler
 isr_handler:
 	//Save all the registers for printing later
