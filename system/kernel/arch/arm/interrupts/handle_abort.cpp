@@ -47,23 +47,31 @@ void handle_abort(void *executing_address, uint32_t fault_status, void *fault_ad
 			/* External Abort on Translation on first level */
 		case 0b1110:
 			/* External Abort on Translation on second level */
+			kcriticalf("External abort attempting to access %p (reason = %#" PRIb32 "). Halting!", fault_address, cause);
+			halt();
 		case 0b0101:
 			/* Translation Fault on section */
 		case 0b0111:
 			/* Translation Fault on page */
+			kcriticalf("Translation fault attempting to access %p (reason = %#" PRIb32 "). Halting!", fault_address, cause);
+			abort();
 		case 0b0011:
 			/* Access Bit Fault, Force AP Only (permission denied?) on section (TODO: what?) */
 		case 0b0110:
 			/* Access Bit Fault, Force AP Only (permission denied?) on page (TODO: what?) */
+			kcriticalf("Permission denied attempting to access %p (reason = %#" PRIb32 "). Halting!", fault_address, cause);
+			halt();
 		case 0b1001:
 			/* Domain Fault on section */
 		case 0b1011:
 			/* Domain Fault on page */
+			kcriticalf("Domains not yet implimented, so abort status %#" PRIb32 " should not be possible. Halting!", cause);
+			halt();
 		case 0b1101:
 			/* Permission Error on section */
 		case 0b1111:
 			/* Permission Error on page */
-			kcriticalf("Paging not yet implimented, so abort status %#" PRIb32 " with DFSR[10]=0 should not be possible. Halting!", cause);
+			kcriticalf("Permission error: abort status %#" PRIb32 " with DFSR[10]=0. Halting!", cause);
 			halt();
 
 		case 0b1000:
