@@ -11,7 +11,9 @@ typedef uint32_t volatile pl011_reg;
 struct pl011 {
 	pl011_reg dr;     /* Data Register */
 	pl011_reg rscrer; /* Receive Status Register */
+	uint32_t _padding_1[4];
 	pl011_reg fr;     /* Flag Register */
+	uint32_t _padding_2[1];
 	pl011_reg ilpr;   /* unused */
 	pl011_reg ibrd;   /* Integer Baud rate divisor */
 	pl011_reg fbrd;   /* Fractional Baud rate divisor */
@@ -23,6 +25,7 @@ struct pl011 {
 	pl011_reg mis;    /* Masked Interupt Status Register */
 	pl011_reg icr;    /* Interupt Clear Register */
 	pl011_reg dmacr;  /* DMA Control Register */
+	uint32_t _padding_3[13];
 	pl011_reg itcr;   /* Test Control register */
 	pl011_reg itip;   /* Integration test input reg */
 	pl011_reg itop;   /* Integration test output reg */
