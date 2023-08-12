@@ -4,6 +4,8 @@
 #include <kernel/devicetree.h>
 #include <kernel/log.h>
 #include <cinttypes>
+#include <kernel/paging.h>
+#include <kernel/vtopmem.h>
 
 fdt_header *devicetree;
 fdt_struct_entry *structs;
@@ -122,8 +124,30 @@ void for_each_prop_in_node(
 	return for_each_prop_in_node(prefix, &current_struct, callback, false, {.address_cells=2, .size_cells=1}, state);
 }
 
-void init_devicetree(fdt_header *header) {
-	devicetree=header;
-	strings=reinterpret_cast<char*>(reinterpret_cast<uintptr_t>(header)+header->off_dt_strings);
-	structs=reinterpret_cast<fdt_struct_entry*>(reinterpret_cast<uintptr_t>(header)+header->off_dt_struct);
+fdt_header *init_devicetree(fdt_header *header) {
+	fdt_header dt_header=read_pmem(header);
+	map_results dt_mapping=map_range(header, dt_header.totalsize, reinterpret_cast<void**>(&devicetree), 0);
+	switch (dt_mapping) {
+		// It worked!
+		case map_success:
+			break;
+		case map_no_virtmem:
+			kcritical("Out of virtual memory while booting! How is this possible? Aborting now.");
+			abort();
+		// These should be impossible for mapping with an unspecified virt_addr
+		case map_already_mapped:
+		case map_notmapped:
+		case map_invalid_align:
+		// These can't happen with opts being 0
+		case map_invalid_option:
+		case map_no_physmem:
+		// A. we're the kernel. B. We don't even have use these errors!
+		case map_no_perm:
+		case map_err_kernel_space:
+			kerrorf("Unexpected error mapping the devicetree: %d. Aborting now!", dt_mapping);
+			abort();
+	}
+	strings=reinterpret_cast<char*>(reinterpret_cast<uintptr_t>(devicetree)+devicetree->off_dt_strings);
+	structs=reinterpret_cast<fdt_struct_entry*>(reinterpret_cast<uintptr_t>(devicetree)+devicetree->off_dt_struct);
+	return devicetree;
 }

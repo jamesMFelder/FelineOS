@@ -11,6 +11,8 @@
 
 /* Begin Private Declarations */
 
+static const uint32_t page_table = 0b01;
+
 /* Return the offset into a page */
 inline uintptr_t page_offset(uintptr_t const addr){
 	return addr&(PHYS_MEM_CHUNK_SIZE-1);
@@ -18,10 +20,31 @@ inline uintptr_t page_offset(uintptr_t const addr){
 inline uintptr_t page_offset(void const * const addr){
 	return page_offset(reinterpret_cast<uintptr_t>(addr));
 }
+inline uintptr_t large_page_offset(uintptr_t const addr){
+	return addr&(LARGE_CHUNK_SIZE-1);
+}
+inline uintptr_t large_page_offset(void const * const addr){
+	return page_offset(reinterpret_cast<uintptr_t>(addr));
+}
 
 /* Return the index of the searchable page tables for addr */
 inline size_t searchable_page_table_offset(page const addr){
 	return addr.getInt()/PHYS_MEM_CHUNK_SIZE;
+}
+
+/* Return the index of the section table for addr */
+inline size_t section_table_offset(largePage const addr) {
+	return addr.getInt()/LARGE_CHUNK_SIZE;
+}
+struct pt_offset {
+	size_t first_level;
+	size_t second_level;
+};
+inline pt_offset page_table_offset(page const addr) {
+	return {
+		.first_level=section_table_offset(largePage(addr)),
+		.second_level=static_cast<size_t>((addr.getInt()%LARGE_CHUNK_SIZE)/PHYS_MEM_CHUNK_SIZE),
+	};
 }
 
 /* Check if a virtual address is mapped */
@@ -61,6 +84,13 @@ extern char const kernel_end;
 /* Maximuim amount of virtual memory */
 /* Change for 64-bit */
 #define MAX_VIRT_MEM 4_GiB
+
+typedef uint32_t first_level_descriptor;
+typedef uint32_t second_level_descriptor;
+
+/* What the CPU sees */
+first_level_descriptor first_level_table_system[[gnu::aligned(0x4000)]][4096]={0};
+second_level_descriptor second_level_table_system[[gnu::aligned(0x4000)]][4096][256]={{0}};
 
 /* What we use for searching */
 /* True if present, false otherwise */
@@ -125,17 +155,41 @@ void *find_free_virtmem(uintptr_t len){
 	return nullptr;
 }
 
+/* Set the first-level descriptor to point to the second-level descriptor array */
+void set_second_level_page_table(largePage const addr, second_level_descriptor second_level[256]) {
+	static const uint32_t domain = 0x0;
+	first_level_descriptor &first_level=first_level_table_system[section_table_offset(addr)];
+	first_level = reinterpret_cast<uintptr_t>(&second_level[section_table_offset(addr)]) | domain | page_table;
+}
+
 /* Map virt_addr to phys_addr (rounding both down to multiple of 4KiB) */
 /* Don't call this function if you haven't locked `modifying_page_tables` */
 map_results map_page(page const phys_addr, page const virt_addr, unsigned int opts[[maybe_unused]]){
-	if (phys_addr==virt_addr) {
-		invlpg(virt_addr);
-		page_tables_searchable[searchable_page_table_offset(virt_addr)]=true;
-		return map_success;
+	static const uint32_t small_page=0b10;
+	static const uint32_t full_access = 0b110000;
+	static const uint32_t global = 0x800;
+	static const uint32_t default_opts = small_page | full_access | global;
+	if((opts & MAP_OVERWRITE) == 0 && isMapped(virt_addr)){
+		return map_already_mapped;
 	}
-	else {
-		return map_invalid_align;
+	uint32_t attributes = 0b0;
+	if (opts & MAP_DEVICE) {
+		attributes = 0b100;
 	}
+	page_tables_searchable[searchable_page_table_offset(virt_addr)]=true;
+	auto offset = page_table_offset(virt_addr).first_level;
+	first_level_descriptor &first_level = first_level_table_system[offset];
+	if (!(first_level & page_table)) {
+		kcritical("Code not written for allocating a new page table!");
+		abort();
+		//TODO: allocate a new table
+	}
+	second_level_descriptor *second_level=reinterpret_cast<second_level_descriptor*>(first_level & ~0x3ff_uint32_t);
+	offset = page_table_offset(virt_addr).second_level;
+	second_level_descriptor &real_pt=second_level[offset];
+	real_pt = phys_addr.getInt()|default_opts|attributes;
+	invlpg(virt_addr);
+	return map_success;
 }
 
 /* Map len bytes from phys_addr to virt_addr (internal use only) */
@@ -204,13 +258,11 @@ map_results map_range(void const * const phys_addr, uintptr_t len, void **virt_a
 	modifying_page_tables.aquire_lock();
 	/* Round up, instead of down. */
 	len += page_offset(phys_addr);
-	if (free_from_here(phys_addr, len)) {
-		*virt_addr=const_cast<void*>(phys_addr);
-	}
-	else {
-		*virt_addr=nullptr;
+	*virt_addr = find_free_virtmem(len);
+	if (*virt_addr==nullptr) {
 		return map_no_virtmem;
 	}
+	*virt_addr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(*virt_addr)+page_offset(phys_addr));
 	/* Set it to the correct offset in the page */
 	map_results temp=internal_map_range(phys_addr, len, *virt_addr, opts);
 	// *virt_addr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(*virt_addr) + page_offset(phys_addr));
@@ -287,16 +339,19 @@ map_results unmap_range(void const * const virt_addr, uintptr_t len, unsigned in
 	}
 	/* If we are managing the physical memory */
 	if((opts & PHYS_ADDR_AUTO) != 0){
-		/* We can't do this until we actually keep track of what the physical memory is
-		 * Will come when we have an actual implimentation */
-		return map_invalid_option;
 		/* Attempt to free it */
-		// pmm_results attempt=free_mem_area(virt_to_phys(virt_addr), len, 0);
+		auto virt_to_phys = [](void const *virt)->void const*{
+			auto offsets = page_table_offset(virt);
+			auto &first_level = first_level_table_system[offsets.first_level];
+			auto &second_level = reinterpret_cast<second_level_descriptor*>(first_level & ~0x3ff_uint32_t)[offsets.second_level];
+			return reinterpret_cast<void const*>(second_level & ~0x3ff_uint32_t);
+		};
+		pmm_results attempt=free_mem_area(virt_to_phys(virt_addr), len, 0);
 		/* If the attempt failed */
-		// if(attempt==pmm_invalid || attempt==pmm_null){
+		if(attempt==pmm_invalid || attempt==pmm_null){
 			/* Call it an invalid option because we shouldn't have been managing it(TODO: better description) */
-			// return map_invalid_option;
-		// }
+			return map_invalid_option;
+		}
 	}
 	/* Loop through again */
 	to_unmap=virt_addr;
@@ -309,17 +364,31 @@ map_results unmap_range(void const * const virt_addr, uintptr_t len, unsigned in
 }
 
 int setup_paging(){
-	/* Map the kernel and page directory */
-	/* This makes sure that they haven't been unmapped */
 	modifying_page_tables.aquire_lock();
+	for (largePage addr=nullptr; addr.getInt() < MAX_VIRT_MEM-LARGE_CHUNK_SIZE; ++addr) {
+		set_second_level_page_table(addr, second_level_table_system[section_table_offset(addr.getInt())]);
+	}
+	/* Map the kernel and serial port */
+	map_results kernel_mapping = map_range(&phys_kernel_start, &phys_kernel_end-&phys_kernel_start, &kernel_start, 0);
+	assert(kernel_mapping==map_success);
+	map_results pl011_mapping = map_range(page(0x20201000), 0x90, page(0x20201000), MAP_DEVICE);
+	assert(pl011_mapping==map_success);
 	/* Basic sanity check */
 	/* If this fails, we probably would crash on the instruction after enabling paging */
-	// assert(isMapped(&kernel_start));
-	// assert(isMapped(&kernel_end));
+	assert(isMapped(&kernel_start));
+	assert(isMapped(&kernel_end));
+	assert(isMapped(0x20201000));
+	/* Actually set the registers */
+	uintptr_t ttbr0=reinterpret_cast<uintptr_t>(first_level_table_system);
+	ttbr0 &= ~0b11111;
+	ttbr0 |= 0b00000;
+	uintptr_t ttbr1=0;
+	uintptr_t ttbc=0; //Always use ttbr0
+	enable_paging(ttbr0, ttbr1, ttbc);
 	modifying_page_tables.release_lock();
 	return 0;
 }
 
-/* Copied from https://wiki.osdev.org/Paging#INVLPG */
-void invlpg(page const addr [[maybe_unused]]){
+void invlpg(page const addr){
+	asm volatile("mcr p15, 0, %0, c8, c7, 0" :: "r" (addr.get()) : "memory");
 }

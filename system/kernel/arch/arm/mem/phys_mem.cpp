@@ -33,11 +33,6 @@ struct reserved_mem {
 	void const *end;
 };
 
-reserved_mem to_avoid[] = {
-	{&phys_kernel_start, &phys_kernel_end},
-	{nullptr, nullptr}, /* Dynamically populate with the devicetree's boundaries */
-};
-
 enum find_actions {
 	fail, /* There is no way to make it work */
 	success, /* It works perfectley */
@@ -71,20 +66,6 @@ static void* find_space_in_area (void const *location, void const *end_of_availa
 	};
 	/* Don't use unaligned memory (unpredictable results) */
 	location=round_up_to_alignment(location, alignment_needed);
-	/* Check hardcoded obstacles */
-	for (auto avoid : to_avoid) {
-		switch (is_overlap(avoid.start, avoid.end)) {
-			case fail:
-				return nullptr;
-			case after:
-				return find_space_in_area(
-						reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(avoid.end)+1),
-						end_of_available, size_needed, alignment_needed
-						);
-			case success:
-				break;
-		}
-	}
 	/* Check device-tree reserved area */
 	fdt_reserve_entry *reserved_mem=reinterpret_cast<fdt_reserve_entry*>(devicetree_header+devicetree_header->off_mem_rsvmap/sizeof(*devicetree_header));
 	while (reserved_mem->address!=0 || reserved_mem->size!=0) {
@@ -117,8 +98,6 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 
 	klog("Starting bootstrap_phys_mem_manager.");
 	devicetree_header = devicetree;
-	to_avoid[1].start=devicetree;
-	to_avoid[1].end=devicetree+(devicetree->totalsize/sizeof(*devicetree));
 
 	/* Print debugging information */
 	klogf("Kernel starts at %p", static_cast<void const *>(&kernel_start));
@@ -143,7 +122,7 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 		// klogf("Sizes: addresses=%#" PRIx32 ", sizes=%#" PRIx32, sizes.address_cells, sizes.size_cells);
 	};
 	for_each_prop_in_node("memory", print_available_memory, reinterpret_cast<void*>(&num_available_entries));
-	size_t sorted_length=((num_reserved_entries+sizeof(to_avoid)/sizeof(*to_avoid))*2+num_available_entries)*sizeof(bootloader_mem_region);
+	size_t sorted_length=(num_reserved_entries*2+num_available_entries)*sizeof(bootloader_mem_region);
 	klogf("There are %zu available memory ranges and %zu reserved memory ranges", num_available_entries, num_reserved_entries);
 	klogf("so we will need a maximum of %zu bytes of memory to sort them.", sorted_length);
 
@@ -186,11 +165,6 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 		unavailable_regions[num_unavailable_regions].len=static_cast<size_t>(reserved_mem->size);
 		++num_unavailable_regions;
 		++reserved_mem;
-	}
-	for (auto &&curr_avoid: to_avoid) {
-		unavailable_regions[num_unavailable_regions].addr=const_cast<void*>(curr_avoid.start);
-		unavailable_regions[num_unavailable_regions].len = reinterpret_cast<size_t>(curr_avoid.end)-reinterpret_cast<size_t>(curr_avoid.start);
-		++num_unavailable_regions;
 	}
 	unavailable_regions[num_unavailable_regions].addr=const_cast<char*>(&phys_kernel_start);
 	/* Since phys_kernel_start and phys_kernel_end are setup in the linker file,

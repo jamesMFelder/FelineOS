@@ -3,32 +3,11 @@
 
 .global enable_paging
 
+//r0: ttbr0
+//r1: ttbr1
+//r2: ttbc
 enable_paging:
-	push %ebp
-	mov %esp, %ebp
-
-	/* Load the page directory into cr3 */
-	mov 8(%ebp), %eax
-	mov %eax, %cr3
-
-	/* Enable paging */
-	mov %cr0, %ebx
-	or  $(1<<31), %ebx
-	mov %ebx, %cr0
-
-	/* Now reload the segment registers (CS, DS, SS, etc.) with the appropriate segment selectors... */
-	mov $0x10, %ax/* Data selector */
-	mov %ax, %ds
-	mov %ax, %es
-	mov %ax, %fs
-	mov %ax, %gs
-
-	/* Reload CS with the code selector */
-	/* Why AT&T! This is jmp 0x08:reloadCS!? */
-	jmp $0x08, $reloadCS /* Code selector */
-
-	reloadCS:
-	mov $0, %eax
-	mov %ebp, %esp
-	pop %ebp
-	ret
+	mcr p15, 0, r0, c2, c0, 0
+	mcr p15, 0, r1, c2, c0, 1
+	mcr p15, 0, r2, c2, c0, 2
+	bx lr

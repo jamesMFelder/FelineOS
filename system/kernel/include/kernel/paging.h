@@ -25,14 +25,22 @@ map_results unmap_range(void const * const virt_addr, uintptr_t len, unsigned in
 /* tell map_* to overwrite previous mappings */
 /* TODO: restrict access to the core kernel */
 #define MAP_OVERWRITE 0b10u
-
+/* tell map_* to map the memory as device memory instead of normal */
+/* TODO: restrict access to the kernel */
+#define MAP_DEVICE 0b100u
 
 /* Call before setting up the PMM so it can map the pages it needs */
 int immediate_paging_initialization();
 /* Initialize paging */
 int setup_paging();
 
+#if defined(__i686__)
 ASM void enable_paging(uintptr_t cr3);
+#elif defined(__arm__)
+ASM void enable_paging(uintptr_t ttbr0, uintptr_t ttbr1, uintptr_t ttbc);
+#else
+#error "Cannot detect architecture!"
+#endif // __i686__ (else)
 
 /* Invalidates the cpu's TLB for the page containing addr */
 void invlpg(page const addr);

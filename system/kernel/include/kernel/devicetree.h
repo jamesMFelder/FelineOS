@@ -60,7 +60,8 @@ struct devicetree_cell_size {
 	uint32_t size_cells;
 };
 
-void init_devicetree(fdt_header *header);
+/* Initializes some state and maps it into virtual memory, returning the virtual address */
+fdt_header *init_devicetree(fdt_header *header);
 
 void for_each_prop_in_node(
 		char const *prefix,
