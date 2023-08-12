@@ -109,8 +109,11 @@ _start:
 	mcr   p15, 0, r8, c3, c0, 0
 
 	mrc p15, 0, r8, c1, c0, 0
-	orr r8, #0b1 // enable MMU
+	orr r8, #0x1 // enable MMU
+	orr r8, #0x800000 // disable subpages
 	mcr p15, 0, r8, c1, c0, 0
+
+.section .text
 
 	/* Setup what C(++) has no idea of */
 	mov r0, r2
