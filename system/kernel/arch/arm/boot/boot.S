@@ -25,8 +25,9 @@
 	sys_stack_bottom:
 		.skip 16384 /* 16 KiB */
 	sys_stack_top:
+
+.section .data
 	/* Reserve space for paging tables */
-	/* Reserve the paging tables */
 	.align 14 /* 16KiB (change if enabling ttbr1) */
 	translation_table_0:
 		.skip 0x20000 /* 4GiB/(1MiB*4B) = address range/(first level descriptor range*descriptor size) */
@@ -114,6 +115,30 @@ _start:
 	mcr p15, 0, r8, c1, c0, 0
 
 .section .text
+
+	/* Clear the .bss section */
+	/* Taken from https://wiki.osdev.org/Raspberry_Pi_Bare_Bones */
+	/* Load the start and end */
+	.extern bss_start
+	.extern bss_end
+	ldr r4, =bss_start
+	ldr r9, =bss_end
+
+	/* Load a bunch of zeros to write at once */
+	mov r5, #0
+	mov r6, #0
+	mov r7, #0
+	mov r8, #0
+	b 2f
+
+1:
+	/* Store 4 at once, increasing the base register (r4) */
+	stmia r4!, {r5-r8}
+
+2:
+	/* If we are still below bss_end, loop */
+	cmp r4, r9
+	blo 1b
 
 	/* Setup what C(++) has no idea of */
 	mov r0, r2
