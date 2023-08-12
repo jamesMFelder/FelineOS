@@ -368,13 +368,21 @@ int setup_paging(){
 	for (largePage addr=nullptr; addr.getInt() < MAX_VIRT_MEM-LARGE_CHUNK_SIZE; ++addr) {
 		set_second_level_page_table(addr, second_level_table_system[section_table_offset(addr.getInt())]);
 	}
+	modifying_page_tables.release_lock();
 	/* Map the kernel and serial port */
 	map_results kernel_mapping = map_range(&phys_kernel_start, &phys_kernel_end-&phys_kernel_start, &kernel_start, 0);
-	assert(kernel_mapping==map_success);
+	if (kernel_mapping != map_success) {
+		kcriticalf("Unable to map kernel! Error %d.", kernel_mapping);
+		abort();
+	}
 	map_results pl011_mapping = map_range(page(0x20201000), 0x90, page(0x20201000), MAP_DEVICE);
-	assert(pl011_mapping==map_success);
+	if (pl011_mapping != map_success) {
+		kcriticalf("Unable to map the serial port! Error %d.", pl011_mapping);
+		abort();
+	}
 	/* Basic sanity check */
 	/* If this fails, we probably would crash on the instruction after enabling paging */
+	modifying_page_tables.aquire_lock();
 	assert(isMapped(&kernel_start));
 	assert(isMapped(&kernel_end));
 	assert(isMapped(0x20201000));
