@@ -5,19 +5,25 @@ page::page(void const * const virt_addr){
 	/* Do the cast */
 	addr=reinterpret_cast<uintptr_t>(virt_addr);
 	/* And cut of the lower bytes */
-	addr&=~(4_KiB-1);
+	addr&=~(get_chunk_size()-1);
 }
 
 page::page(uintptr_t const virt_addr){
 	addr=virt_addr;
-	addr&=~(4_KiB-1);
+	addr&=~(get_chunk_size()-1);
 }
+
+largePage::largePage(void const * const virt_addr)
+	:page(virt_addr){}
+
+largePage::largePage(uintptr_t const virt_addr)
+	:page(virt_addr){}
 
 /* Prefix increment */
 page& page::operator++(){
 	/* Make sure we won't overflow */
-	if(addr<=UINTPTR_MAX-4_KiB){
-		addr+=4_KiB;
+	if(addr<=UINTPTR_MAX-get_chunk_size()){
+		addr+=get_chunk_size();
 	}
 	else{
 		addr=UINTPTR_MAX;
@@ -38,8 +44,8 @@ page page::operator++(int){
 /* Prefix decrement */
 page& page::operator--(){
 	/* Make sure we won't underflow */
-	if(addr>=4_KiB){
-		addr+=4_KiB;
+	if(addr>=get_chunk_size()){
+		addr-=get_chunk_size();
 	}
 	/* If we would: set to 0 */
 	else{
@@ -90,7 +96,7 @@ uintptr_t page::getInt() const{
 /* Set the address (rounding off) */
 void page::set(const void *newAddr){
 	addr=reinterpret_cast<uintptr_t>(newAddr);
-	addr&=~(4_KiB-1);
+	addr&=~(get_chunk_size()-1);
 }
 
 /* Implicit get (encourage only taking pointer) */

@@ -7,7 +7,8 @@
 #include <feline/fixed_width.h>
 
 /* Size of 1 page=granularity of chunks we're handing out */
-#define PHYS_MEM_CHUNK_SIZE 4_KiB
+constexpr unsigned long long PHYS_MEM_CHUNK_SIZE=4_KiB;
+constexpr unsigned long long LARGE_CHUNK_SIZE=1_MiB;
 
 /* Use for manipulating pages instead of void* / uintptr_t */
 /* TODO: support 2MiB pages */
@@ -43,8 +44,25 @@ class page{
 		/* Check if it is null */
 		/* Returns true if null, false if not null */
 		bool isNull() const;
+	protected:
+		inline virtual unsigned long long get_chunk_size() const{
+			return PHYS_MEM_CHUNK_SIZE;
+		};
 	private:
 		uintptr_t addr=0;
+};
+
+/* Use for manipulating pages instead of void* / uintptr_t */
+/* 1MiB version */
+class largePage : public page {
+	public:
+		largePage(void const * const virt_addr=nullptr);
+		largePage(uintptr_t const virt_addr);
+
+	protected:
+		inline unsigned long long get_chunk_size() const override{
+			return LARGE_CHUNK_SIZE;
+		};
 };
 
 enum pmm_results{
@@ -101,6 +119,19 @@ inline uintptr_t constexpr bytes_to_pages(uintptr_t const bytes){
 	return pages;
 }
 inline uintptr_t bytes_to_pages(page const bytes){
+	return bytes_to_pages(bytes.getInt());
+}
+/* And largePage versions */
+inline uintptr_t constexpr bytes_to_large_pages(uintptr_t const bytes){
+	uintptr_t pages=bytes;
+	if (UINTPTR_MAX-pages < LARGE_CHUNK_SIZE-1) {
+		return UINTPTR_MAX/LARGE_CHUNK_SIZE;
+	}
+	pages+=LARGE_CHUNK_SIZE-1;
+	pages/=LARGE_CHUNK_SIZE;
+	return pages;
+}
+inline uintptr_t bytes_to_large_pages(largePage const bytes){
 	return bytes_to_pages(bytes.getInt());
 }
 
