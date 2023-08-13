@@ -2,10 +2,6 @@
 
 /* Wait to get the lock */
 void Spinlock::aquire_lock(){
-	/* TODO: on ARM, we can't use this until we setup paging (see https://stackoverflow.com/a/26014734) */
-#ifdef __arm__
-	return;
-#else // __arm__
 	bool temp=false;
 	/* If the lock is true (not held), loop */
 	/* Once it is false, atomically replace with true and continue */
@@ -17,16 +13,10 @@ void Spinlock::aquire_lock(){
 	/* Once it was 0 (released by someone else) */
 	/*	We already set it to 1 */
 	return;
-#endif // __arm__ (else)
 }
 
 void Spinlock::release_lock() {
-	/* TODO: on ARM, we can't use this until we setup paging (see https://stackoverflow.com/a/26014734) */
-#ifdef __arm__
-	return;
-#else // __arm__
 	/* Release the lock */
 	lock.store(false);
 	return;
-#endif // __arm__ (else)
 }

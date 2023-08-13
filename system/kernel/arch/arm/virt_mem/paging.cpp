@@ -172,7 +172,7 @@ map_results map_page(page const phys_addr, page const virt_addr, unsigned int op
 	if((opts & MAP_OVERWRITE) == 0 && isMapped(virt_addr)){
 		return map_already_mapped;
 	}
-	uint32_t attributes = 0b0;
+	uint32_t attributes = 0b1001100;
 	if (opts & MAP_DEVICE) {
 		attributes = 0b100;
 	}
