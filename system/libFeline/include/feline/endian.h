@@ -11,7 +11,7 @@
 
 #include <feline/reverse_endian.h>
 
-template <typename T>
+template <EndianReverseable T>
 class native_endian {
 	public:
 		constexpr inline operator T() const {return value;};
@@ -19,7 +19,7 @@ class native_endian {
 		T value;
 };
 
-template <typename T>
+template <EndianReverseable T>
 class nonnative_endian {
 	public:
 		constexpr inline operator T() const {return reverse_endian(value);};
@@ -28,9 +28,9 @@ class nonnative_endian {
 };
 
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-template <typename T>
+template <EndianReverseable T>
 using little_endian = native_endian<T>;
-template <typename T>
+template <EndianReverseable T>
 using big_endian = nonnative_endian<T>;
 #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 template <typename T>

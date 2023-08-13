@@ -4,6 +4,7 @@
 #define _FELINE_REVERSE_ENDIAN_H 1
 
 #include <cstdint>
+#include <concepts>
 
 template <typename T>
 constexpr T reverse_endian(T value);
@@ -36,5 +37,10 @@ inline uint64_t reverse_endian(uint64_t value) {
 		reversed |= (value&0x00000000000000ff)<<56;
 		return reversed;
 }
+
+template <typename T>
+concept EndianReverseable = requires(T a) {
+	{ reverse_endian(a) } -> std::same_as<T>;
+};
 
 #endif /* _FELINE_REVERSE_ENDIAN_H */
