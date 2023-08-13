@@ -12,7 +12,6 @@
 
 /* Include various headers with different types */
 #include <cstddef>
-#include <cstdbool>
 #include <cmath>
 #include <ctime>
 #include <cstring>

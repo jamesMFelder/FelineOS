@@ -1,9 +1,0 @@
-/* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2023 James McNaughton Felder */
-#ifndef _CSTDINT
-#define _CSTDINT 1
-
-/* Just dump the definitions in the global namespace */
-#include "stdint.h"
-
-#endif /* _CSTDINT */

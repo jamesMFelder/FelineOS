@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
 #include <climits>
-#include <cstdbool>
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
