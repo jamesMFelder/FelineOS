@@ -44,10 +44,10 @@ libfeline.a: $(OBJS)
 	$(AR) rcs $@ $(OBJS)
 
 .c.o:
-	$(CC) -MD -o $@ -std=gnu17 $(CFLAGS) -c $(abspath $<)
+	$(CC) -MD -o $@ -std=gnu20 $(CFLAGS) -c $(abspath $<)
 
 .cpp.o:
-	$(CPP) -MD -o $@ -std=gnu++17 $(CFLAGS) $(CPPFLAGS) -c $(abspath $<)
+	$(CPP) -MD -o $@ -std=gnu++20 $(CFLAGS) $(CPPFLAGS) -c $(abspath $<)
 
 .c.S:
 	$(CC) -MD -o $@ $(CFLAGS) -c $(abspath $<)
@@ -56,10 +56,10 @@ libfeline.a: $(OBJS)
 	$(CPP) -MD -o $@ $(CFLAGS) $(CPPFLAGS) -c $(abspath $<)
 
 .c.libfeline.o:
-	$(CC) -MD -o $@ -std=gnu17 $(LIBFELINE_CFLAGS) -c $(abspath $<)
+	$(CC) -MD -o $@ -std=gnu20 $(LIBFELINE_CFLAGS) -c $(abspath $<)
 
 .cpp.libfeline.o:
-	$(CPP) -MD -o $@ -std=gnu++17 $(LIBFELINE_CFLAGS) $(LIBFELINE_CPPFLAGS) -c $(abspath $<)
+	$(CPP) -MD -o $@ -std=gnu++20 $(LIBFELINE_CFLAGS) $(LIBFELINE_CPPFLAGS) -c $(abspath $<)
 
 .S.libfeline.o:
 	$(CC) -MD -o $@ $(LIBFELINE_CFLAGS) $(LIBFELINE_CPPFLAGS) -c $(abspath $<)

@@ -75,10 +75,10 @@ libk.a: $(LIBK_OBJS)
 	$(AR) rcs $@ $(LIBK_OBJS)
 
 .c.o:
-	$(CC) -MD -o $@ -std=gnu17 $(CFLAGS) -c $(abspath $<)
+	$(CC) -MD -o $@ -std=gnu20 $(CFLAGS) -c $(abspath $<)
 
 .cpp.o:
-	$(CPP) -MD -o $@ -std=gnu++17 $(CPPFLAGS) -c $(abspath $<)
+	$(CPP) -MD -o $@ -std=gnu++20 $(CPPFLAGS) -c $(abspath $<)
 
 .c.S:
 	$(CC) -MD -o $@ $(CFLAGS) -c $(abspath $<)
@@ -87,10 +87,10 @@ libk.a: $(LIBK_OBJS)
 	$(CPP) -MD -o $@ $(CPPFLAGS) -c $(abspath $<)
 
 .c.libk.o:
-	$(CC) -MD -o $@ -std=gnu17 $(LIBK_CFLAGS) -c $(abspath $<)
+	$(CC) -MD -o $@ -std=gnu20 $(LIBK_CFLAGS) -c $(abspath $<)
 
 .cpp.libk.o:
-	$(CPP) -MD -o $@ -std=gnu++17 $(LIBK_CPPFLAGS) -c $(abspath $<)
+	$(CPP) -MD -o $@ -std=gnu++20 $(LIBK_CPPFLAGS) -c $(abspath $<)
 
 .S.libk.o:
 	$(CC) -MD -o $@  $(LIBK_CPPFLAGS) -c $(abspath $<)
