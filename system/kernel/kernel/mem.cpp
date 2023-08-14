@@ -15,7 +15,7 @@ mem_results get_mem_from(void *phys_addr, void **new_virt_addr, uintptr_t len) {
 	pmm_results phys_mem_results;
 	map_results virt_mem_results;
 
-	phys_mem_results=get_mem_area(phys_addr, len, 0);
+	phys_mem_results=get_mem_area(phys_addr, len);
 	switch (phys_mem_results) {
 		case pmm_success:
 			break;
@@ -52,7 +52,7 @@ mem_results get_mem_at(void *virt_addr, uintptr_t len) {
 	pmm_results phys_mem_results;
 	map_results virt_mem_results;
 
-	phys_mem_results=get_mem_area(&phys_addr, len, 0);
+	phys_mem_results=get_mem_area(&phys_addr, len);
 	switch (phys_mem_results) {
 		case pmm_success:
 			break;
@@ -93,7 +93,7 @@ mem_results get_mem(void **new_virt_addr, uintptr_t len) {
 	pmm_results phys_mem_results;
 	map_results virt_mem_results;
 
-	phys_mem_results=get_mem_area(&phys_addr, len, 0);
+	phys_mem_results=get_mem_area(&phys_addr, len);
 	switch (phys_mem_results) {
 		case pmm_success:
 			break;

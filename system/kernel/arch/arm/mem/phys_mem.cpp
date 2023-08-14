@@ -150,6 +150,7 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 	}
 	else {
 		kcritical("Unable to find a location for bootstrapping the PMM! Aborting.");
+		std::abort();
 	}
 
 	size_t num_unavailable_regions=0;

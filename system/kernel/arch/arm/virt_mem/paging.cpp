@@ -275,7 +275,7 @@ map_results map_range(uintptr_t len, void const * const virt_addr, unsigned int 
 	modifying_page_tables.aquire_lock();
 	void *phys_addr;
 	/* attempt to get the physical memory */
-	pmm_results attempt=get_mem_area(&phys_addr, len, 0);
+	pmm_results attempt=get_mem_area(&phys_addr, len);
 	/* if we are out */
 	if(attempt==pmm_nomem){
 		modifying_page_tables.release_lock();
@@ -299,7 +299,7 @@ map_results map_range(uintptr_t len, void **virt_addr, unsigned int opts){
 	}
 	void *phys_addr;
 	/* attempt to get the physical memory */
-	pmm_results attempt=get_mem_area(&phys_addr, len, 0);
+	pmm_results attempt=get_mem_area(&phys_addr, len);
 	/* if we are out */
 	if(attempt==pmm_nomem){
 		modifying_page_tables.release_lock();
@@ -346,7 +346,7 @@ map_results unmap_range(void const * const virt_addr, uintptr_t len, unsigned in
 			auto &second_level = reinterpret_cast<second_level_descriptor*>(first_level & ~0x3ff_uint32_t)[offsets.second_level];
 			return reinterpret_cast<void const*>(second_level & ~0x3ff_uint32_t);
 		};
-		pmm_results attempt=free_mem_area(virt_to_phys(virt_addr), len, 0);
+		pmm_results attempt=free_mem_area(virt_to_phys(virt_addr), len);
 		/* If the attempt failed */
 		if(attempt==pmm_invalid || attempt==pmm_null){
 			/* Call it an invalid option because we shouldn't have been managing it(TODO: better description) */

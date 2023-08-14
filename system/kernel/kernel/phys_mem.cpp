@@ -20,55 +20,57 @@ extern const char phys_kernel_start;
 extern const char phys_kernel_end;
 extern const char kernel_start;
 extern const char kernel_end;
-const uintptr_t uint_kernel_start = reinterpret_cast<uintptr_t>(&kernel_start);
-const uintptr_t uint_kernel_end = reinterpret_cast<uintptr_t>(&kernel_end);
 
 Spinlock modifying_pmm;
 
-static phys_mem_area_t *normal_mem_bitmap = nullptr;
-size_t mem_bitmap_len = 0;
+/* Return the offset into a page */
+inline uintptr_t page_offset(uintptr_t const addr){
+	return addr&(PHYS_MEM_CHUNK_SIZE-1);
+}
+inline uintptr_t page_offset(void const * const addr){
+	return page_offset(reinterpret_cast<uintptr_t>(addr));
+}
 
-/* Start the physical memory manager */
-/* Create a bitmap of pages for use */
-/* Create+fill in the bitmap */
-/* Call after paging is active */
+page round_up_to_page(uintptr_t len) {
+	len += PHYS_MEM_CHUNK_SIZE-1;
+	len &= ~(PHYS_MEM_CHUNK_SIZE-1);
+	return len;
+}
+page addr_round_up_to_page(void *len) {
+	return round_up_to_page(reinterpret_cast<uintptr_t>(len));
+}
+
+// static phys_mem_area_t *normal_mem_bitmap = nullptr;
+// size_t mem_bitmap_len = 0;
+
+struct PhysMemHeader {
+	PhysMemHeader *next;
+	PhysMemHeader *prev;
+	page memory;
+	page size; //number of PHYS_MEM_CHUNK_SIZE chunks (we will lose the ends of areas that don't nicely fit, which is okay)
+	bool in_use;
+	uint8_t canary[3];
+};
+
+static PhysMemHeader *first_header = nullptr;
+
 int start_phys_mem_manager(
 		struct bootloader_mem_region *unavailable_memory_regions,
 		size_t num_unavailable_memory_regions,
 		struct bootloader_mem_region *available_memory_regions,
 		size_t num_available_memory_regions) {
-
 	modifying_pmm.aquire_lock();
-	klog("Starting bootstrap_phys_mem_manager.");
+	/* +2 if we go in the middle of a memory region, +1 so we can bootstrap adding more */
+	size_t num_headers_needed = num_available_memory_regions+3;
+	size_t headers_needed_size = round_up_to_page(num_headers_needed*sizeof(PhysMemHeader)).getInt();
 
-	/* Print debugging information */
-	klogf("Kernel starts at %p", static_cast<void const *>(&kernel_start));
-	klogf("Kernel ends at %p", static_cast<void const *>(&kernel_end));
-	klogf("It is %#" PRIxPTR " bytes long.",
-			uint_kernel_end - uint_kernel_start);
-
-	/* Find the required size of the bitmap (maximum physical memory we can use) */
-	// TODO: how to safely not overflow
-	uintptr_t avail_max_mem =
-		reinterpret_cast<uintptr_t>(available_memory_regions[num_available_memory_regions - 1].addr) +
-		available_memory_regions[num_available_memory_regions - 1].len;
-	uintptr_t unavail_max_mem =
-		reinterpret_cast<uintptr_t>(unavailable_memory_regions[num_unavailable_memory_regions - 1].addr) +
-		unavailable_memory_regions[num_unavailable_memory_regions - 1].len;
-	uintptr_t max_mem=max(avail_max_mem, unavail_max_mem);
-	max_mem=min(max_mem, static_cast<uintptr_t>(4_GiB-1));
-
-	mem_bitmap_len=bytes_to_pages(max_mem);
-	printf("%#zx = min(%#" PRIxPTR ", %#" PRIxPTR ")\n", mem_bitmap_len, bytes_to_pages(4_GiB-1), bytes_to_pages(max_mem));
-
-	klogf("Using %zu elements in array.", mem_bitmap_len);
-	size_t needed_size=(mem_bitmap_len+1)*sizeof(phys_mem_area_t);
+	klogf("Using %zu memory regions.", num_headers_needed);
 
 	/* Is it possible to fit size_needed bytes into location..end_of_available without overlapping something important
 	 * If so, where in the area can we go; if not, nullptr */
-	auto find_space_in_area = [&unavailable_memory_regions, &num_unavailable_memory_regions, &available_memory_regions, &num_available_memory_regions](void const *location, void const *end_of_available, size_t size_needed, auto& recursive_self) -> phys_mem_area_t* {
-		/* Align the area (faster on x86, required on arm) */
-		location=round_up_to_alignment(location, alignof(phys_mem_area_t));
+	auto find_space_in_area = [&unavailable_memory_regions, &num_unavailable_memory_regions, &available_memory_regions, &num_available_memory_regions](void const *location, void const *end_of_available, size_t size_needed, auto& recursive_self) -> PhysMemHeader* {
+		/* Align the area to the minimum chunk alignment we can reserve */
+		location=round_up_to_alignment(location, PHYS_MEM_CHUNK_SIZE);
 		enum find_actions {
 			fail, /* There is no way to make it work */
 			success, /* It works perfectley */
@@ -144,213 +146,198 @@ int start_phys_mem_manager(
 		}
 		/* Because we reached the end of the loop and did the switch for everything else,
 		 * nothing conflicted with the address, so it works */
-		return reinterpret_cast<phys_mem_area_t*>(const_cast<void*>(location));
+		return reinterpret_cast<PhysMemHeader*>(const_cast<void*>(location));
 	};
 	/* For each available memory region, check if we can use it */
 	for (size_t i=0; i<num_available_memory_regions; ++i) {
-		normal_mem_bitmap=find_space_in_area(
+		first_header=find_space_in_area(
 				available_memory_regions[i].addr,
 				reinterpret_cast<void*>(
 					reinterpret_cast<uintptr_t>(available_memory_regions[i].addr)
 					+available_memory_regions[i].len
 					),
-				needed_size, find_space_in_area);
+				headers_needed_size, find_space_in_area);
 		/* If it's not nullptr, we don't need to check anywhere else because it points to a good place */
-		if (normal_mem_bitmap) {
+		if (first_header) {
 			break;
 		}
 	}
 
-	if (normal_mem_bitmap==nullptr) {
-		kcritical("Unable to find space for the memory bitmap. Aborting!");
+	if (first_header==nullptr) {
+		kcritical("Unable to find space for the memory headers. Aborting!");
 		std::abort();
 	}
 
 	/* Note where we found the memory and stop searching */
 	klog("");
-	klogf("Bitmap at %p.", static_cast<void*>(normal_mem_bitmap));
-	klogf("Ends at %p.", static_cast<void*>(normal_mem_bitmap+mem_bitmap_len));
+	klogf("Headers start at %p.", static_cast<void*>(first_header));
+	klogf("Headers end at %p.", static_cast<void*>(first_header+num_headers_needed));
 	klog("");
 
 	/* Map it, saving it's address to mark it reserved later. */
-	uintptr_t phys_nmb=reinterpret_cast<uintptr_t>(normal_mem_bitmap);
-	printf("Bitmap points to %p in physical memory...",
-			reinterpret_cast<void*>(normal_mem_bitmap));
-	map_results mapping=map_range(normal_mem_bitmap,
-			mem_bitmap_len*sizeof(phys_mem_area_t),
-			reinterpret_cast<void**>(&normal_mem_bitmap), 0);
+	unsigned char *phys_hdr_ptr=reinterpret_cast<unsigned char*>(first_header);
+	printf("Header chunk is at %p in physical memory...",
+			reinterpret_cast<void*>(first_header));
+	map_results mapping=map_range(first_header,
+			headers_needed_size,
+			reinterpret_cast<void**>(&first_header), 0);
 	if(mapping!=map_success){
 		puts("");
 		kcriticalf("Unable to map the physical memory manager (error code %d).", mapping);
 		std::abort();
 	}
-	printf("and to %p in virtual memory.\n", reinterpret_cast<void*>(normal_mem_bitmap));
-	/* Fill in the bitmap */
-	auto set_region_to = [max_mem](void *addr, size_t len, bool in_use) {
-		size_t max_trackable_len=max_mem-reinterpret_cast<uintptr_t>(addr);
-		len=min(len, max_trackable_len);
-		if (bytes_to_pages(len) > mem_bitmap_len) {
-			kerrorf("Requesting %#zx pages of memory (max %#zx).", bytes_to_pages(len), mem_bitmap_len);
+	printf("and %p in virtual memory.\n", reinterpret_cast<void*>(first_header));
+
+	/* Copy the available bootloader_mem_regions to the linked list */
+	/* Don't bother keeping the unavailable ones, because we can never free them */
+	size_t cur_avail_region_offset=0, cur_header_offset=0;
+	/* Loop while we still have a header to copy over */
+	while (cur_avail_region_offset < num_available_memory_regions) {
+		/* Verify we're not copying to much (most likely from splitting a region to include the headers) */
+		if (cur_header_offset >= num_headers_needed) {
+			kcritical("BUG: miscalculated the number of headers needed for the PMM!");
 			std::abort();
 		}
-
-		/* TODO: delete low-level logging */
-		printf("Setting %p to %s for %#" PRIxPTR " bytes.\n",
-				static_cast<void*>(addr),
-				in_use?"unavailable":"available",
-				bytes_to_pages(len));
-		/* fill in the array */
-		std::memset(&normal_mem_bitmap[bytes_to_pages(addr)],
-				in_use,
-				bytes_to_pages(len)/sizeof(*normal_mem_bitmap));
-	};
-	/* Quickly mark unknown parts of the bitmap as unuseable */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
-	/* I'm actually using it as a pointer to 0, not as a null pointer */
-	set_region_to(0x0, max_mem, true);
-#pragma GCC diagnostic pop
-	for (size_t mem_index=0; mem_index < num_available_memory_regions; ++mem_index) {
-		set_region_to(available_memory_regions[mem_index].addr, available_memory_regions[mem_index].len, false);
+		if (available_memory_regions[cur_avail_region_offset].addr <= phys_hdr_ptr && \
+				static_cast<unsigned char*>(available_memory_regions[cur_avail_region_offset].addr)+available_memory_regions[cur_avail_region_offset].len >= \
+				(phys_hdr_ptr + headers_needed_size)) {
+			if (available_memory_regions[cur_avail_region_offset].addr != first_header) {
+				first_header[cur_header_offset].next = nullptr;
+				first_header[cur_header_offset].prev = &first_header[cur_header_offset-1];
+				first_header[cur_header_offset].memory = addr_round_up_to_page(available_memory_regions[cur_avail_region_offset].addr);
+				first_header[cur_header_offset].size = phys_hdr_ptr - addr_round_up_to_page(available_memory_regions[cur_header_offset].addr).getInt();
+				first_header[cur_header_offset].in_use = false;
+				++cur_header_offset;
+			}
+			first_header[cur_header_offset].next = nullptr;
+			first_header[cur_header_offset].prev = &first_header[cur_header_offset-1];
+			first_header[cur_header_offset].memory = first_header;
+			first_header[cur_header_offset].size = headers_needed_size;
+			first_header[cur_header_offset].in_use = true;
+			++cur_header_offset;
+			if (static_cast<unsigned char*>(available_memory_regions[cur_avail_region_offset].addr)+available_memory_regions[cur_avail_region_offset].len != \
+					first_header[cur_header_offset-1].memory+first_header[cur_header_offset-1].size) {
+				first_header[cur_header_offset].next = nullptr;
+				first_header[cur_header_offset].prev = &first_header[cur_header_offset-1];
+				first_header[cur_header_offset].memory = first_header[cur_header_offset-1].memory+first_header[cur_header_offset-1].size;
+				first_header[cur_header_offset].size = static_cast<unsigned char*>(available_memory_regions[cur_avail_region_offset].addr)+available_memory_regions[cur_avail_region_offset].len-\
+													   (first_header[cur_header_offset-1].memory+first_header[cur_header_offset-1].size).getInt();
+				first_header[cur_header_offset].in_use = false;
+				++cur_header_offset;
+			}
+		}
+		else {
+			first_header[cur_header_offset].next = nullptr;
+			first_header[cur_header_offset].prev = &first_header[cur_header_offset-1];
+			first_header[cur_header_offset].memory = addr_round_up_to_page(available_memory_regions[cur_avail_region_offset].addr);
+			first_header[cur_header_offset].size = available_memory_regions[cur_avail_region_offset].len-page_offset(available_memory_regions[cur_avail_region_offset].addr);
+			first_header[cur_header_offset].in_use = false;
+		}
+		++cur_avail_region_offset;
+		++cur_header_offset;
 	}
-	for (size_t mem_index=0; mem_index < num_unavailable_memory_regions; ++mem_index) {
-		set_region_to(unavailable_memory_regions[mem_index].addr, unavailable_memory_regions[mem_index].len, true);
-	}
-
-	/* Unmap the architecture-specific memory info */
-	unmap_range(unavailable_memory_regions,
-			(num_available_memory_regions + num_unavailable_memory_regions) *
-			sizeof(struct bootloader_mem_region), 0);
-
-	puts("Bitmap filled...Marking kernel as used.");
-	/* Now mark the bitmap as used */
-	std::memset(&normal_mem_bitmap[phys_nmb/PHYS_MEM_CHUNK_SIZE], INT_TRUE, bytes_to_pages(mem_bitmap_len));
-	/* And the first page (so it can be nullptr) */
-	normal_mem_bitmap[0].in_use=true;
+	/* Avoid walking off the start of the chain */
+	first_header[0].prev = nullptr;
+	/* And reserve the location the headers are currently at */
 	modifying_pmm.release_lock();
-	klog("Ending bootstrap_phys_mem_manager.");
 	return 0;
 }
+
+enum allocation_strategy {
+	first_fit,
+};
 
 /* Find num unused (contiguous) pages */
 /* modifying_pmm must be locked before calling this! */
 /* returns nullptr if no RAM is available */
-static page find_free_pages(size_t num) {
-	/* Abort if we don't have enough total RAM */
-	if (num >= mem_bitmap_len) {
-		std::abort();
-	}
-	/* Loop through the page table stopping when there can't be enough free
-	 * space
-	 */
-	/* Start at 1, because nullptr is 0 and means not enough space was available
-	*/
-	for (size_t where = 1; where < mem_bitmap_len - num; where++) {
-		/* If it is free */
-		if (!normal_mem_bitmap[where].in_use) {
-			/* Start counting up to the number we need */
-			for (size_t count = 0; count < num; count++) {
-				/* If one isn't free */
-				if (normal_mem_bitmap[where + count].in_use) {
-					/* Go back to searching for a free one after this */
-					where += count;
-					break;
-				}
-			}
-			/* If the free space wasn't long enough */
-			if (normal_mem_bitmap[where].in_use) {
-				/* continue looking */
-				continue;
-			}
-			/* There is enough free space!! */
-			/* Loop through again */
-			else {
-				return where * PHYS_MEM_CHUNK_SIZE;
-			}
+static PhysMemHeader* find_free_pages(size_t len, allocation_strategy strategy[[maybe_unused]]) {
+	for (PhysMemHeader *cur_header = first_header; cur_header != nullptr; cur_header = cur_header->next) {
+		/* If it is available and there is enough space */
+		if (!cur_header->in_use && cur_header->size.getInt() >= len) {
+			return cur_header;
 		}
 	}
 	/* There isn't enough memory */
 	return nullptr;
 }
 
-/* Reserve num pages starting at addr */
-/* modifying_pmm must be locked before calling this! */
-static pmm_results internal_claim_mem_area(page const addr, size_t num, unsigned int opts [[maybe_unused]]) {
-	/* Make sure we are given a valid pointer */
-	if (addr.isNull()) {
-		return pmm_null;
-	}
-	/* Get the offset into the bitmap */
-	size_t offset = bytes_to_pages(addr);
-	/* Check if someone is trying to access beyond the end of RAM */
-	if (offset > mem_bitmap_len - num) {
-		return pmm_nomem;
-	}
-	/* Double check that everything is free and claim it */
-	for (size_t count = 0; count < num; count++) {
-		/* If it is in use */
-		if (normal_mem_bitmap[offset + count].in_use) {
-			/* Roll back our changes */
-			while (count > 0) {
-				normal_mem_bitmap[offset + count - 1].in_use = false;
-				count--;
+/* Find the header for addr, making sure it is available and has enough space */
+static PhysMemHeader* find_header_for_page(void const * const addr, size_t len) {
+	for (PhysMemHeader *cur_header = first_header; cur_header != nullptr; cur_header = cur_header->next) {
+		if (cur_header->memory <= addr && cur_header->memory+cur_header->size >= addr) {
+			/* We found the header, now we just need to check if we can use it */
+			if (cur_header->in_use || cur_header->size.getInt() < len) {
+				return nullptr;
 			}
-			/* And return an error */
-			return pmm_invalid;
-		}
-		/* It is free */
-		else {
-			/* Claim it */
-			normal_mem_bitmap[offset + count].in_use = true;
+			else {
+				return cur_header;
+			}
 		}
 	}
+	/* We couldn't find the header */
+	return nullptr;
+}
+
+/* Reserve num pages that addr controls */
+/* modifying_pmm must be locked before calling this! */
+static pmm_results internal_claim_mem_area(PhysMemHeader &header, size_t len) {
+	assert(!header.in_use);
+	assert(header.size.getInt() >= len);
+	header.in_use = true;
 	return pmm_success;
 }
 
 /* Reserve len unused bytes from addr (if available) */
-pmm_results get_mem_area(void const *const addr, uintptr_t len, unsigned int opts) {
+pmm_results get_mem_area(void const *const addr, uintptr_t len) {
 	modifying_pmm.aquire_lock();
-	pmm_results temp = internal_claim_mem_area(addr, bytes_to_pages(len), opts);
+	PhysMemHeader *header = find_header_for_page(addr, len);
+	if (!header) {
+		return pmm_nomem;
+	}
+	pmm_results temp = internal_claim_mem_area(*header, len);
 	modifying_pmm.release_lock();
 	return temp;
 }
 
 /* Aquire len unused bytes */
-pmm_results get_mem_area(void **addr, uintptr_t len, unsigned int opts) {
+pmm_results get_mem_area(void **addr, uintptr_t len) {
 	modifying_pmm.aquire_lock();
-	*addr = find_free_pages(bytes_to_pages(len));
-	if (*addr == nullptr) {
+	auto *header = find_free_pages(len, first_fit);
+	if (header == nullptr) {
 		modifying_pmm.release_lock();
 		return pmm_nomem;
 	}
 	pmm_results result =
-		internal_claim_mem_area(*addr, bytes_to_pages(len), opts);
+		internal_claim_mem_area(*header, len);
+	if (result==pmm_success) {
+		*addr = header->memory;
+	}
 	modifying_pmm.release_lock();
 	return result;
 }
 
 /* Free len bytes from addr */
-pmm_results free_mem_area(void const *const addr, uintptr_t len, unsigned int opts [[maybe_unused]]) {
+pmm_results free_mem_area(void const *const addr, uintptr_t len) {
 	modifying_pmm.aquire_lock();
-	/* Figure out how many pages to mark free */
-	size_t num = bytes_to_pages(len);
-	page base_page = addr;
-	size_t base_index = base_page.getInt() / PHYS_MEM_CHUNK_SIZE;
-	/* Loop through all the pages */
-	for (size_t count = 0; count < num; count++) {
-		/* And make sure that none of them are already free */
-		if (!normal_mem_bitmap[base_index + count].in_use) {
-			/* If any are, quit immediatly */
+	for (PhysMemHeader *cur_header = first_header; cur_header != nullptr; cur_header = cur_header->next) {
+		if (cur_header->memory <= addr && cur_header->memory+cur_header->size >= addr) {
+			auto end = static_cast<unsigned char const *>(addr)+len;
+			if (cur_header->memory+cur_header->size < end) {
+				/* We only know about part of the area? */
+				kwarnf("Attempt to free area %p-%p, but header covers area %p-%p!", addr, end, cur_header->memory.get(), (cur_header->memory+cur_header->size).get());
+				/* TODO: should we abort? */
+			}
+			if (!cur_header->in_use) {
+				modifying_pmm.release_lock();
+				return pmm_invalid;
+			}
+			cur_header->in_use = false;
+			/* TODO: merge with free regions */
 			modifying_pmm.release_lock();
-			return pmm_invalid;
+			return pmm_success;
 		}
 	}
-	/* Loop through again */
-	for (size_t count = 0; count < num; count++) {
-		/* And unmap everything */
-		/* TODO: zero the pages? */
-		normal_mem_bitmap[base_index + count].in_use = false;
-	}
 	modifying_pmm.release_lock();
-	return pmm_success;
+	/* We never found the header, so it was an invalid free */
+	return pmm_invalid;
 }

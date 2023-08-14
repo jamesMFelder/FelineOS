@@ -17,6 +17,7 @@
 /* Only define templates for C++, but don't error if another language includes this file */
 #if defined(__cplusplus) && !defined(__ASSEMBLER__)
 
+#include <cstddef>
 #include <cstdlib>
 #include <kernel/paging.h>
 #include <kernel/log.h>

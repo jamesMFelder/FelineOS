@@ -100,12 +100,12 @@ mem_results free_mem(void *addr, uintptr_t len);
 
 
 /* Aquire len unused bytes */
-pmm_results get_mem_area(void **addr, uintptr_t len, unsigned int opts);
+pmm_results get_mem_area(void **addr, uintptr_t len);
 /* Reserve len unused bytes from addr (if available) */
-pmm_results get_mem_area(void const * const addr, uintptr_t len, unsigned int opts);
+pmm_results get_mem_area(void const * const addr, uintptr_t len);
 
 /* Return len bytes starting at addr(TODO: keep track of who can free what) */
-pmm_results free_mem_area(void const * const addr, uintptr_t len, unsigned int opts);
+pmm_results free_mem_area(void const * const addr, uintptr_t len);
 
 /* Utility function to turn a number of bytes into a number of pages */
 /* Just a division rounding up with overflow checking. */

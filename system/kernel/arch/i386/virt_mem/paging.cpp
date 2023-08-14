@@ -197,7 +197,7 @@ bool isMapped(page const virt_addr){
 /* Not used, but keep for when we are doing stuff dynamically */
 page_table_entry* create_new_page_table(){
 	void *marea;
-	get_mem_area(&marea, PHYS_MEM_CHUNK_SIZE, 0);
+	get_mem_area(&marea, PHYS_MEM_CHUNK_SIZE);
 	std::memset(marea, 0, sizeof(page_table_entry)*1024);
 	return static_cast<page_table_entry*>(marea);
 }
@@ -377,7 +377,7 @@ map_results map_range(uintptr_t len, void const * const virt_addr, unsigned int 
 	modifying_page_tables.aquire_lock();
 	void *phys_addr;
 	/* attempt to get the physical memory */
-	pmm_results attempt=get_mem_area(&phys_addr, len, 0);
+	pmm_results attempt=get_mem_area(&phys_addr, len);
 	/* if we are out */
 	if(attempt==pmm_nomem){
 		modifying_page_tables.release_lock();
@@ -401,7 +401,7 @@ map_results map_range(uintptr_t len, void **virt_addr, unsigned int opts){
 	}
 	void *phys_addr;
 	/* attempt to get the physical memory */
-	pmm_results attempt=get_mem_area(&phys_addr, len, 0);
+	pmm_results attempt=get_mem_area(&phys_addr, len);
 	/* if we are out */
 	if(attempt==pmm_nomem){
 		modifying_page_tables.release_lock();
@@ -443,7 +443,7 @@ map_results unmap_range(void const * const virt_addr, uintptr_t len, unsigned in
 	/* If we are managing the physical memory */
 	if((opts & PHYS_ADDR_AUTO) != 0){
 		/* Attempt to free it */
-		pmm_results attempt=free_mem_area(virt_to_phys(virt_addr), len, 0);
+		pmm_results attempt=free_mem_area(virt_to_phys(virt_addr), len);
 		/* If the attempt failed */
 		if(attempt==pmm_invalid || attempt==pmm_null){
 			/* Call it an invalid option because we shouldn't have been managing it(TODO: better description) */
