@@ -8,7 +8,7 @@
 idt_init:
 
 	.extern isr_start
-	ldr r4, =isr_start
-	mcr p15, 0, r4, c12, c0, 0
+	ldr r0, =isr_start
+	mcr p15, 0, r0, c12, c0, 0
 
 	bx lr
