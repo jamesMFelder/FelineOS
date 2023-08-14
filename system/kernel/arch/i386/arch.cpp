@@ -39,7 +39,7 @@ static void screen_init(multiboot_info_t mbp){
 	int fb_init_rval=fb.init(reinterpret_cast<pixel_bgr_t*>(mbp.framebuffer_addr), static_cast<uint16_t>(mbp.framebuffer_width), static_cast<uint16_t>(mbp.framebuffer_height), static_cast<uint16_t>(mbp.framebuffer_pitch), mbp.framebuffer_bpp);
 	if(fb_init_rval!=0){
 		kerrorf("Unable to initialize framebuffer! Failed with error %d.", fb_init_rval);
-		abort();
+		std::abort();
 	}
 }
 

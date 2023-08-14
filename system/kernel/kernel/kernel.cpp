@@ -47,14 +47,14 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 	void *old_mem_ptr, *mem_ptr;
 	mem_results mem;
 	mem=get_mem(&old_mem_ptr, 1);
-	if(mem!=mem_success){kcriticalf("Getting memory returned %u.", mem); abort();}
+	if(mem!=mem_success){kcriticalf("Getting memory returned %u.", mem); std::abort();}
 	printf("Getting mem area returns %d.\n", mem);
 	printf("Got a page at %p.\n", old_mem_ptr);
 	mem=free_mem(old_mem_ptr, 1);
-	if(mem!=mem_success){kcriticalf("Getting memory returned %d.", mem); abort();}
+	if(mem!=mem_success){kcriticalf("Getting memory returned %d.", mem); std::abort();}
 	printf("Freeing an allocated area returns %d.\n", mem);
 	mem=get_mem(&mem_ptr, 1);
-	if(mem!=mem_success){kcriticalf("Getting memory returned %d.", mem); abort();}
+	if(mem!=mem_success){kcriticalf("Getting memory returned %d.", mem); std::abort();}
 	printf("Getting mem area returns %d.\n", mem);
 	printf("Got another page at %p.\n", mem_ptr);
 	if(mem_ptr==old_mem_ptr){
@@ -82,5 +82,5 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 	printf("Testing an syscall...\n");
 	printf("It returned %ld.\n", syscall(0));
 	kcritical("Nothing to do... Pausing now."); /* boot.S should hang if we return */
-	abort();
+	std::abort();
 }

@@ -56,7 +56,7 @@ inline void increment_fdt_struct(fdt_struct_entry **entry) {
 		default:
 #pragma GCC diagnostic pop
 			kcritical("Attempted to move past the end of the device tree, or are working with an invalid one.");
-			abort();
+			std::abort();
 	}
 }
 
@@ -110,7 +110,7 @@ static void for_each_prop_in_node(
 			default:
 #pragma GCC diagnostic pop
 				kcritical("Invalid device tree! Halting.");
-				abort();
+				std::abort();
 		}
 	}
 }
@@ -133,7 +133,7 @@ fdt_header *init_devicetree(fdt_header *header) {
 			break;
 		case map_no_virtmem:
 			kcritical("Out of virtual memory while booting! How is this possible? Aborting now.");
-			abort();
+			std::abort();
 		// These should be impossible for mapping with an unspecified virt_addr
 		case map_already_mapped:
 		case map_notmapped:
@@ -145,7 +145,7 @@ fdt_header *init_devicetree(fdt_header *header) {
 		case map_no_perm:
 		case map_err_kernel_space:
 			kerrorf("Unexpected error mapping the devicetree: %d. Aborting now!", dt_mapping);
-			abort();
+			std::abort();
 	}
 	strings=reinterpret_cast<char*>(reinterpret_cast<uintptr_t>(devicetree)+devicetree->off_dt_strings);
 	structs=reinterpret_cast<fdt_struct_entry*>(reinterpret_cast<uintptr_t>(devicetree)+devicetree->off_dt_struct);

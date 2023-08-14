@@ -160,7 +160,7 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 	while (reserved_mem->address!=0 || reserved_mem->size!=0) {
 		unavailable_regions[num_unavailable_regions].addr=reinterpret_cast<void*>(static_cast<uintptr_t>(reserved_mem->address));
 		if (reserved_mem->size > SIZE_MAX) {
-			abort();
+			std::abort();
 		}
 		unavailable_regions[num_unavailable_regions].len=static_cast<size_t>(reserved_mem->size);
 		++num_unavailable_regions;

@@ -72,7 +72,7 @@ page& page::operator+=(const page &rhs){
 	}
 	else{
 		addr=UINTPTR_MAX;
-		abort();
+		std::abort();
 	}
 	return *this;
 }

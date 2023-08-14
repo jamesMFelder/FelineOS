@@ -163,7 +163,7 @@ int start_phys_mem_manager(
 
 	if (normal_mem_bitmap==nullptr) {
 		kcritical("Unable to find space for the memory bitmap. Aborting!");
-		abort();
+		std::abort();
 	}
 
 	/* Note where we found the memory and stop searching */
@@ -182,7 +182,7 @@ int start_phys_mem_manager(
 	if(mapping!=map_success){
 		puts("");
 		kcriticalf("Unable to map the physical memory manager (error code %d).", mapping);
-		abort();
+		std::abort();
 	}
 	printf("and to %p in virtual memory.\n", reinterpret_cast<void*>(normal_mem_bitmap));
 	/* Fill in the bitmap */
@@ -191,7 +191,7 @@ int start_phys_mem_manager(
 		len=min(len, max_trackable_len);
 		if (bytes_to_pages(len) > mem_bitmap_len) {
 			kerrorf("Requesting %#zx pages of memory (max %#zx).", bytes_to_pages(len), mem_bitmap_len);
-			abort();
+			std::abort();
 		}
 
 		/* TODO: delete low-level logging */
@@ -238,7 +238,7 @@ int start_phys_mem_manager(
 static page find_free_pages(size_t num) {
 	/* Abort if we don't have enough total RAM */
 	if (num >= mem_bitmap_len) {
-		abort();
+		std::abort();
 	}
 	/* Loop through the page table stopping when there can't be enough free
 	 * space

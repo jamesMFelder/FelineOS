@@ -97,7 +97,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 	/* See above hack alert for we we don't use (!found_space) */
 	if (found_space==IN_USE_LOCATION) {
 		kcriticalf("Cannot find enough memory.");
-		abort();
+		std::abort();
 	}
 
 	/* Actually map the found space. */
@@ -105,7 +105,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 	enum map_results mapping=map_range(found_space, sorted_length, reinterpret_cast<void**>(&unavailable_memory), 0);
 	if (mapping!=map_success) {
 		kcriticalf("Unable to map the needed memory for the PMM boostrapping!");
-		abort();
+		std::abort();
 	}
 
 	/* Copy the multiboot information into our cross-platform setup

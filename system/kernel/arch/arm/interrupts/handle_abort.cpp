@@ -54,7 +54,7 @@ void handle_abort(void *executing_address, uint32_t fault_status, void *fault_ad
 		case 0b0111:
 			/* Translation Fault on page */
 			kcriticalf("Translation fault attempting to access %p (reason = %#" PRIb32 "). Halting!", fault_address, cause);
-			abort();
+			std::abort();
 		case 0b0011:
 			/* Access Bit Fault, Force AP Only (permission denied?) on section (TODO: what?) */
 		case 0b0110:
@@ -77,7 +77,7 @@ void handle_abort(void *executing_address, uint32_t fault_status, void *fault_ad
 		case 0b1000:
 			/* Precise External Abort */
 			kerrorf("Instruction %p aborted trying to access %p", executing_address, fault_address);
-			abort();
+			std::abort();
 			// return;
 
 		case 0b0010:

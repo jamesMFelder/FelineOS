@@ -22,11 +22,11 @@ C_LINKAGE __attribute__((noreturn)) void __stack_chk_fail(void);
 void __stack_chk_fail(void)
 {
 #if __STDC_HOSTED__
-	abort();
+	std::abort();
 	__builtin_unreachable();
 #else
 	kcritical("Stack smashing detected");
-	abort();
+	std::abort();
 	__builtin_unreachable();
 #endif
 }

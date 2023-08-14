@@ -29,7 +29,7 @@ T read_pmem(T const * const addr) {
 	map_results type_mapping=map_range(addr, sizeof(T), reinterpret_cast<void**>(&tmp_ptr), 0);
 	if (type_mapping != map_success) {
 		kerrorf ("Cannot map physical memory %p. Error %d.", static_cast<void const * const>(addr), type_mapping);
-		abort();
+		std::abort();
 	}
 	value = *tmp_ptr;
 	unmap_range(tmp_ptr, sizeof(T), 0);
@@ -43,7 +43,7 @@ void read_pmem(T const * const addr, size_t num, T * result) {
 	map_results type_mapping=map_range(addr, sizeof(T) * num, reinterpret_cast<void**>(&tmp_ptr), 0);
 	if (type_mapping != map_success) {
 		kerrorf ("Cannot map physical memory %p. Error %d.", static_cast<void const * const>(addr), type_mapping);
-		abort();
+		std::abort();
 	}
 	memmove(result, tmp_ptr, sizeof(T) * num);
 	unmap_range(tmp_ptr, sizeof(T) * num, 0);
@@ -56,7 +56,7 @@ void write_pmem(T * const addr, T value) {
 	map_results type_mapping=map_range(addr, sizeof(T), &tmp_ptr, 0);
 	if (type_mapping != map_success) {
 		kerrorf ("Cannot map physical memory %p. Error %d.", static_cast<void const * const>(addr), type_mapping);
-		abort();
+		std::abort();
 	}
 	*tmp_ptr=value;
 	unmap_range(tmp_ptr, sizeof(T), 0);
@@ -69,7 +69,7 @@ void write_pmem(T * addr, size_t num, T * value) {
 	map_results type_mapping=map_range(addr, sizeof(T) * num, reinterpret_cast<void**>(&tmp_ptr), 0);
 	if (type_mapping != map_success) {
 		kerrorf ("Cannot map physical memory %p. Error %d.", static_cast<void const * const>(addr), type_mapping);
-		abort();
+		std::abort();
 	}
 	memmove(tmp_ptr, value, sizeof(T) * num);
 	unmap_range(tmp_ptr, sizeof(T) * num, 0);

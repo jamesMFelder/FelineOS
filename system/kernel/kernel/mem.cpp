@@ -37,12 +37,12 @@ mem_results get_mem_from(void *phys_addr, void **new_virt_addr, uintptr_t len) {
 		case map_notmapped:
 		case map_err_kernel_space:
 			kcritical("The VMM has a bug!\n");
-			abort();
+			std::abort();
 		case map_no_physmem:
 		case map_invalid_align:
 		case map_invalid_option:
 			kcritical("The memory manager has a bug!\n");
-			abort();
+			std::abort();
 	}
 	return mem_success;
 }
@@ -61,7 +61,7 @@ mem_results get_mem_at(void *virt_addr, uintptr_t len) {
 		case pmm_null:
 		case pmm_invalid:
 			kcritical("The PMM has a bug!\n");
-			abort();
+			std::abort();
 	}
 
 	uintptr_t phys_addr_with_offset=reinterpret_cast<uintptr_t>(phys_addr);
@@ -78,12 +78,12 @@ mem_results get_mem_at(void *virt_addr, uintptr_t len) {
 		case map_already_mapped:
 		case map_notmapped:
 			kcritical("The VMM has a bug!\n");
-			abort();
+			std::abort();
 		case map_no_physmem:
 		case map_invalid_align:
 		case map_invalid_option:
 			kcritical("The memory manager has a bug!\n");
-			abort();
+			std::abort();
 	}
 	return mem_success;
 }
@@ -102,7 +102,7 @@ mem_results get_mem(void **new_virt_addr, uintptr_t len) {
 		case pmm_null:
 		case pmm_invalid:
 			kcritical("The PMM has a bug!\n");
-			abort();
+			std::abort();
 	}
 
 	virt_mem_results=map_range(phys_addr, len, new_virt_addr, 0);
@@ -117,12 +117,12 @@ mem_results get_mem(void **new_virt_addr, uintptr_t len) {
 		case map_already_mapped:
 		case map_notmapped:
 			kcritical("The VMM has a bug!\n");
-			abort();
+			std::abort();
 		case map_no_physmem:
 		case map_invalid_align:
 		case map_invalid_option:
 			kcritical("The memory manager has a bug!\n");
-			abort();
+			std::abort();
 	}
 	return mem_success;
 }
@@ -142,10 +142,10 @@ mem_results free_mem(void *addr, uintptr_t len){
 		case map_no_physmem:
 		case map_no_virtmem:
 			kcritical("The VMM has a bug!\n");
-			abort();
+			std::abort();
 		case map_invalid_option:
 			kcritical("The memory manager has a bug!\n");
-			abort();
+			std::abort();
 		case map_notmapped:
 			return mem_invalid;
 	}

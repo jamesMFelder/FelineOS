@@ -7,10 +7,10 @@
 
 [[noreturn]] void _Assert(char const * const err_msg){
 	puts(err_msg);
-	abort();
+	std::abort();
 }
 
 [[noreturn]] void _Assert_func(char const * const err_msg, char const * const func ,char const * const end){
 	printf("%s%s%s\n", err_msg, func, end);
-	abort();
+	std::abort();
 }

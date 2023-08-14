@@ -7,9 +7,9 @@
 
 #include <bits/c_compat.h>
 
-/* Print error message and call abort() */
+/* Print error message and call std::abort() */
 C_LINKAGE [[noreturn]] void _Assert(char const * const err_msg);
-/* Print error message and call abort() */
+/* Print error message and call std::abort() */
 /* Extra parameters because __func__ can't be concatenated with a string literal. */
 C_LINKAGE [[noreturn]] void _Assert_func(char const * const, char const * const, char const * const);
 

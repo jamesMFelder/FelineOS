@@ -181,7 +181,7 @@ map_results map_page(page const phys_addr, page const virt_addr, unsigned int op
 	first_level_descriptor &first_level = first_level_table_system[offset];
 	if (!(first_level & page_table)) {
 		kcritical("Code not written for allocating a new page table!");
-		abort();
+		std::abort();
 		//TODO: allocate a new table
 	}
 	second_level_descriptor *second_level=reinterpret_cast<second_level_descriptor*>(first_level & ~0x3ff_uint32_t);
@@ -230,7 +230,7 @@ static map_results internal_map_range(void const * const phys_addr, uintptr_t le
 						/*	b: unmapped one of our previously mapped pages */
 						/* So it is safe to say our code isn't working and someone is trying to cause a crash. */
 						/* Abort should be pretty safe */
-						abort();
+						std::abort();
 					}
 				}
 				/* Propegate the error out */
@@ -373,12 +373,12 @@ int setup_paging(){
 	map_results kernel_mapping = map_range(&phys_kernel_start, &phys_kernel_end-&phys_kernel_start, &kernel_start, 0);
 	if (kernel_mapping != map_success) {
 		kcriticalf("Unable to map kernel! Error %d.", kernel_mapping);
-		abort();
+		std::abort();
 	}
 	map_results pl011_mapping = map_range(page(0x20201000), 0x90, page(0x20201000), MAP_DEVICE);
 	if (pl011_mapping != map_success) {
 		kcriticalf("Unable to map the serial port! Error %d.", pl011_mapping);
-		abort();
+		std::abort();
 	}
 	/* Basic sanity check */
 	/* If this fails, we probably would crash on the instruction after enabling paging */

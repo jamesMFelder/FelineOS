@@ -333,7 +333,7 @@ static map_results internal_map_range(void const * const phys_addr, uintptr_t le
 						/*	b: unmapped one of our previously mapped pages */
 						/* So it is safe to say our code isn't working and someone is trying to cause a crash. */
 						/* Abort should be pretty safe */
-						abort();
+						std::abort();
 					}
 				}
 				/* Propegate the error out */
