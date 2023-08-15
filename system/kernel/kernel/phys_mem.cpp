@@ -15,12 +15,6 @@
 #include <kernel/phys_mem.h>
 #include <kernel/vtopmem.h>
 
-/* Setup by the linker to be at the start and end of the kernel. */
-extern const char phys_kernel_start;
-extern const char phys_kernel_end;
-extern const char kernel_start;
-extern const char kernel_end;
-
 Spinlock modifying_pmm;
 
 /* Return the offset into a page */
@@ -39,9 +33,6 @@ page round_up_to_page(uintptr_t len) {
 page addr_round_up_to_page(void *len) {
 	return round_up_to_page(reinterpret_cast<uintptr_t>(len));
 }
-
-// static phys_mem_area_t *normal_mem_bitmap = nullptr;
-// size_t mem_bitmap_len = 0;
 
 struct PhysMemHeader {
 	PhysMemHeader *next;
@@ -80,7 +71,7 @@ int start_phys_mem_manager(
 		location=round_up_to_alignment(location, PHYS_MEM_CHUNK_SIZE);
 		enum find_actions {
 			fail, /* There is no way to make it work */
-			success, /* It works perfectley */
+			success, /* It works perfectly */
 			after, /* Try at the end of the current reserved area */
 		};
 		/* Check if a location works */
@@ -189,8 +180,7 @@ int start_phys_mem_manager(
 			headers_needed_size,
 			reinterpret_cast<void**>(&first_chunk), 0);
 	if(mapping!=map_success){
-		puts("");
-		kcriticalf("Unable to map the physical memory manager (error code %d).", mapping);
+		kcriticalf("\nUnable to map the physical memory manager (error code %d).", mapping);
 		std::abort();
 	}
 	printf("and %p in virtual memory.\n", reinterpret_cast<void*>(first_chunk));
@@ -278,6 +268,7 @@ static PhysMemHeader* get_new_header() {
 		chunk=chunk->next;
 	}
 	/* None of the chunks had an available header (TODO: allocate a new one) */
+	kwarn("Unable to find a new header for the PMM to use!");
 	return nullptr;
 }
 

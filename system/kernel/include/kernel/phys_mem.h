@@ -5,12 +5,6 @@
 
 #include <cstddef>
 
-/* Used for a stack of pages */
-typedef struct phys_mem_area{
-	/* Is any part of this in use (including through a child) */
-	bool in_use;
-} phys_mem_area_t;
-
 /* Used for passing in information from the bootloader */
 struct bootloader_mem_region {
 	void *addr;
