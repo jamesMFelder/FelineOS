@@ -6,8 +6,17 @@
 #include <cstddef>
 #include <cstdint>
 
+inline uintptr_t round_up_to_alignment(uintptr_t addr, size_t align) {
+	if (addr%align == 0) {
+		return addr;
+	}
+	else {
+		return addr+align-(addr%align);
+	}
+}
+
 inline void const* round_up_to_alignment(void const* addr, size_t align) {
-	return static_cast<unsigned char const*>(addr)+align-(reinterpret_cast<uintptr_t>(addr)%align);
+	return reinterpret_cast<void const*>(round_up_to_alignment(reinterpret_cast<uintptr_t>(addr), align));
 }
 
 template<typename T>
