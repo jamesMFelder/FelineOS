@@ -25,6 +25,7 @@ const uintptr_t uint_kernel_start = reinterpret_cast<uintptr_t>(&kernel_start);
 const uintptr_t uint_kernel_end = reinterpret_cast<uintptr_t>(&kernel_end);
 // const uintptr_t phys_uint_kernel_start = reinterpret_cast<uintptr_t>(&phys_kernel_start);
 // const uintptr_t phys_uint_kernel_end = reinterpret_cast<uintptr_t>(&phys_kernel_end);
+fdt_header *phys_devicetree_header;
 fdt_header *devicetree_header;
 
 /* TODO: make a generic system for registering reserved memory */
@@ -85,6 +86,23 @@ static void* find_space_in_area (void const *location, void const *end_of_availa
 		}
 		++reserved_mem;
 	}
+	switch (is_overlap(&phys_kernel_start, &phys_kernel_end)) {
+		case fail:
+			return nullptr;
+		case after:
+			return find_space_in_area(&phys_kernel_end+1, end_of_available, size_needed, alignment_needed);
+		case success:
+			break;
+	}
+	switch (is_overlap(phys_devicetree_header, phys_devicetree_header+devicetree_header->totalsize/sizeof(fdt_header))) {
+		case fail:
+			return nullptr;
+		case after:
+			return find_space_in_area(phys_devicetree_header+devicetree_header->totalsize/sizeof(fdt_header)+1, end_of_available, size_needed, alignment_needed);
+		case success:
+			break;
+	}
+	++reserved_mem;
 	/* Nothing conflicted with the address, so we're good to go*/
 	return const_cast<void*>(location);
 };
@@ -154,7 +172,12 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 	}
 
 	size_t num_unavailable_regions=0;
-	bootloader_mem_region *unavailable_regions=reinterpret_cast<bootloader_mem_region*>(memory_map_location.where);
+	bootloader_mem_region *unavailable_regions=0;
+	map_results mapping = map_range(memory_map_location.where, memory_map_location.len_needed, reinterpret_cast<void**>(&unavailable_regions), 0);
+	if (mapping != map_success) {
+		kcritical("Unable to map memory to start the PMM! Aborting!");
+		std::abort();
+	}
 
 	/* Reusing the same variable for the same loop */
 	reserved_mem=reinterpret_cast<fdt_reserve_entry*>(devicetree_header+devicetree_header->off_mem_rsvmap/sizeof(*devicetree_header));
@@ -173,7 +196,7 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 	/* cppcheck-suppress comparePointers */
 	unavailable_regions[num_unavailable_regions].len=static_cast<size_t>(&phys_kernel_end-&phys_kernel_start);
 	++num_unavailable_regions;
-	unavailable_regions[num_unavailable_regions].addr=(&devicetree);
+	unavailable_regions[num_unavailable_regions].addr=(phys_devicetree_header);
 	unavailable_regions[num_unavailable_regions].len=devicetree->totalsize;
 	++num_unavailable_regions;
 
