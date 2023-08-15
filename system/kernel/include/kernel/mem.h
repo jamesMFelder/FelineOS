@@ -28,6 +28,8 @@ class page{
 		/* And sometimes we need to do arithmetic */
 		page& operator+=(const page& rhs);
 		friend page operator+(page lhs, const page& rhs);
+		page& operator-=(const page& rhs);
+		friend page operator-(page lhs, const page& rhs);
 
 		/* Quickly get and set */
 		void *get() const;

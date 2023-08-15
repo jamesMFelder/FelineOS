@@ -77,9 +77,28 @@ page& page::operator+=(const page &rhs){
 	return *this;
 }
 
+/* Self-subtraction */
+page& page::operator-=(const page &rhs){
+	/* Make sure we won't underflow */
+	if (addr>=rhs.getInt()){
+		addr-=rhs.getInt();
+	}
+	else{
+		addr=0;
+		std::abort();
+	}
+	return *this;
+}
+
 /* Addition */
 page operator+(page lhs, const page &rhs){
 	lhs += rhs;
+	return lhs;
+}
+
+/* Subtraction */
+page operator-(page lhs, const page &rhs){
+	lhs -= rhs;
 	return lhs;
 }
 
