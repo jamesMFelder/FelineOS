@@ -35,20 +35,19 @@ SECTIONS
 
 	.text ALIGN(4K) : AT (ADDR(.text) - VA_OFFSET)
 	{
-		*(.multiboot)
 		*(.text*)
 	}
 
 	/* Read-only data. */
 	.rodata ALIGN(4K) : AT (ADDR(.rodata) - VA_OFFSET)
 	{
-		*(.rodata)
+		*(.rodata*)
 	}
 
 	/* Read-write data (initialized) */
 	.data ALIGN(4K) : AT (ADDR(.data) - VA_OFFSET)
 	{
-		*(.data)
+		*(.data*)
 	}
 
 	/* Read-write data (uninitialized) and stack */
@@ -56,7 +55,7 @@ SECTIONS
 	{
 		bss_start = .;
 		*(COMMON)
-		*(.bss)
+		*(.bss*)
 		bss_end = .;
 	}
 
