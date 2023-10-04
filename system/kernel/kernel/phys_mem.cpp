@@ -239,9 +239,9 @@ int start_phys_mem_manager(
 			first_header[cur_header_offset].size = available_memory_regions[cur_avail_region_offset].len-page_offset(available_memory_regions[cur_avail_region_offset].addr);
 			first_header[cur_header_offset].in_use = false;
 			first_header[cur_header_offset].header_in_use = true;
+			++cur_header_offset;
 		}
 		++cur_avail_region_offset;
-		++cur_header_offset;
 	}
 	/* Avoid walking off the start of the chain */
 	first_header[0].prev = nullptr;
