@@ -4,7 +4,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cinttypes>
-#include <feline/kstring.h>
 #include <kernel/arch.h>
 #include <kernel/log.h>
 #include <kernel/multiboot.h>
@@ -12,6 +11,7 @@
 #include <drivers/serial.h>
 #include <drivers/framebuffer.h>
 #include <kernel/settings.h>
+#include <string_view>
 #include <sys/syscall.h>
 #include <kernel/backtrace.h>
 #include <feline/str.h>
@@ -33,11 +33,8 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 	/* Announce that we are loaded */
 	klog("Hello kernel world!");
 
-	KStringView str = "Test\0string"_kstr;
-	klogf("Testing a kstring: %s", str.get());
-
 	if (Settings::Misc::commandline) {
-		klogf("Commandline: %s", Settings::Misc::commandline.get().get());
+		klogf("Commandline: %s", Settings::Misc::commandline.get().data());
 	}
 	if (Settings::PMM::totalMem) {
 		klogf("Total memory: %#llx", Settings::PMM::totalMem.get());
@@ -93,5 +90,7 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 	printf("Testing an syscall...\n");
 	printf("It returned %ld.\n", syscall(0));
 	kcritical("Nothing to do... Pausing now."); /* boot.S should hang if we return */
+	std::string_view str_view = "String view!";
+	printf("%s\n", str_view.data());
 	std::abort();
 }

@@ -13,7 +13,6 @@
 #include <cinttypes>
 #include <kernel/settings.h>
 #include <kernel/vtopmem.h>
-#include <new>
 
 framebuffer fb;
 
@@ -50,18 +49,13 @@ int early_boot_setup(fdt_header *devicetree){
 }
 
 int boot_setup(){
-	KStringView cmdline;
 	for_each_prop_in_node("chosen", []
-			(fdt_struct_entry *entry, devicetree_cell_size , char *, void *user)
+			(fdt_struct_entry *entry, devicetree_cell_size , char *, void *_[[maybe_unused]])
 			{
-				if (!strcmp(entry->node_name, "cmdline")) {
-					return;
+				if (strcmp(entry->node_name, "cmdline")) {
+					Settings::Misc::commandline.initialize(std::string_view(reinterpret_cast<char*>(&(entry->prop.value)), entry->prop.len));
 				}
-				// Use placement-new to run the constructor on the pre-allocated memory
-				[[maybe_unused]] KStringView* user_kstr = new (reinterpret_cast<KStringView*>(user))
-					KStringView(reinterpret_cast<char*>(&(entry->prop.value)), entry->prop.len);
-			}, &cmdline);
-	Settings::Misc::commandline.initialize(cmdline);
+			}, nullptr);
 	dump_pagetables();
 	return 0;
 }

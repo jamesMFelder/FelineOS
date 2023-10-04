@@ -24,7 +24,6 @@ LIBFELINE_CPPFLAGS:=$(CPPFLAGS) -D__is_libfeline
 LIBS:=$(LIBS) -nostdlib -lgcc
 
 FREEOBJS=\
-src/kstring/kstring.o \
 src/string/itostr.o \
 src/locking/spinlock.o
 

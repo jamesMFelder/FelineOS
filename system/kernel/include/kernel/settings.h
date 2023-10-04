@@ -1,13 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
-#include <typeinfo>
 #ifndef _KERN_SETTINGS_H
 #define _KERN_SETTINGS_H 1
 
-#include <cstddef>
-#include <cstdlib>
-#include <type_traits>
-#include <feline/kstring.h>
+#include <string_view>
 #include <kernel/log.h>
 
 template <typename T, bool changeable>
@@ -45,7 +41,7 @@ namespace Settings {
 		inline Setting<unsigned long long, false> totalMem;
 	};
 	namespace Misc {
-		inline Setting<KStringView, false> commandline;
+		inline Setting<std::string_view, false> commandline;
 	};
 };
 
