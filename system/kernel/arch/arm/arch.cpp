@@ -50,5 +50,6 @@ int early_boot_setup(fdt_header *devicetree){
 
 int boot_setup(){
 	klogf("Command line: %s", grub_cmdline);
+	dump_pagetables();
 	return 0;
 }

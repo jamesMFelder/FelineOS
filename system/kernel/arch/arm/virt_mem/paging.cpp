@@ -400,3 +400,52 @@ int setup_paging(){
 void invlpg(page const addr){
 	asm volatile("mcr p15, 0, %0, c8, c7, 0" :: "r" (addr.get()) : "memory");
 }
+
+void dump_pagetables() {
+	page prev_phys_addr=nullptr;
+	page prev_virt_addr=nullptr;
+	page contiguous_phys_addr_start=nullptr;
+	page contiguous_virt_addr_start=nullptr;
+	size_t num_contiguous_mappings=0;
+	for (page virt_addr=nullptr; virt_addr.getInt() != 0xffc00000; ++virt_addr) {
+		pt_offset offsets = page_table_offset(virt_addr);
+		uint32_t first_level = first_level_table_system[offsets.first_level];
+		if (!(first_level & page_table)) {
+			continue;
+		}
+		page phys_addr=reinterpret_cast<second_level_descriptor*>(first_level & ~0x3ff_uint32_t)[offsets.second_level] & ~0x3ff_uint32_t;
+		bool is_jump =
+			!isMapped(virt_addr) ||
+			!isMapped(prev_virt_addr)
+			|| prev_phys_addr+page{PHYS_MEM_CHUNK_SIZE} != phys_addr;
+		if (is_jump) {
+			if (num_contiguous_mappings > 0) {
+				printf("%p-%p -> %p-%p (%#llx)\n",
+						contiguous_virt_addr_start.get(), reinterpret_cast<void*>(prev_virt_addr.getInt()+0xfff),
+						contiguous_phys_addr_start.get(), reinterpret_cast<void*>(prev_phys_addr.getInt()+0xfff),
+						num_contiguous_mappings*PHYS_MEM_CHUNK_SIZE
+					  );
+			}
+			if (isMapped(virt_addr)) {
+				num_contiguous_mappings=1;
+			}
+			else {
+				num_contiguous_mappings=0;
+			}
+			contiguous_virt_addr_start=virt_addr;
+			contiguous_phys_addr_start=phys_addr;
+		}
+		else {
+			++num_contiguous_mappings;
+		}
+		prev_virt_addr=virt_addr;
+		prev_phys_addr=phys_addr;
+	}
+	if (num_contiguous_mappings != 0) {
+		printf("%p-%p -> %p-%p (%#llx)\n",
+				contiguous_virt_addr_start.get(), reinterpret_cast<void*>(prev_virt_addr.getInt()+0xfff),
+				contiguous_phys_addr_start.get(), reinterpret_cast<void*>(prev_phys_addr.getInt()+0xfff),
+				num_contiguous_mappings*PHYS_MEM_CHUNK_SIZE
+			  );
+	}
+}
