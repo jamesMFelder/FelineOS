@@ -11,6 +11,7 @@
 #include <kernel/misc.h>
 #include <drivers/serial.h>
 #include <drivers/framebuffer.h>
+#include <kernel/settings.h>
 #include <sys/syscall.h>
 #include <kernel/backtrace.h>
 #include <feline/str.h>
@@ -34,6 +35,13 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 
 	KStringView str = "Test\0string"_kstr;
 	klogf("Testing a kstring: %s", str.get());
+
+	if (Settings::Misc::commandline) {
+		klogf("Commandline: %s", Settings::Misc::commandline.get().get());
+	}
+	if (Settings::PMM::totalMem) {
+		klogf("Total memory: %#llx", Settings::PMM::totalMem.get());
+	}
 
 #ifdef __i686__
 	if(cpuid_supported()){

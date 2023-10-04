@@ -13,6 +13,8 @@
 #include <cstdlib>
 #include <cinttypes>
 #include <kernel/vtopmem.h>
+#include <kernel/settings.h>
+#include <feline/kstring.h>
 
 framebuffer fb;
 
@@ -68,6 +70,7 @@ static void save_grub_params(multiboot_info_t * const phys_mbp){
 			kerror("We were given too long a command line, truncating to 4096 characters.");
 		}
 		unmap_range(mapped_cmdline, 4096, 0);
+		Settings::Misc::commandline.initialize(KStringView(grub_cmdline, offset));
 	}
 after_cmdline: //Jump here if you need to abort processing the command line.
 	if(get_flag(grub_flags, MULTIBOOT_INFO_FRAMEBUFFER_INFO)){
@@ -111,6 +114,5 @@ int early_boot_setup(multiboot_info_t *mbp){
 
 int boot_setup(){
 	dump_pagetables();
-	klogf("Command line: %s", grub_cmdline);
 	return 0;
 }

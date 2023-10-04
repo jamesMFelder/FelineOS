@@ -14,6 +14,7 @@
 #include <kernel/paging.h>
 #include <kernel/phys_mem.h>
 #include <kernel/vtopmem.h>
+#include <kernel/settings.h>
 
 Spinlock modifying_pmm;
 
@@ -245,6 +246,7 @@ int start_phys_mem_manager(
 	}
 	/* Avoid walking off the start of the chain */
 	first_header[0].prev = nullptr;
+	Settings::PMM::totalMem.initialize(static_cast<unsigned long long>(first_header[cur_header_offset-2].memory.getInt())+first_header[cur_header_offset].size.getInt());
 	/* And reserve the location the headers are currently at */
 	modifying_pmm.release_lock();
 	return 0;

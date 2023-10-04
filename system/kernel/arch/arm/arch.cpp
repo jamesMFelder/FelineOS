@@ -11,14 +11,15 @@
 #include <drivers/serial.h>
 #include <cstdlib>
 #include <cinttypes>
+#include <kernel/settings.h>
 #include <kernel/vtopmem.h>
+#include <new>
 
 framebuffer fb;
 
 static void screen_init(){
 }
 
-char grub_cmdline[4096]="";
 
 /* Dependencies:
    Turn on the serial port before we log anything
@@ -49,7 +50,18 @@ int early_boot_setup(fdt_header *devicetree){
 }
 
 int boot_setup(){
-	klogf("Command line: %s", grub_cmdline);
+	KStringView cmdline;
+	for_each_prop_in_node("chosen", []
+			(fdt_struct_entry *entry, devicetree_cell_size , char *, void *user)
+			{
+				if (!strcmp(entry->node_name, "cmdline")) {
+					return;
+				}
+				// Use placement-new to run the constructor on the pre-allocated memory
+				[[maybe_unused]] KStringView* user_kstr = new (reinterpret_cast<KStringView*>(user))
+					KStringView(reinterpret_cast<char*>(&(entry->prop.value)), entry->prop.len);
+			}, &cmdline);
+	Settings::Misc::commandline.initialize(cmdline);
 	dump_pagetables();
 	return 0;
 }
