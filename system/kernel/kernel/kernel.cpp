@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cinttypes>
+#include <feline/kstring.h>
 #include <kernel/arch.h>
 #include <kernel/log.h>
 #include <kernel/multiboot.h>
@@ -31,6 +32,8 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 	/* Announce that we are loaded */
 	klog("Hello kernel world!");
 
+	KStringView str = "Test\0string"_kstr;
+	klogf("Testing a kstring: %s", str.get());
 
 #ifdef __i686__
 	if(cpuid_supported()){
