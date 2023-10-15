@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstdlib>
 #include <kernel/mem.h>
 #include <kernel/paging.h>
@@ -124,11 +125,18 @@ mem_results get_mem(void **new_virt_addr, uintptr_t len) {
 			kcritical("The memory manager has a bug!\n");
 			std::abort();
 	}
+	//Clear the memory
+	std::fill_n(static_cast<std::byte*>(*new_virt_addr), PHYS_MEM_CHUNK_SIZE, std::byte{0xCC});
 	return mem_success;
 }
 
 mem_results free_mem(void *addr, uintptr_t len){
 	map_results virt_mem_results;
+
+	/* Protect against freeing an uninitialized pointer */
+	if (addr == nullptr) {
+		return mem_invalid;
+	}
 
 	virt_mem_results=unmap_range(addr, len, PHYS_ADDR_AUTO);
 	switch (virt_mem_results) {
