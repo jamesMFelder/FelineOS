@@ -51,7 +51,7 @@ isr_stub_\isr_num:
 	push %ecx
 	push %edx
 
-    push \isr_num /* Add the exeption number to the stack */
+    push $ \isr_num /* Add the exeption number to the stack */
 	push $noerror_msg_generic_interrupt
     call kerrorf /* Error because we don't know what to do */
 

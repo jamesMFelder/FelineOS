@@ -13,9 +13,9 @@ bool cpuid_supported(){
 	return true;
 }
 
-int cpuid_max(){
+unsigned int cpuid_max(){
 	if(!cpuid_is_supported){
-		return -1;
+		return 0;
 	}
 	return __get_cpuid_max(0x80000000, nullptr);
 }

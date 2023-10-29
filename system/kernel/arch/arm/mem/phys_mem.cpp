@@ -172,7 +172,7 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 	}
 
 	size_t num_unavailable_regions=0;
-	bootloader_mem_region *unavailable_regions=0;
+	bootloader_mem_region *unavailable_regions=nullptr;
 	map_results mapping = map_range(memory_map_location.where, memory_map_location.len_needed, reinterpret_cast<void**>(&unavailable_regions), 0);
 	if (mapping != map_success) {
 		kcritical("Unable to map memory to start the PMM! Aborting!");

@@ -13,7 +13,7 @@
 bool cpuid_supported(void);
 
 /* Returns number of supported cpuid inputs */
-int cpuid_max();
+unsigned int cpuid_max();
 
 /* Return the vendor of the cpu in vendor */
 /* Overwrites all 13 bytes with the string */

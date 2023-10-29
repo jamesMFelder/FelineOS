@@ -3,6 +3,7 @@
 #ifndef _KERN_SETTINGS_H
 #define _KERN_SETTINGS_H 1
 
+#include <cstdlib>
 #include <string_view>
 #include <kernel/log.h>
 

@@ -26,12 +26,12 @@ inline uintptr_t page_offset(void const * const addr){
 	return page_offset(reinterpret_cast<uintptr_t>(addr));
 }
 
-page round_up_to_page(uintptr_t len) {
+inline page round_up_to_page(uintptr_t len) {
 	len += PHYS_MEM_CHUNK_SIZE-1;
 	len &= ~(PHYS_MEM_CHUNK_SIZE-1);
 	return len;
 }
-page addr_round_up_to_page(void *len) {
+inline page addr_round_up_to_page(void *len) {
 	return round_up_to_page(reinterpret_cast<uintptr_t>(len));
 }
 
@@ -212,6 +212,7 @@ int start_phys_mem_manager(
 				first_header[cur_header_offset].size = phys_hdr_ptr - addr_round_up_to_page(available_memory_regions[cur_header_offset].addr).getInt();
 				first_header[cur_header_offset].in_use = false;
 				first_header[cur_header_offset].header_in_use = true;
+				first_header[cur_header_offset].prev->next = &first_header[cur_header_offset];
 				++cur_header_offset;
 			}
 			first_header[cur_header_offset].next = nullptr;
@@ -220,6 +221,7 @@ int start_phys_mem_manager(
 			first_header[cur_header_offset].size = headers_needed_size;
 			first_header[cur_header_offset].in_use = true;
 			first_header[cur_header_offset].header_in_use = true;
+			first_header[cur_header_offset].prev->next = &first_header[cur_header_offset];
 			++cur_header_offset;
 			if (static_cast<unsigned char*>(available_memory_regions[cur_avail_region_offset].addr)+available_memory_regions[cur_avail_region_offset].len != \
 					first_header[cur_header_offset-1].memory+first_header[cur_header_offset-1].size) {
@@ -230,6 +232,7 @@ int start_phys_mem_manager(
 													   (first_header[cur_header_offset-1].memory+first_header[cur_header_offset-1].size).getInt();
 				first_header[cur_header_offset].in_use = false;
 				first_header[cur_header_offset].header_in_use = true;
+				first_header[cur_header_offset].prev->next = &first_header[cur_header_offset];
 				++cur_header_offset;
 			}
 		}
@@ -240,6 +243,7 @@ int start_phys_mem_manager(
 			first_header[cur_header_offset].size = available_memory_regions[cur_avail_region_offset].len-page_offset(available_memory_regions[cur_avail_region_offset].addr);
 			first_header[cur_header_offset].in_use = false;
 			first_header[cur_header_offset].header_in_use = true;
+			first_header[cur_header_offset].prev->next = &first_header[cur_header_offset];
 			++cur_header_offset;
 		}
 		++cur_avail_region_offset;
@@ -389,7 +393,7 @@ pmm_results get_mem_area(void **addr, uintptr_t len) {
 }
 
 /* Merge the headers next to this one if they are both free */
-void merge_adjacent_headers(PhysMemHeader &header) {
+static void merge_adjacent_headers(PhysMemHeader &header) {
 	if (header.next && !header.next->in_use && header.memory+header.size == header.next->memory) {
 		header.next->header_in_use = false;
 		header.size += header.next->size;
@@ -413,11 +417,11 @@ pmm_results free_mem_area(void const *const addr, uintptr_t len) {
 	modifying_pmm.aquire_lock();
 	for (PhysMemHeader *cur_header = first_header; cur_header != nullptr; cur_header = cur_header->next) {
 		assert(cur_header->header_in_use);
-		if (cur_header->memory <= addr && cur_header->memory+cur_header->size >= addr) {
+		if (cur_header->memory <= addr && cur_header->memory+cur_header->size > addr) {
 			auto end = static_cast<unsigned char const *>(addr)+len;
 			if (cur_header->memory+cur_header->size < end) {
 				/* We only know about part of the area? */
-				kwarnf("Attempt to free area %p-%p, but header covers area %p-%p!", addr, end, cur_header->memory.get(), (cur_header->memory+cur_header->size).get());
+				kwarnf("Attempt to free area %p-%p, but header covers area %p-%p!", addr, static_cast<const void*>(end), cur_header->memory.get(), (cur_header->memory+cur_header->size).get());
 				/* TODO: should we abort? */
 			}
 			if (!cur_header->in_use) {

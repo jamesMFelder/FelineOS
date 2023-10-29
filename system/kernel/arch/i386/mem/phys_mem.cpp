@@ -145,10 +145,10 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 								reinterpret_cast<uintptr_t>(unavailable_memory[memory_region_index].addr)
 						)) {
 						unavailable_memory[memory_region_index].addr = min(reinterpret_cast<void*>(current_multiboot_memory->addr), unavailable_memory[memory_region_index].addr);
-						unavailable_memory[memory_region_index].len = max(
+						unavailable_memory[memory_region_index].len = static_cast<size_t>(max(
 								current_multiboot_memory->addr+current_multiboot_memory->len,
 								reinterpret_cast<uintptr_t>(unavailable_memory[memory_region_index].addr)+static_cast<unsigned long long>(unavailable_memory[memory_region_index].len)
-								)-reinterpret_cast<uintptr_t>(unavailable_memory[memory_region_index].addr);
+								)-reinterpret_cast<uintptr_t>(unavailable_memory[memory_region_index].addr));
 						merged=true;
 						klogf("merged regions");
 						break;
@@ -162,7 +162,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 								unavailable_memory[moved_index]=unavailable_memory[moved_index-1];
 							}
 							unavailable_memory[memory_region_index].addr=reinterpret_cast<void*>(current_multiboot_memory->addr);
-							unavailable_memory[memory_region_index].len=current_multiboot_memory->len;
+							unavailable_memory[memory_region_index].len=static_cast<size_t>(current_multiboot_memory->len);
 							++num_unavailable_regions;
 							break;
 						}
@@ -172,7 +172,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 			//Otherwise, simply append it
 			else if (current_multiboot_memory->addr<4_GiB) {
 				new_memory->addr=reinterpret_cast<void*>(current_multiboot_memory->addr);
-				new_memory->len=min(current_multiboot_memory->len, 4_GiB-current_multiboot_memory->addr);
+				new_memory->len=static_cast<size_t>(min(current_multiboot_memory->len, 4_GiB-current_multiboot_memory->addr));
 				++num_unavailable_regions;
 			}
 			else {
@@ -223,7 +223,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 
 			if (!should_drop_region){
 				new_memory->addr=reinterpret_cast<void*>(current_multiboot_memory->addr);
-				new_memory->len=current_multiboot_memory->len;
+				new_memory->len=static_cast<size_t>(current_multiboot_memory->len);
 				++num_available_regions;
 				klogf("Available memory region: at %p\t| length: %#zx", new_memory->addr, new_memory->len);
 				new_memory++;

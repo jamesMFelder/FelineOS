@@ -156,7 +156,7 @@ void *find_free_virtmem(uintptr_t len){
 }
 
 /* Set the first-level descriptor to point to the second-level descriptor array */
-void set_second_level_page_table(largePage const addr, second_level_descriptor second_level[256]) {
+static void set_second_level_page_table(largePage const addr, second_level_descriptor second_level[256]) {
 	static const uint32_t domain = 0x0;
 	first_level_descriptor &first_level=first_level_table_system[section_table_offset(addr)];
 	first_level = reinterpret_cast<uintptr_t>(&second_level[section_table_offset(addr)]) | domain | page_table;
@@ -370,7 +370,7 @@ int setup_paging(){
 	}
 	modifying_page_tables.release_lock();
 	/* Map the kernel and serial port */
-	map_results kernel_mapping = map_range(&phys_kernel_start, &phys_kernel_end-&phys_kernel_start, &kernel_start, 0);
+	map_results kernel_mapping = map_range(&phys_kernel_start, static_cast<uintptr_t>(&phys_kernel_end-&phys_kernel_start), &kernel_start, 0);
 	if (kernel_mapping != map_success) {
 		kcriticalf("Unable to map kernel! Error %d.", kernel_mapping);
 		std::abort();
@@ -388,8 +388,8 @@ int setup_paging(){
 	assert(isMapped(0x20201000));
 	/* Actually set the registers */
 	uintptr_t ttbr0=reinterpret_cast<uintptr_t>(first_level_table_system);
-	ttbr0 &= ~0b11111;
-	ttbr0 |= 0b00000;
+	ttbr0 &= ~0b11111_uintptr_t;
+	ttbr0 |= 0b00000_uintptr_t;
 	uintptr_t ttbr1=0;
 	uintptr_t ttbc=0; //Always use ttbr0
 	enable_paging(ttbr0, ttbr1, ttbc);

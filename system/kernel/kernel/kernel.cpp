@@ -25,7 +25,7 @@
 extern const char kernel_start;
 extern const char kernel_end;
 
-ASM [[noreturn]] void kernel_main(multiboot_info_t *mbp, unsigned int magic);
+ASM void kernel_main(multiboot_info_t *mbp, unsigned int magic);
 
 void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[maybe_unused]]){
 	boot_setup();
@@ -92,5 +92,5 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 	kcritical("Nothing to do... Pausing now."); /* boot.S should hang if we return */
 	std::string_view str_view = "String view!";
 	printf("%s\n", str_view.data());
-	std::abort();
+	return;
 }

@@ -8,6 +8,7 @@
 #include <kernel/mem.h>
 #include <kernel/asm_compat.h>
 
+//TODO: take size_t instead of uintptr_t for length
 /* Map len bytes from phys_addr to virt_addr */
 map_results map_range(void const * const phys_addr, uintptr_t len, void const * const virt_addr, unsigned int opts);
 /* Map len bytes from phys_addr to any free virtual address */
