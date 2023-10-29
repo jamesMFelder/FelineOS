@@ -13,4 +13,7 @@ C_LINKAGE int abs(int j);
 C_LINKAGE long labs(long j);
 C_LINKAGE long long llabs(long long j);
 
+C_LINKAGE void* malloc(size_t size);
+C_LINKAGE void free(void* ptr);
+
 #endif /* _STDLIB_H */

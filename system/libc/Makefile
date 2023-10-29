@@ -41,6 +41,7 @@ stdio/puts.o \
 stdio/io_common.o \
 stdlib/abort.o \
 stdlib/abs.o \
+stdlib/malloc_free.o \
 string/memcmp.o \
 string/memcpy.o \
 string/memmove.o \

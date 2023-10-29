@@ -18,6 +18,9 @@ namespace std {
 	long int abs(long int n);
 	long long int abs(long long int n);
 
+	using ::malloc;
+	using ::free;
+
 } /* namespace std */
 
 #endif /* _CSTDLIB */
