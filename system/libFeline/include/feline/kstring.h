@@ -8,6 +8,8 @@
 #include <cstddef>
 #include <cstdlib>
 #include <feline/cpp_only.h>
+#include <kernel/kstdallocator.h>
+#include <feline/kvector.h>
 
 class KStringView {
 	public:
@@ -44,5 +46,10 @@ class KStringView {
 };
 
 inline KStringView operator""_kstr(char const *characters, size_t len) { return KStringView(characters, len); };
+
+using KString = KVector<char, KGeneralAllocator<char>>;
+using KConstString = KVector<char const, KGeneralAllocator<char>>;
+
+inline KConstString operator""_kstr_vec(char const *characters, size_t len) { return KConstString(characters, len); };
 
 #endif /* _FELINE_KSTRING_H */
