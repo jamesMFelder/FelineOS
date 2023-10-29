@@ -54,26 +54,26 @@ $(ARCHDIR)/boot/crtn.o \
 
 all: FelineOS.kernel
 
-FelineOS.kernel: $(OBJS) $(ARCHDIR)/linker.ld
-	$(CPP) -T $(abspath $(ARCHDIR)/linker.ld) -o $@ $(CFLAGS) $(LINK_LIST)
+FelineOS.kernel: $(ARCHDIR)/linker.ld $(OBJS)
+	$(CPP) -T $(ARCHDIR)/linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
 ifeq ($(HOSTARCH), i386)
 	grub-file --is-x86-multiboot FelineOS.kernel
 endif
 
 $(ARCHDIR)/linker.ld: $(ARCHDIR)/linker.ldpp
-	$(CPP) $(CFLAGS) $(CPPFLAGS) -CC -E -x c++ $(abspath $<) -o $@
+	$(CPP) $(CFLAGS) $(CPPFLAGS) -CC -E -x c++ $< -o $@
 
 $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" $@
 
 .c.o:
-	$(CC) -MD -o $@ -std=gnu20 $(CFLAGS) -c $(abspath $<)
+	$(CC) -MD -o $@ -std=gnu20 $(CFLAGS) -c $<
 
 .cpp.o:
-	$(CPP) -MD -o $@ -std=gnu++20 $(CPPFLAGS) -c $(abspath $<)
+	$(CPP) -MD -o $@ -std=gnu++20 $(CPPFLAGS) -c $<
 
 .S.o:
-	$(CC) -MD -o $@ $(CPPFLAGS) -c $(abspath $<)
+	$(CC) -MD -o $@ $(CPPFLAGS) -c $<
 
 clean:
 	$(RM) FelineOS.kernel
