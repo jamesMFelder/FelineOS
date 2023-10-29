@@ -44,6 +44,14 @@ namespace Settings {
 	namespace Misc {
 		inline Setting<std::string_view, false> commandline;
 	};
+	namespace Logging {
+		typedef void (*output_func)(const char*, size_t);
+		inline Setting<output_func, true> critical;
+		inline Setting<output_func, true> error;
+		inline Setting<output_func, true> warning;
+		inline Setting<output_func, true> log;
+		inline Setting<output_func, true> debug;
+	}
 };
 
 #endif /* _KERN_SETTINGS_H */

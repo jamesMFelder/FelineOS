@@ -34,6 +34,11 @@ Also note that the interrupts actually log stuff, so watch out!
 After this we should be good to go! */
 int early_boot_setup(fdt_header *devicetree){
 	init_serial(); /* We can't do any logging before this gets setup */
+	Settings::Logging::critical.initialize(write_serial);
+	Settings::Logging::error.initialize(write_serial);
+	Settings::Logging::warning.initialize(write_serial);
+	Settings::Logging::log.initialize(write_serial);
+	Settings::Logging::debug.initialize(write_serial);
 	idt_init(); /* Actually display an error if we have a problem: don't just triple fault */
 	setup_paging(); /* Take control of it from the assembly! */
 	klogf("Device tree should be at %p", static_cast<void*>(devicetree));
