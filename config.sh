@@ -23,9 +23,10 @@ export LAR_OPTS=""
 export LAS="llvm-as"
 export LAS_OPTS="-target ${TARGET_HOST}"
 export LCC="clang"
-export LCC_OPTS="-target ${TARGET_HOST} ${ARCH_OPTS/-mapcs-frame/} -Weverything -Wno-c++98-compat -Wno-c++98-compat-extra-semi -Wno-c++98-compat-pedantic -Wno-c++17-extensions -Wno-reserved-identifier -Wno-missing-variable-declarations -Wno-global-constructors -Wno-language-extension-token -Wno-c++20-designator -Wno-error=format-invalid-specifier"
+#FIXME: can -Wno-unsafe-buffer ever be removed in a kernel?
+export LCC_OPTS="-target ${TARGET_HOST} ${ARCH_OPTS/-mapcs-frame/} -Weverything -Wno-c++98-compat -Wno-c++98-compat-extra-semi -Wno-c++98-compat-pedantic -Wno-c++17-extensions -Wno-reserved-identifier -Wno-missing-variable-declarations -Wno-global-constructors -Wno-language-extension-token -Wno-c++20-designator -Wno-error=format-invalid-specifier -Wno-unsafe-buffer-usage -Wno-shadow-field-in-constructor"
 export LPP="clang++"
-export LPP_OPTS="-target ${TARGET_HOST} ${ARCH_OPTS/-mapcs-frame/} -Weverything -Wno-c++98-compat -Wno-c++98-compat-extra-semi -Wno-c++98-compat-pedantic -Wno-c++17-extensions -Wno-reserved-identifier -Wno-missing-variable-declarations -Wno-global-constructors -Wno-language-extension-token -Wno-c++20-designator -Wno-error=format-invalid-specifier"
+export LPP_OPTS="-target ${TARGET_HOST} ${ARCH_OPTS/-mapcs-frame/} -Weverything -Wno-c++98-compat -Wno-c++98-compat-extra-semi -Wno-c++98-compat-pedantic -Wno-c++17-extensions -Wno-reserved-identifier -Wno-missing-variable-declarations -Wno-global-constructors -Wno-language-extension-token -Wno-c++20-designator -Wno-error=format-invalid-specifier -Wno-unsafe-buffer-usage -Wno-shadow-field-in-constructor"
 
 if [[ ${COMPILER} == "gcc" ]]; then
 	export AR="${GAR} ${GAR_OPTS}"
