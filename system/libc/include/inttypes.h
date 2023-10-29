@@ -23,7 +23,7 @@
 #define PRI64 "ll"
 #if defined(__arm__) || defined(__clang__) /* Uintptr is somehow int. */
 #define PRIPTR
-#elif defined(__i686__) && defined(__GNUC__) /* Oddly enough, for gcc on i686, int and long 32-bits, but it will only take an int. */
+#elif defined(__i386__) && defined(__GNUC__) /* Oddly enough, for gcc on i386, int and long 32-bits, but it will only take an int. */
 #define PRIPTR PRI32
 #else
 #error Can't find correct size for a pointer

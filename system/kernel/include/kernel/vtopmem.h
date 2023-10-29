@@ -6,7 +6,7 @@
 
 
 /* How far is the kernel in virtual memory from where it is in physical memory */
-#if defined(__i686__)
+#if defined(__i386__)
 #define VA_OFFSET 0xf0000000
 #elif defined(__arm__)
 #define VA_OFFSET 0x00000000

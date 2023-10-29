@@ -35,13 +35,13 @@ int immediate_paging_initialization();
 /* Initialize paging */
 int setup_paging();
 
-#if defined(__i686__)
+#if defined(__i386__)
 ASM void enable_paging(uintptr_t cr3);
 #elif defined(__arm__)
 ASM void enable_paging(uintptr_t ttbr0, uintptr_t ttbr1, uintptr_t ttbc);
 #else
 #error "Cannot detect architecture!"
-#endif // __i686__ (else)
+#endif // __i386__ (else)
 
 /* Invalidates the cpu's TLB for the page containing addr */
 void invlpg(page const addr);

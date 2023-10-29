@@ -17,7 +17,7 @@
 /*	heap */
 /*	screen output */
 /* See the definition for dependencies */
-#if defined(__i686__)
+#if defined(__i386__)
 ASM int early_boot_setup(multiboot_info_t *mbp);
 #elif defined(__arm__)
 ASM int early_boot_setup(fdt_header *fdt);

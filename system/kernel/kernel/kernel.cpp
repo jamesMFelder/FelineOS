@@ -17,7 +17,7 @@
 #include <feline/str.h>
 #include <kernel/mem.h>
 #include <kernel/asm_compat.h>
-#ifdef __i686__
+#ifdef __i386__
 #include <kernel/cpuid.h>
 #endif
 
@@ -40,7 +40,7 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 		klogf("Total memory: %#llx", Settings::PMM::totalMem.get());
 	}
 
-#ifdef __i686__
+#ifdef __i386__
 	if(cpuid_supported()){
 		unsigned char vendor[13];
 		cpuid_vendor(vendor);
