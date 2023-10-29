@@ -11,7 +11,6 @@
 #include <drivers/serial.h>
 #include <drivers/framebuffer.h>
 #include <kernel/settings.h>
-#include <string_view>
 #include <sys/syscall.h>
 #include <kernel/backtrace.h>
 #include <feline/str.h>
@@ -87,10 +86,12 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 		p={0, 0, 255}; /* blue */
 		fb.putRect(maxX/2, maxY/2, maxX/2-1, maxY/2-1, p); /* lower right */
 	}
-	printf("Testing an syscall...\n");
-	printf("It returned %ld.\n", syscall(0));
-	kcritical("Nothing to do... Pausing now."); /* boot.S should hang if we return */
-	std::string_view str_view = "String view!";
-	printf("%s\n", str_view.data());
+	kLog("kernel/") << "Testing a syscall…";
+	auto value = syscall(0);
+	kLog("kernel/") << "It returned " << bin(value) << '.';
+	kLog("kernel/") << "Testing new logging in function at " << reinterpret_cast<void*>(&kernel_main);
+	kLog("kernel/") << "Maximum memory = " << hex(Settings::PMM::totalMem.get());
+	kLog("kernel/") << "Debugged string: " << strDebug("\033[32mHello\tworld\0!\033[0m\r\n"_kstr);
+	kCritical("kernel/") << "Nothing to do... Pausing now."; /* boot.S should hang if we return */
 	return;
 }
