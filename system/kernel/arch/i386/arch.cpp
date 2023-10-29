@@ -112,6 +112,5 @@ int early_boot_setup(multiboot_info_t *mbp){
 }
 
 int boot_setup(){
-	dump_pagetables();
 	return 0;
 }

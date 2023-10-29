@@ -56,6 +56,5 @@ int boot_setup(){
 					Settings::Misc::commandline.initialize(std::string_view(reinterpret_cast<char*>(&(entry->prop.value)), entry->prop.len));
 				}
 			}, nullptr);
-	dump_pagetables();
 	return 0;
 }
