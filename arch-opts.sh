@@ -5,7 +5,7 @@ HOST=$(./default-host.sh)
 if [ "${HOST}" = "arm-none-eabi" ] ; then
 	echo "-mcpu=arm1176jzf-s -mfloat-abi=soft -mapcs-frame -mno-unaligned-access"
 elif [ "${HOST}" = "i686-elf" ] ; then
-	echo ""
+	echo "-mno-sse"
 else
 	echo "Unknown host ${HOST}. Cannot supply compiler arguments." >&2
 	echo "Aborting." >&2
