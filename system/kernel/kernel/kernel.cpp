@@ -86,9 +86,9 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 		p={0, 0, 255}; /* blue */
 		fb.putRect(maxX/2, maxY/2, maxX/2-1, maxY/2-1, p); /* lower right */
 	}
-	kLog("kernel/") << "Testing a syscall…";
-	auto value = syscall(0);
-	kLog("kernel/") << "It returned " << bin(value) << '.';
+
+	//TODO: test syscalls
+	raw_syscall(syscall_open, nullptr, nullptr);
 	kLog("kernel/") << "Testing new logging in function at " << reinterpret_cast<void*>(&kernel_main);
 	kLog("kernel/") << "Maximum memory = " << hex(Settings::PMM::totalMem.get());
 	kLog("kernel/") << "Debugged string: " << strDebug("\033[32mHello\tworld\0!\033[0m\r\n"_kstr);

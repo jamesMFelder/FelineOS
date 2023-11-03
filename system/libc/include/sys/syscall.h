@@ -4,7 +4,70 @@
 #define _KERN_SYSCALL_H 1
 
 #include <bits/c_compat.h>
+#include <cstddef>
 
-C_LINKAGE long syscall(long which, ...);
+#ifdef __is_kernel
+#include <kernel/user_ptr.h>
+#define USER_PTR(p) UserPtr<p>
+#else // __is_kernel
+#define USER_PTR(p) p*
+#endif // __is_kernel (else)
+
+enum syscall_number {
+	syscall_open,
+	syscall_read,
+	syscall_write,
+	syscall_close,
+};
+
+C_LINKAGE void raw_syscall(syscall_number which, void* args, void* result);
+
+typedef int fd_type;
+
+#define SYSCALL_ENUMERATE(_S) \
+	_S( \
+			open, \
+			USER_PTR(char const) path; int flags; , \
+			open_any , \
+			fd_type fd; \
+	)\
+	_S( \
+			close, \
+			fd_type fd; , \
+			close_any , \
+			; \
+	)\
+	_S( \
+			read, \
+			fd_type fd; USER_PTR(void) buffer; size_t len; , \
+			read_any , \
+			size_t amount_read; \
+	)\
+	_S( \
+			write, \
+			fd_type fd; USER_PTR(void) buffer; size_t len; , \
+			write_any , \
+			size_t amount_written; \
+	)\
+
+#define _S(name, args, errors, result) \
+	struct __syscall_ ## name ## _args { \
+		args \
+	}; \
+	enum __syscall_ ## name ## _errors { \
+		name ## _none, \
+		name ## _invalid_syscall, \
+		errors \
+	}; \
+	struct __syscall_ ## name ## _result { \
+		__syscall_ ## name ## _errors error; \
+		result \
+	}; \
+	inline void __syscall_ ## name(__syscall_ ## name ## _args &args_arg, __syscall_ ## name ## _result &result_arg) { \
+		raw_syscall(syscall_ ## name, &args_arg, &result_arg); \
+	}
+
+SYSCALL_ENUMERATE(_S)
+#undef _S
 
 #endif /* _KERN_SYSCALL_H */

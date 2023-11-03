@@ -197,20 +197,18 @@ isr_stub_31:
 	push %ebp /* Create a stack frame (for debugging) */
 	mov  %esp, %ebp
 
-	push %ecx /* Save registers */
-	push %edx
 	cld /* Reset string operation direction flag before calling C code */
 
-	push %eax /* Push the syscall number */
-	push $temp_syscall_error_msg /* The format string */
-	call klogf /* Error because we don't support anything yet */
+	/* Setup arguments for c++ */
+	push %ecx
+	push %ebx
+	push %eax
 
-	call abort /* Quit */
+	call syscall_handler
 
-	mov $0, %eax /* Return success */
-
-	add $1, %esp /* Remove local variables */
-	pop %edx /* Restore registers */
+	/* Restore stack */
+	pop %eax
+	pop %ebx
 	pop %ecx
 
 	mov %ebp, %esp/* Remove the stack frame */
@@ -232,7 +230,6 @@ in_page_fault: .long 0
 .section .rodata
 /* Change %lX to %llX for 64-bit */
 	interrupt_corrupted_stack_trace: .asciz "Replace the address that caused the fault in the stack trace below with the address shown here when you are debugging."
-	temp_syscall_error_msg: .asciz "Unknown system call %ld made."
 	error_msg_generic_interrupt: .asciz "Unknown interrupt 0x%lX fired with error 0x%lX."
 	noerror_msg_generic_interrupt: .asciz "Unknown interrupt 0x%lX fired"
 	error_msg_generic_eip: .asciz "The instruction was at %p."

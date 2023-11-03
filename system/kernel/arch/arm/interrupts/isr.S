@@ -102,32 +102,15 @@ swi:
 	//Switch to system mode so we can find out what we're being asked to do
 	cps #sys_mode
 	//Construct a stack frame for backtracing
-	//Don't save r0, because that is our return value.
-	//Save everything else, because I haven't decided yet what what needs to be saved
 	push {fp, ip, lr}
 	add fp, sp, #0xc
 
-	//Get the instruction that called the interrupt
-	// store the one we will return to, and use the one that called us
-	ldr r1, [fp]
-	str r1, [fp, #-4]
-	sub r1, r1, #4
+	//Registers are in the right place already
+	bl syscall_handler
 
-	//Get what the instruction is (r3) and the interrupt number (r2)
-	//TODO: should we always expect 0, or should we use this as the actual system call selector
-	ldr r3, [r1]
-	and r2, r3, #(1<<24)-1
-
-	//Print an error message and backtrace
-	ldr r0,=swi_msg
-	bl printf
-
-	bl backtrace
-
-	//Return success
+	//Return
 	sub sp, fp, #0xc
 	pop {fp, ip, lr}
-	mov r0, #0
 
 	//Remove the stack frame and return
 	rfefd sp!
@@ -139,5 +122,3 @@ register_dump_msg:
 	.asciz "r0: %#x\nr1: %#x\nr2: %#x\nr3: %#x\nr4: %#x\nr5: %#x\nr6: %#x\nr7: %#x\nr8: %#x\nr9: %#x\nr10: %#x\nr11: %#x\nr12: %#x\n"
 undef_msg:
 	.asciz "Undefined instruction (%#x) executed at %p.\n"
-swi_msg:
-	.asciz "Instruction %p made system call %u. The instruction is %#x.\n"
