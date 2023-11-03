@@ -6,7 +6,7 @@
 #include <feline/str.h>
 #include <kernel/log.h>
 #include <kernel/settings.h>
-#include <stdarg.h>
+#include <cstdarg>
 
 kout::kout(log_level level, KStringView module, std::source_location loc, bool alloc) :
 	alloc(alloc)

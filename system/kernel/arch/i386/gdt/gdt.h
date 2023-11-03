@@ -3,9 +3,9 @@
 #ifndef _KERN_GDT_H
 #define _KERN_GDT_H 1
 
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include <kernel/log.h>
-#include <stddef.h>
 #include <kernel/asm_compat.h>
 
 /* This warning doesn't matter here, unlike a lot of the kernel */

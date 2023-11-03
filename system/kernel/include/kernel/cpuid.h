@@ -4,9 +4,8 @@
 #define _KERN_CPUID_H 1
 
 #include <cpuid.h>
-#include <stddef.h>
-#include <stdbool.h>
-#include <string.h>
+#include <cstddef>
+#include <cstring>
 
 /* Returns true if cpuid is int cpuid_supported */
 /* Always call before any other calls as it sets an internal variable allowing exiting before calling any invalid instructions. */

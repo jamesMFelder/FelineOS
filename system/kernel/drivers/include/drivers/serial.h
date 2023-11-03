@@ -3,7 +3,7 @@
 #ifndef _KERN_DRIVER_SERIAL_H
 #define _KERN_DRIVER_SERIAL_H 1
 
-#include <stddef.h>
+#include <cstddef>
 #include <kernel/asm_compat.h>
 
 /* Setup the serial port (ASM because of emergency at initialization possibility) */

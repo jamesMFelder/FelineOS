@@ -3,9 +3,8 @@
 #ifndef _KERN_ARCH_MEM_H
 #define _KERN_ARCH_MEM_H 1
 
-#include <stddef.h>
-#include <stdbool.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 
 #include <kernel/mem.h>
 #include <kernel/devicetree.h>

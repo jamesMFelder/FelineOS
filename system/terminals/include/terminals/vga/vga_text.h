@@ -3,8 +3,8 @@
 #ifndef _TERMINAL_VGA_TEXT_H
 #define _TERMINAL_VGA_TEXT_H 1
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include <terminals/terminal.h>
 
 /* Width and height */

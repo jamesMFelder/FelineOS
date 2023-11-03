@@ -3,7 +3,7 @@
 #ifndef _KERN_DRIVER_FB_H
 #define _KERN_DRIVER_FB_H 1
 
-#include <stdint.h>
+#include <cstdint>
 
 typedef struct pixel{
 	uint8_t red;

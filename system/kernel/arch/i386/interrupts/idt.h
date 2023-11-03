@@ -3,7 +3,7 @@
 #ifndef _KERN_IDT_H
 #define _KERN_IDT_H 1
 
-#include <stdint.h>
+#include <cstdint>
 
 #define IDT_MAX_DESCRIPTORS 32
 

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
 
-#include <stdint.h>
+#include <cstdint>
 #include <kernel/asm_compat.h>
 
 /* Since we don't have dynamic memory allocation (yet), how far back we go. */
