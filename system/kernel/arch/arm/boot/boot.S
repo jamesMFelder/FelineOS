@@ -153,7 +153,6 @@ _start:
 	ldr r0, =boot_msg
 	mov r1, pc
 	bl printf
-	svc #0
 
 	/* Transfer control to the main kernel. */
 	.extern kernel_main
