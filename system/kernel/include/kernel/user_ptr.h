@@ -5,6 +5,7 @@
 
 #include <cstddef>
 #include <cstdlib>
+#include <type_traits>
 
 //FIXME: actually validate instead of just a nullptr check
 inline bool validate_user_ptr(void const *ptr, size_t len[[maybe_unused]]) {
@@ -29,6 +30,26 @@ class UserPtr {
 		}
 		/* Crashes if unsafe, so use .is_safe() or convert to bool */
 		operator T() { return get(); }
+
+		/* Only use this for printing warnings!
+		 * Do not read or write from it! */
+		T * const unsafe_raw_get() {
+			return ptr;
+		}
+
+		/* Create UserPtr<T> from UserPtr<void>.
+		 * It's safe because we don't dereference the value,
+		 * and immediately put it behind another UserPtr */
+		UserPtr(UserPtr<void> &other)
+			: ptr(static_cast<T*>(other.unsafe_raw_get())) {};
+
+		/* Create UserPtr<void> from UserPtr<U>.
+		 * It's safe because we don't dereference the value,
+		 * and immediately put it behind another UserPtr */
+		template <typename U>
+			requires (std::is_same_v<T, void>)
+		UserPtr(UserPtr<U> &other)
+		: ptr(static_cast<void*>(other.unsafe_raw_get())) {};
 
 	private:
 		T *ptr;
