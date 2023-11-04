@@ -74,6 +74,17 @@ static void split_header(Header* &current_header, size_t split) {
     return hdr;
 }
 
+static void return_mem(Header *hdr) {
+#ifdef __is_libk
+	auto result = free_mem(hdr, hdr->len+sizeof(Header));
+	if (result != mem_success) {
+		std::abort();
+	}
+#else // __is_libk
+	static_assert(false, "Memory-deallocation syscall not setup yet!");
+#endif // __is_libk (else)
+}
+
 void* malloc(size_t size) {
 	allocation_lock.aquire_lock();
 	if (first_header == nullptr) {
@@ -142,8 +153,8 @@ void free(void* ptr) {
 			if (hdr == first_header) {
 				first_header = hdr->next;
 			}
-			free(hdr);
-			return;
+			return_mem(hdr);
+			break;
 		}
 		else {
 			Header *to_del = hdr;
@@ -162,7 +173,8 @@ void free(void* ptr) {
 			if (to_del == first_header) {
 				first_header = to_del->next;
 			}
-			free(to_del);
+			return_mem(to_del);
+			break;
 		}
 	}
 	allocation_lock.release_lock();
