@@ -200,16 +200,16 @@ isr_stub_31:
 	cld /* Reset string operation direction flag before calling C code */
 
 	/* Setup arguments for c++ */
+	push %edx
 	push %ecx
-	push %ebx
 	push %eax
 
 	call syscall_handler
 
 	/* Restore stack */
 	pop %eax
-	pop %ebx
 	pop %ecx
+	pop %edx
 
 	mov %ebp, %esp/* Remove the stack frame */
 	pop %ebp
