@@ -51,7 +51,12 @@ string/strlen.o \
 string/strcat.o \
 string/strcpy.o \
 string/strcmp.o \
-ssp/ssp.o
+ssp/ssp.o \
+unistd/read.o \
+unistd/write.o \
+fcntl/close.o \
+fcntl/open.o \
+# Should system calls (write.o, open.o) be disabled for freestanding?
 
 HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \

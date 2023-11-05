@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cinttypes>
+#include <fcntl.h>
 #include <kernel/arch.h>
 #include <kernel/log.h>
 #include <kernel/multiboot.h>
@@ -16,6 +17,7 @@
 #include <feline/str.h>
 #include <kernel/mem.h>
 #include <kernel/asm_compat.h>
+#include <unistd.h>
 #ifdef __i386__
 #include <kernel/cpuid.h>
 #endif
@@ -87,8 +89,11 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 		fb.putRect(maxX/2, maxY/2, maxX/2-1, maxY/2-1, p); /* lower right */
 	}
 
-	//TODO: test syscalls
-	raw_syscall(syscall_open, nullptr, nullptr);
+	//TODO: test syscalls better
+	kDbgNoAlloc("kernel/") << "result of open('/', 0): " << dec(open("/", 0));
+	kDbgNoAlloc("kernel/") << "result of read(0, nullptr 0): " << dec(read(0, nullptr, 0));
+	kDbgNoAlloc("kernel/") << "result of write(0, '', 0): " << dec(write(0, "", 0));
+	kDbgNoAlloc("kernel/") << "result of close(0): " << dec(close(0));
 	kLog("kernel/") << "Testing new logging in function at " << reinterpret_cast<void*>(&kernel_main);
 	kLog("kernel/") << "Maximum memory = " << hex(Settings::PMM::totalMem.get());
 	kLog("kernel/") << "Debugged string: " << strDebug("\033[32mHello\tworld\0!\033[0m\r\n"_kstr);
