@@ -4,20 +4,65 @@
 #include <kernel/log.h>
 #include <sys/syscall.h>
 
+//FIXME: terminate process instead of the kernel
+#define GET_ARGS_RESULT(syscall) \
+	auto unchecked_args = static_cast<UserPtr<__syscall_ ## syscall ## _args>>(sc_args); \
+	auto unchecked_result = static_cast<UserPtr<__syscall_ ## syscall ## _result>>(sc_result); \
+	if (!unchecked_args || !unchecked_result) { \
+		kWarning("kernel/") << "Unsafe pointer to syscall arguments (" << unchecked_args.unsafe_raw_get() << ") or result (" << unchecked_result.unsafe_raw_get() << ")!"; \
+		std::abort(); \
+	} \
+	auto args[[maybe_unused]] = unchecked_args.get(); \
+	auto result[[maybe_unused]] = unchecked_result.get(); \
+
+static void sc_open(UserPtr<void> sc_args, UserPtr<void> sc_result) {
+	GET_ARGS_RESULT(open);
+	result->error = __syscall_open_errors::open_any;
+	result->fd = -1;
+}
+
+static void sc_read(UserPtr<void> sc_args, UserPtr<void> sc_result) {
+	GET_ARGS_RESULT(read);
+	result->error = __syscall_read_errors::read_any;
+	result->amount_read = 0;
+}
+
+static void sc_write(UserPtr<void> sc_args, UserPtr<void> sc_result) {
+	GET_ARGS_RESULT(write);
+	result->error = __syscall_write_errors::write_any;
+	result->amount_written = 0;
+}
+
+static void sc_close(UserPtr<void> sc_args, UserPtr<void> sc_result) {
+	GET_ARGS_RESULT(close);
+	result->error = __syscall_close_errors::close_any;
+}
+
 //FIXME: actually implement system calls
-C_LINKAGE void syscall_handler(syscall_number which, UserPtr<void> args, UserPtr<void> result) {
-	KString args_str, result_str;
-	if (args) {
-		args_str = hex(reinterpret_cast<uintptr_t>(args.get()));
+C_LINKAGE void syscall_handler(syscall_number which, UserPtr<__syscall_noop_args> args, UserPtr<__syscall_noop_result> result) {
+	void (*real_func)(UserPtr<void>, UserPtr<void>) = nullptr;
+	switch (which) {
+		case syscall_noop:
+			//Should this be callable (currently not)?
+			break;
+		case syscall_open:
+			real_func = sc_open;
+			break;
+		case syscall_read:
+			real_func = sc_read;
+			break;
+		case syscall_write:
+			real_func = sc_write;
+			break;
+		case syscall_close:
+			real_func = sc_close;
+			break;
 	}
-	else {
-		args_str.append("std::nullptr"_kstr_vec);
+	if (!real_func) {
+		//FIXME: terminate process or return an error?
+		result.get()->error = __syscall_noop_errors::noop_invalid_syscall;
+		kWarning("kernel/") << "Invalid syscall " << dec(which) << " called";
+		return;
 	}
-	if (result) {
-		result_str = hex(reinterpret_cast<uintptr_t>(result.get()));
-	}
-	else {
-		result_str.append("std::nullptr"_kstr_vec);
-	}
-	kLog("kernel/") << "Syscall " << dec(which) << " called with args=" << args_str << " and result=" << result_str;
+	real_func(args, result);
 }
