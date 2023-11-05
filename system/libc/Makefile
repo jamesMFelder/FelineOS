@@ -34,6 +34,7 @@ $(ARCH_FREEOBJS) \
 assert/assert.o \
 ctype/isdigit.o \
 ctype/iscntrl.o \
+errno/errno.o \
 icxxabi/icxxabi.o \
 stdio/printf.o \
 stdio/putchar.o \
