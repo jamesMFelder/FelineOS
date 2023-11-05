@@ -21,10 +21,11 @@ class KStringView {
 		using const_iterator = value_type const *;
 		using iterator = const_pointer;
 
+		KStringView() : characters(nullptr), len(0) {}
 		KStringView(char const *characters, size_t len) : characters(characters), len(len) {}
 		KStringView(char const *characters) : characters(characters), len(strlen(characters)) {}
 		KStringView(KStringView &other) { *this = other; }
-		KStringView &operator=(KStringView &other) {characters = other.data(); len = other.length(); return *this; }
+		KStringView &operator=(KStringView const &other) {characters = other.data(); len = other.length(); return *this; }
 
 		const_reference get(size_t index) const {
 			if (index >= len) {

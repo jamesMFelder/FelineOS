@@ -69,7 +69,7 @@ static void save_grub_params(multiboot_info_t * const phys_mbp){
 			kerror("We were given too long a command line, truncating to 4096 characters.");
 		}
 		unmap_range(mapped_cmdline, 4096, 0);
-		Settings::Misc::commandline.initialize(std::string_view(grub_cmdline, offset));
+		Settings::Misc::commandline.initialize(KStringView(grub_cmdline, offset));
 	}
 after_cmdline: //Jump here if you need to abort processing the command line.
 	if(get_flag(grub_flags, MULTIBOOT_INFO_FRAMEBUFFER_INFO)){

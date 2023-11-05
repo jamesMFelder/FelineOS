@@ -4,7 +4,6 @@
 #define _KERN_SETTINGS_H 1
 
 #include <cstdlib>
-#include <string_view>
 #include <kernel/log.h>
 
 template <typename T, bool changeable>
@@ -42,7 +41,7 @@ namespace Settings {
 		inline Setting<unsigned long long, false> totalMem;
 	};
 	namespace Misc {
-		inline Setting<std::string_view, false> commandline;
+		inline Setting<KStringView, false> commandline;
 	};
 	namespace Logging {
 		typedef void (*output_func)(const char*, size_t);

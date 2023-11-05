@@ -58,7 +58,7 @@ int boot_setup(){
 			(fdt_struct_entry *entry, devicetree_cell_size , char *, void *_[[maybe_unused]])
 			{
 				if (strcmp(entry->node_name, "cmdline")) {
-					Settings::Misc::commandline.initialize(std::string_view(reinterpret_cast<char*>(&(entry->prop.value)), entry->prop.len));
+					Settings::Misc::commandline.initialize(KStringView(reinterpret_cast<char*>(&(entry->prop.value)), entry->prop.len));
 				}
 			}, nullptr);
 	return 0;
