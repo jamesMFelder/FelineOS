@@ -21,7 +21,8 @@ enum syscall_number {
 	syscall_close,
 };
 
-C_LINKAGE void raw_syscall(syscall_number which, void* args, void* result);
+// Returns false if the syscall is not supported by the kernel (args and result are untouched)
+C_LINKAGE bool raw_syscall(syscall_number which, void* args, void* result);
 
 typedef int fd_type;
 
@@ -63,15 +64,14 @@ typedef int fd_type;
 	}; \
 	enum __syscall_ ## name ## _errors { \
 		name ## _none, \
-		name ## _invalid_syscall, \
 		errors \
 	}; \
 	struct __syscall_ ## name ## _result { \
 		__syscall_ ## name ## _errors error; \
 		result \
 	}; \
-	inline void __syscall_ ## name(__syscall_ ## name ## _args &args_param, __syscall_ ## name ## _result &result_param) { \
-		raw_syscall(syscall_ ## name, &args_param, &result_param); \
+	inline bool __syscall_ ## name(__syscall_ ## name ## _args &args_param, __syscall_ ## name ## _result &result_param) { \
+		return raw_syscall(syscall_ ## name, &args_param, &result_param); \
 	}
 
 SYSCALL_ENUMERATE(_S)

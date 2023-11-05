@@ -39,7 +39,7 @@ static void sc_close(UserPtr<void> sc_args, UserPtr<void> sc_result) {
 }
 
 //FIXME: actually implement system calls
-C_LINKAGE void syscall_handler(syscall_number which, UserPtr<__syscall_noop_args> args, UserPtr<__syscall_noop_result> result) {
+C_LINKAGE bool syscall_handler(syscall_number which, UserPtr<__syscall_noop_args> args, UserPtr<__syscall_noop_result> result) {
 	void (*real_func)(UserPtr<void>, UserPtr<void>) = nullptr;
 	switch (which) {
 		case syscall_noop:
@@ -59,10 +59,9 @@ C_LINKAGE void syscall_handler(syscall_number which, UserPtr<__syscall_noop_args
 			break;
 	}
 	if (!real_func) {
-		//FIXME: terminate process or return an error?
-		result.get()->error = __syscall_noop_errors::noop_invalid_syscall;
-		kWarning("kernel/") << "Invalid syscall " << dec(which) << " called";
-		return;
+		kWarning("kernel/") << "Invalid syscall " << dec(which) << " called. Returning false.";
+		return false;
 	}
 	real_func(args, result);
+	return true;
 }

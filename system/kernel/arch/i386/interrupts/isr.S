@@ -206,10 +206,8 @@ isr_stub_31:
 
 	call syscall_handler
 
-	/* Restore stack */
-	pop %eax
-	pop %ecx
-	pop %edx
+	/* Don't restore stack so we preserve the return value in %eax */
+	add $0xc, %esp
 
 	mov %ebp, %esp/* Remove the stack frame */
 	pop %ebp

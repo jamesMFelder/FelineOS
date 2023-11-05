@@ -11,7 +11,14 @@
 ssize_t write(int fd, void const *buf, size_t len) {
 	__syscall_write_result res;
 	__syscall_write_args args = {.fd=fd, .buffer=buf, .len=len};
-	__syscall_write(args, res);
+	bool is_valid = __syscall_write(args, res);
+
+	//Please, never have this happen!
+	if (!is_valid) {
+		//FIXME: how do we report the error (if at all)?
+		errno = ENOSYS;
+		return -1;
+	}
 
 	//If it errored but we wrote something, return sucess anyways
 	if (res.amount_written > 0) {
@@ -22,15 +29,6 @@ ssize_t write(int fd, void const *buf, size_t len) {
 	switch (res.error) {
 		case write_none:
 			return res.amount_written;
-			break;
-
-			//Please, never have this happen!
-		case write_invalid_syscall:
-#ifdef __is_libk
-			kWarning("libc/") << "write() system call returned ENOSYS!";
-			//FIXME: should we just crash in userspace?
-#endif // __is_libk
-			errno=ENOSYS;
 			break;
 
 			//Correct errors shall be added
