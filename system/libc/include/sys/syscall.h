@@ -4,7 +4,7 @@
 #define _KERN_SYSCALL_H 1
 
 #include <bits/c_compat.h>
-#include <cstddef>
+#include <stddef.h>
 
 #ifdef __is_kernel
 #include <kernel/user_ptr.h>
