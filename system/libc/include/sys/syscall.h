@@ -14,6 +14,7 @@
 #endif // __is_kernel (else)
 
 enum syscall_number {
+	syscall_noop,
 	syscall_open,
 	syscall_read,
 	syscall_write,
@@ -25,6 +26,12 @@ C_LINKAGE void raw_syscall(syscall_number which, void* args, void* result);
 typedef int fd_type;
 
 #define SYSCALL_ENUMERATE(_S) \
+	_S( \
+			noop, \
+			, \
+			, \
+			\
+	)\
 	_S( \
 			open, \
 			USER_PTR(char const) path; int flags; , \
@@ -45,7 +52,7 @@ typedef int fd_type;
 	)\
 	_S( \
 			write, \
-			fd_type fd; USER_PTR(void) buffer; size_t len; , \
+			fd_type fd; USER_PTR(void const) buffer; size_t len; , \
 			write_any , \
 			size_t amount_written; \
 	)\
@@ -63,8 +70,8 @@ typedef int fd_type;
 		__syscall_ ## name ## _errors error; \
 		result \
 	}; \
-	inline void __syscall_ ## name(__syscall_ ## name ## _args &args_arg, __syscall_ ## name ## _result &result_arg) { \
-		raw_syscall(syscall_ ## name, &args_arg, &result_arg); \
+	inline void __syscall_ ## name(__syscall_ ## name ## _args &args_param, __syscall_ ## name ## _result &result_param) { \
+		raw_syscall(syscall_ ## name, &args_param, &result_param); \
 	}
 
 SYSCALL_ENUMERATE(_S)
