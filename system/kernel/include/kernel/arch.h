@@ -18,7 +18,8 @@
 /*	screen output */
 /* See the definition for dependencies */
 #if defined(__i386__)
-ASM int early_boot_setup(multiboot_info_t *mbp);
+ASM int early_boot_setup();
+ASM void after_constructors_init(multiboot_info_t *mbp);
 #elif defined(__arm__)
 ASM int early_boot_setup(fdt_header *fdt);
 #else

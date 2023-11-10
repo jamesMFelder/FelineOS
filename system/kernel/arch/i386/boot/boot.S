@@ -152,11 +152,17 @@ _start:
 	.extern _init
 	call _init
 
+	/* Do setup that needs constructors to have run */
+	.extern after_constructors_init
+	call after_constructors_init
+
 	/* Transfer control to the main kernel. */
 	.extern kernel_main
 	call kernel_main
 
 	/* Call destructors (shouldn't reach here) */
+	.extern _fini
+	call _fini
 	sub $4, %esp
 	movw $0, (%esp)
 	.extern __cxa_finalize

@@ -35,7 +35,7 @@ static void screen_init(multiboot_info_t mbp){
 			break;
 		case MULTIBOOT_FRAMEBUFFER_TYPE_EGA_TEXT:
 			klogf("Framebuffer type: %s.", "EGA text");
-			break;
+			return;
 	}
 	int fb_init_rval=fb.init(reinterpret_cast<pixel_bgr_t*>(mbp.framebuffer_addr), static_cast<uint16_t>(mbp.framebuffer_width), static_cast<uint16_t>(mbp.framebuffer_height), static_cast<uint16_t>(mbp.framebuffer_pitch), mbp.framebuffer_bpp);
 	if(fb_init_rval!=0){
@@ -83,27 +83,20 @@ after_cmdline: //Jump here if you need to abort processing the command line.
 }
 
 /* Dependencies:
-	Setup the GDT ASAP
-	Turn on the serial port before we log anything
-	Setup the IDT before any errors can occur
-	Initial paging setup so map_range doesn't fail (not turning it on)
-	Save grub info before it gets clobbered
-	TODO: save ACPI tables before they get clobbered
-	Setup the PMM (don't call it until paging is ON)
-	Turn on paging
-Flexibility:
-	Saving grub info (esp. the command line) and ACPI tables after the PMM would
-		be ideal in that we could save a variable length command line, but messier
-		and more likely to end up overwriting them (esp. in low-mem computers).
-		And honestly, why should we support more than a kilobyte long command line?
-	In an ideal world we should be able to setup the IDT anytime before paging.
-	If you write a real serial port driver using interrupts, note that you won't
-		be able to log anything until the IDT is setup (attempts will triple-fault)
-		Also note that the interrupts actually log stuff, so watch out!
+   Setup the GDT ASAP
+   Turn on the serial port before we log anything
+   Setup the IDT before any errors can occur
+   Initialize c++ paging handler so map_range doesn't fail (not turning it on)
+In an ideal world we should be able to setup the IDT anytime before paging.
+If you write a real serial port driver using interrupts, note that you won't
+be able to log anything until the IDT is setup (attempts will triple-fault)
+Also note that the interrupts actually log stuff, so watch out!
 After this we should be good to go! */
-int early_boot_setup(multiboot_info_t *mbp){
+int early_boot_setup(){
 	disable_gdt(); /* We don't use it because it's not cross platform */
 	init_serial(); /* We can't do any logging before this gets setup */
+	/* Initialize the logging categories. Note that they will be clobbered when
+	 * _init is run, so reset them ASAP after that */
 	Settings::Logging::critical.initialize(write_serial);
 	Settings::Logging::error.initialize(write_serial);
 	Settings::Logging::warning.initialize(write_serial);
@@ -111,9 +104,26 @@ int early_boot_setup(multiboot_info_t *mbp){
 	Settings::Logging::debug.initialize(write_serial);
 	idt_init(); /* Actually display an error if we have a problem: don't just triple fault */
 	setup_paging(); /* Take control of it from the assembly! */
+	return 0;
+}
+
+/*
+   Save grub info before it gets clobbered
+   TODO: save ACPI tables before they get clobbered
+   Setup the PMM (don't call it until paging is ON)
+   Saving grub info (esp. the command line) and ACPI tables after the PMM would
+   be ideal in that we could save a variable length command line, but messier
+   and more likely to end up overwriting them (esp. in low-mem computers).
+   And honestly, why should we support more than a kilobyte long command line?
+   */
+void after_constructors_init(multiboot_info_t *mbp){
+	Settings::Logging::critical.initialize(write_serial);
+	Settings::Logging::error.initialize(write_serial);
+	Settings::Logging::warning.initialize(write_serial);
+	Settings::Logging::log.initialize(write_serial);
+	Settings::Logging::debug.initialize(write_serial);
 	save_grub_params(mbp);
 	bootstrap_phys_mem_manager(mbp); /* Get the physical memory manager working */
-	return 0;
 }
 
 int boot_setup(){

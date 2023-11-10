@@ -28,7 +28,7 @@ class Setting {
 				std::abort();
 			}
 		}
-		bool set(T &value) requires(changeable) { this->value=value; initialized = true; }
+		void set(T const &value) requires(changeable) { this->value=value; initialized = true; }
 		operator bool() const { return initialized; }
 
 	private:
@@ -37,20 +37,24 @@ class Setting {
 };
 
 namespace Settings {
-	namespace PMM {
-		inline Setting<unsigned long long, false> totalMem;
-	};
-	namespace Misc {
-		inline Setting<KStringView, false> commandline;
-	};
 	namespace Logging {
 		typedef void (*output_func)(const char*, size_t);
-		inline Setting<output_func, true> critical;
-		inline Setting<output_func, true> error;
-		inline Setting<output_func, true> warning;
-		inline Setting<output_func, true> log;
-		inline Setting<output_func, true> debug;
 	}
+
+#define SETTINGS_LIST(_S) \
+	_S(unsigned long long, false, PMM, totalMem) \
+	_S(KStringView, false, Misc, commandline) \
+	_S(Settings::Logging::output_func, true, Logging, critical) \
+	_S(Settings::Logging::output_func, true, Logging, error) \
+	_S(Settings::Logging::output_func, true, Logging, warning) \
+	_S(Settings::Logging::output_func, true, Logging, log) \
+	_S(Settings::Logging::output_func, true, Logging, debug) \
+
+#define _S(type, modifiable, ns, name) \
+	namespace ns {extern Setting<type, modifiable> name;};
+SETTINGS_LIST(_S)
+#undef _S
+
 };
 
 #endif /* _KERN_SETTINGS_H */

@@ -113,9 +113,11 @@ _start:
 	orr r8, #0x1 // enable MMU
 	orr r8, #0x800000 // disable subpages
 	mcr p15, 0, r8, c1, c0, 0
+	bl paged_start
 
 .section .text
-
+.global paged_start
+paged_start:
 	/* Clear the .bss section */
 	/* Taken from https://wiki.osdev.org/Raspberry_Pi_Bare_Bones */
 	/* Load the start and end */
@@ -159,6 +161,8 @@ _start:
 	bl kernel_main
 
 	/* Call destructors (shouldn't reach here) */
+	.extern _fini
+	bl _fini
 	mov r0, #0
 	.extern __cxa_finalize
 	bl __cxa_finalize

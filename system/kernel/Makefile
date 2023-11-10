@@ -39,14 +39,18 @@ $(KERNEL_CORE_OBJS) \
 
 OBJS=\
 $(ARCHDIR)/boot/crti.o \
+$(ARCHDIR)/crtbegin.o \
 $(KERNEL_OBJS) \
+$(ARCHDIR)/crtend.o \
 $(ARCHDIR)/boot/crtn.o \
 
 LINK_LIST=\
 $(LDFLAGS) \
 $(ARCHDIR)/boot/crti.o \
+$(ARCHDIR)/crtbegin.o \
 $(KERNEL_OBJS) \
 $(LIBS) \
+$(ARCHDIR)/crtend.o \
 $(ARCHDIR)/boot/crtn.o \
 
 .PHONY: all clean install install-headers install-kernel
