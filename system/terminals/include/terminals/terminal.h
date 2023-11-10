@@ -35,10 +35,6 @@ class terminal{
 		virtual int putchar(char const c)=0;
 		virtual int puts(char const * const s);
 
-		/* Sets the color (noop for monochrome terminal) */
-		virtual int setfg(term_color_t const fg);
-		virtual int setbg(term_color_t const bg);
-
 	protected:
 		/* Location */
 		static unsigned char x, y;

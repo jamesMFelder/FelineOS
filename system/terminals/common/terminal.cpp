@@ -6,7 +6,6 @@
 #include <cctype>
 
 unsigned char terminal::x=0, terminal::y=0;
-unsigned char terminal::maxX=0, terminal::maxY=0;
 
 terminal::terminal()
 {
@@ -30,8 +29,7 @@ void terminal::clear(){
 
 /* Reset everything to sane values (+clear the screen) */
 void terminal::reset(){
-	setfg(term_white);
-	setbg(term_black);
+	move(0, 0);
 	clear();
 }
 
@@ -65,15 +63,5 @@ int terminal::puts(char const * const s){
 		curptr++;
 	}
 	/* TODO: propogate errors */
-	return 0;
-}
-
-/* Set the foreground */
-int terminal::setfg(__attribute__((unused)) term_color_t const fg){
-	return 0;
-}
-
-/* Set the background */
-int terminal::setbg(__attribute__((unused)) term_color_t const bg){
 	return 0;
 }

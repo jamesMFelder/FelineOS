@@ -46,8 +46,6 @@ static inline vga_text_char vga_entry(unsigned char uc, uint8_t color) {
 	return (vga_text_char) uc | (vga_text_char) color << 8;
 }
 
-unsigned char terminal::maxX=VGA_TEXT_WIDTH;
-unsigned char terminal::maxY=VGA_TEXT_HEIGHT;
 class vga_text_term:public terminal{
 	public:
 		/* constructor and destructor */

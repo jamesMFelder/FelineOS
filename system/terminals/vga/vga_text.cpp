@@ -5,12 +5,14 @@
 #include <cstring>
 #include <cctype>
 
+unsigned char terminal::maxX=VGA_TEXT_WIDTH;
+unsigned char terminal::maxY=VGA_TEXT_HEIGHT;
+
 /* Pointer to the video memory */
 vga_text_char *vga_text_term::vga_hardware_mem=reinterpret_cast<vga_text_char*>(0xB8000ul);
 
 vga_text_term::vga_text_term()
 {
-	reset();
 }
 
 /* TODO: clear screen at end? */
