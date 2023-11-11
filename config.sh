@@ -1,6 +1,6 @@
 #!/bin/bash
-export SYSTEM_HEADER_PROJECTS="system/libc system/libFeline system/kernel"
-export PROJECTS="system/libc system/libFeline system/kernel"
+export SYSTEM_HEADER_PROJECTS="system/libc system/libFeline system/terminals system/kernel"
+export PROJECTS="system/libc system/libFeline system/terminals system/kernel"
 
 export MAKE=${MAKE:-make}
 export TARGET_HOST=${TARGET_HOST:-$(./default-host.sh)}

@@ -21,7 +21,7 @@ INCLUDEDIR?=$(PREFIX)/include
 CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra
 CPPFLAGS:=$(CFLAGS) $(CPPFLAGS) -D__is_kernel
 LDFLAGS:=$(LDFLAGS)
-LIBS:=$(LIBS) -nostdlib -L$(SYSROOT)/usr/lib -Wl,-\( -lfeline -lk -lgcc -lstdc++ -Wl,-\)
+LIBS:=$(LIBS) -nostdlib -L$(SYSROOT)/usr/lib -Wl,-\( -lfeline -lVGA_text -lk -lgcc -lstdc++ -Wl,-\)
 
 include kernel/make.config
 include $(ARCHDIR)/make.config

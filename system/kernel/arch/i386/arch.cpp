@@ -14,8 +14,17 @@
 #include <cinttypes>
 #include <kernel/vtopmem.h>
 #include <kernel/settings.h>
+#include <terminals/vga/vga_text.h>
 
 framebuffer fb;
+vga_text_term term;
+static bool vga_is_text;
+
+void write_to_term(char const *str, size_t len) {
+	for (size_t i = 0; i < len; ++i) {
+		term.putchar(str[i]);
+	}
+}
 
 static void screen_init(multiboot_info_t mbp){
 	klogf("Framebuffer at %p.", reinterpret_cast<void*>(mbp.framebuffer_addr));
@@ -35,8 +44,12 @@ static void screen_init(multiboot_info_t mbp){
 			break;
 		case MULTIBOOT_FRAMEBUFFER_TYPE_EGA_TEXT:
 			klogf("Framebuffer type: %s.", "EGA text");
+			klogf("Not a framebuffer, not initializing!");
+			vga_is_text = true;
+			map_range(reinterpret_cast<void*>(0xb8000), 160*25, reinterpret_cast<void*>(0xb8000), 0);
 			return;
 	}
+	vga_is_text = false;
 	int fb_init_rval=fb.init(reinterpret_cast<pixel_bgr_t*>(mbp.framebuffer_addr), static_cast<uint16_t>(mbp.framebuffer_width), static_cast<uint16_t>(mbp.framebuffer_height), static_cast<uint16_t>(mbp.framebuffer_pitch), mbp.framebuffer_bpp);
 	if(fb_init_rval!=0){
 		kerrorf("Unable to initialize framebuffer! Failed with error %d.", fb_init_rval);
@@ -127,5 +140,14 @@ void after_constructors_init(multiboot_info_t *mbp){
 }
 
 int boot_setup(){
+	Settings::Logging::output_func write_both = [](char const *str, size_t len) -> void {write_serial(str, len); write_to_term(str, len);};
+	if (vga_is_text) {
+		term.reset();
+		Settings::Logging::critical.set(write_both);
+		Settings::Logging::warning.set(write_both);
+		Settings::Logging::error.set(write_both);
+		Settings::Logging::log.set(write_both);
+		Settings::Logging::debug.set(write_both);
+	}
 	return 0;
 }
