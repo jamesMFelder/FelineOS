@@ -82,10 +82,10 @@ libk.a: $(LIBK_OBJS)
 	$(AR) rcs $@ $(LIBK_OBJS)
 
 .c.o:
-	$(CC) -MD -o $@ -std=gnu20 $(CFLAGS) -c $<
+	$(CC) -MD -o $@ -std=gnu23 $(CFLAGS) -c $<
 
 .cpp.o:
-	$(CPP) -MD -o $@ -std=gnu++20 $(CPPFLAGS) -c $<
+	$(CPP) -MD -o $@ -std=gnu++23 $(CPPFLAGS) -c $<
 
 .c.S:
 	$(CC) -MD -o $@ $(CFLAGS) -c $<
@@ -94,10 +94,10 @@ libk.a: $(LIBK_OBJS)
 	$(CPP) -MD -o $@ $(CPPFLAGS) -c $<
 
 .c.libk.o:
-	$(CC) -MD -o $@ -std=gnu20 $(LIBK_CFLAGS) -c $<
+	$(CC) -MD -o $@ -std=gnu23 $(LIBK_CFLAGS) -c $<
 
 .cpp.libk.o:
-	$(CPP) -MD -o $@ -std=gnu++20 $(LIBK_CPPFLAGS) -c $<
+	$(CPP) -MD -o $@ -std=gnu++23 $(LIBK_CPPFLAGS) -c $<
 
 .S.libk.o:
 	$(CC) -MD -o $@  $(LIBK_CPPFLAGS) -c $<
