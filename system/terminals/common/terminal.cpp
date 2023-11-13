@@ -9,7 +9,8 @@ unsigned char terminal::x=0, terminal::y=0;
 
 terminal::terminal()
 {
-	reset();
+	//Don't call reset because it (indirectly) calls putchar (a virtual function)
+	move(0, 0);
 }
 
 /* TODO: clear screen at end? */

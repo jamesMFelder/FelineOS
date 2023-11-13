@@ -6,5 +6,11 @@
 /*	so just don't do anything */
 /* Seperate declaration and definition to quiet a warning. */
 #include <bits/c_compat.h>
+#include <cstdlib>
+#include <drivers/serial.h>
 C_LINKAGE void __cxa_pure_virtual();
-void __cxa_pure_virtual(){}
+void __cxa_pure_virtual(){
+	// We can't be sure about anything, but having some warning is nice
+	writestr_serial("__cxa_pure_virtual() called: some class doesn't have a type\n");
+	std::abort();
+}
