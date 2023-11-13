@@ -4,10 +4,11 @@
 #define KERNEL_PHYS_MEM_H
 
 #include <cstddef>
+#include <kernel/phys_addr.h>
 
 /* Used for passing in information from the bootloader */
 struct bootloader_mem_region {
-	void *addr;
+	PhysAddr<void> addr;
 	size_t len;
 };
 

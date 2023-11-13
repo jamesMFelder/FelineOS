@@ -124,9 +124,9 @@ void for_each_prop_in_node(
 	return for_each_prop_in_node(prefix, &current_struct, callback, false, {.address_cells=2, .size_cells=1}, state);
 }
 
-fdt_header *init_devicetree(fdt_header *header) {
-	fdt_header dt_header=read_pmem(header);
-	map_results dt_mapping=map_range(header, dt_header.totalsize, reinterpret_cast<void**>(&devicetree), 0);
+fdt_header *init_devicetree(PhysAddr<fdt_header> header) {
+	fdt_header dt_header=read_pmem<fdt_header>(header);
+	map_results dt_mapping=map_range(header.unsafe_raw_get(), dt_header.totalsize, reinterpret_cast<void**>(&devicetree), 0);
 	switch (dt_mapping) {
 		// It worked!
 		case map_success:

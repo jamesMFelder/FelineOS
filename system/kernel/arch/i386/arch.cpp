@@ -60,7 +60,7 @@ static void screen_init(multiboot_info_t mbp){
 char grub_cmdline[4096]="";
 multiboot_uint32_t grub_flags;
 
-static void save_grub_params(multiboot_info_t * const phys_mbp){
+static void save_grub_params(PhysAddr<multiboot_info_t> phys_mbp){
 	multiboot_info_t mbp=read_pmem(phys_mbp);
 	grub_flags=mbp.flags;
 	if(get_flag(grub_flags, MULTIBOOT_INFO_CMDLINE)){
@@ -129,7 +129,7 @@ int early_boot_setup(){
    and more likely to end up overwriting them (esp. in low-mem computers).
    And honestly, why should we support more than a kilobyte long command line?
    */
-void after_constructors_init(multiboot_info_t *mbp){
+void after_constructors_init(PhysAddr<multiboot_info_t> mbp){
 	Settings::Logging::critical.initialize(write_serial);
 	Settings::Logging::error.initialize(write_serial);
 	Settings::Logging::warning.initialize(write_serial);

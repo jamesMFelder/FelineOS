@@ -32,7 +32,7 @@ If you write a real serial port driver using interrupts, note that you won't
 be able to log anything until the IDT is setup (attempts will triple-fault)
 Also note that the interrupts actually log stuff, so watch out!
 After this we should be good to go! */
-int early_boot_setup(fdt_header *devicetree){
+int early_boot_setup(PhysAddr<fdt_header> devicetree){
 	init_serial(); /* We can't do any logging before this gets setup */
 	Settings::Logging::critical.initialize(write_serial);
 	Settings::Logging::error.initialize(write_serial);
@@ -41,14 +41,7 @@ int early_boot_setup(fdt_header *devicetree){
 	Settings::Logging::debug.initialize(write_serial);
 	idt_init(); /* Actually display an error if we have a problem: don't just triple fault */
 	setup_paging(); /* Take control of it from the assembly! */
-	klogf("Device tree should be at %p", static_cast<void*>(devicetree));
-	klogf("Devicetree:\n\tmagic: %#" PRIx32 "\n\toff_mem_rsvmap: %#" PRIx32,
-			static_cast<uint32_t>(read_pmem(devicetree).magic),
-			static_cast<uint32_t>(read_pmem(devicetree).off_mem_rsvmap)
-		 );
-	//Print all the structures
-	devicetree = init_devicetree(devicetree);
-	bootstrap_phys_mem_manager(devicetree); /* Get the physical memory manager working */
+	bootstrap_phys_mem_manager(init_devicetree(devicetree)); /* Get the physical memory manager working */
 	screen_init(); /* Initialize the framebuffer */
 	return 0;
 }

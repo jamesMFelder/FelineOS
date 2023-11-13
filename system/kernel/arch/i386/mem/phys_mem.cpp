@@ -36,7 +36,7 @@ const uintptr_t phys_uint_kernel_end = reinterpret_cast<uintptr_t>(&phys_kernel_
 /* Create a stack of pages for use */
 /* Create+fill in the bitmap */
 /* Call after paging is active */
-int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
+int bootstrap_phys_mem_manager(PhysAddr<multiboot_info_t> phys_mbp){
 	multiboot_info_t mbp=read_pmem<multiboot_info_t>(phys_mbp);
 	assert(mbp.flags & MULTIBOOT_INFO_MEM_MAP);
 
@@ -66,8 +66,8 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 	 * * or reached the end of it (so we should abort)
 	 * so we don't want to abort just because there is enough free space at 0x0
 	 */
-#define IN_USE_LOCATION reinterpret_cast<bootloader_mem_region*>(const_cast<char*>(&phys_kernel_start))
-	bootloader_mem_region *found_space=IN_USE_LOCATION;
+	const PhysAddr<bootloader_mem_region> in_use_location(reinterpret_cast<uintptr_t>(&phys_kernel_start));
+	PhysAddr<bootloader_mem_region> found_space=in_use_location;
 	/* Search for a space large enough to sort them that isn't being used already */
 	multiboot_memory_map_t *current_multiboot_memory=mbmp;
 	while (current_multiboot_memory < mbmp+(mbmp_len/sizeof(multiboot_memory_map_t))){
@@ -89,20 +89,20 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 		bool overlapping_data=avoiding_kernel && avoiding_grub_memmap && avoiding_module;
 		/* Can we use the space */
 		if (hardware_available && large_enough && no_pointer_wrapping && !overlapping_data){
-			found_space=reinterpret_cast<bootloader_mem_region*>(current_multiboot_memory->addr);
+			found_space=current_multiboot_memory->addr;
 			break;
 		}
 		current_multiboot_memory=next_mmap_entry(current_multiboot_memory);
 	}
 	/* See above hack alert for we we don't use (!found_space) */
-	if (found_space==IN_USE_LOCATION) {
+	if (found_space==in_use_location) {
 		kcriticalf("Cannot find enough memory.");
 		std::abort();
 	}
 
 	/* Actually map the found space. */
 	struct bootloader_mem_region *unavailable_memory;
-	enum map_results mapping=map_range(found_space, sorted_length, reinterpret_cast<void**>(&unavailable_memory), 0);
+	enum map_results mapping=map_range(found_space.unsafe_raw_get(), sorted_length, reinterpret_cast<void**>(&unavailable_memory), 0);
 	if (mapping!=map_success) {
 		kcriticalf("Unable to map the needed memory for the PMM boostrapping!");
 		std::abort();
@@ -113,10 +113,10 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 	 * Don't forget to add new variables here when adding a new memory type */
 	unavailable_memory[0].addr=found_space;
 	unavailable_memory[0].len=sorted_length;
-	klogf("Unavailable memory region: at %p\t| length: %#zx", unavailable_memory[0].addr, unavailable_memory[0].len);
-	unavailable_memory[1].addr=const_cast<char*>(&phys_kernel_start);
+	klogf("Unavailable memory region: at %p\t| length: %#zx", unavailable_memory[0].addr.unsafe_raw_get(), unavailable_memory[0].len);
+	unavailable_memory[1].addr=reinterpret_cast<uintptr_t>(&phys_kernel_start);
 	unavailable_memory[1].len=phys_uint_kernel_end-phys_uint_kernel_start;
-	klogf("Unavailable memory region: at %p\t| length: %#zx", unavailable_memory[1].addr, unavailable_memory[1].len);
+	klogf("Unavailable memory region: at %p\t| length: %#zx", unavailable_memory[1].addr.unsafe_raw_get(), unavailable_memory[1].len);
 	size_t num_unavailable_regions=2;
 
 	/* First, copy the number of unavailable entries over */
@@ -128,8 +128,7 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 			if (
 							new_memory > unavailable_memory &&
 							(current_multiboot_memory->addr)<
-							reinterpret_cast<uintptr_t>((new_memory-1)->addr)+
-							reinterpret_cast<uintptr_t>((new_memory-1)->len)
+							((new_memory-1)->addr+(new_memory-1)->len).as_int()
 			   ) {
 				//The list must be sorted up until now, or this breaks
 				bool merged=false;
@@ -138,17 +137,17 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 					if ((
 								(current_multiboot_memory->addr)
 								<=
-								reinterpret_cast<uintptr_t>(unavailable_memory[memory_region_index].addr)+unavailable_memory[memory_region_index].len
+								(unavailable_memory[memory_region_index].addr+unavailable_memory[memory_region_index].len).as_int()
 						) && (
 								current_multiboot_memory->addr+current_multiboot_memory->len
 								>=
-								reinterpret_cast<uintptr_t>(unavailable_memory[memory_region_index].addr)
+								unavailable_memory[memory_region_index].addr.as_int()
 						)) {
-						unavailable_memory[memory_region_index].addr = min(reinterpret_cast<void*>(current_multiboot_memory->addr), unavailable_memory[memory_region_index].addr);
+						unavailable_memory[memory_region_index].addr = min(static_cast<uintptr_t>(current_multiboot_memory->addr), unavailable_memory[memory_region_index].addr.as_int());
 						unavailable_memory[memory_region_index].len = static_cast<size_t>(max(
-								current_multiboot_memory->addr+current_multiboot_memory->len,
-								reinterpret_cast<uintptr_t>(unavailable_memory[memory_region_index].addr)+static_cast<unsigned long long>(unavailable_memory[memory_region_index].len)
-								)-reinterpret_cast<uintptr_t>(unavailable_memory[memory_region_index].addr));
+								static_cast<uintptr_t>(current_multiboot_memory->addr+current_multiboot_memory->len),
+								(unavailable_memory[memory_region_index].addr+unavailable_memory[memory_region_index].len).as_int()
+								)-unavailable_memory[memory_region_index].addr.as_int());
 						merged=true;
 						klogf("merged regions");
 						break;
@@ -157,11 +156,11 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 				if (!merged) {
 					for (size_t memory_region_index=0; memory_region_index < num_unavailable_regions; ++memory_region_index) {
 						/* Move this and everything after it back one spot to put the new memory in here */
-						if (reinterpret_cast<uintptr_t>(unavailable_memory[memory_region_index].addr) < current_multiboot_memory->addr) {
+						if (unavailable_memory[memory_region_index].addr.as_int() < current_multiboot_memory->addr) {
 							for (size_t moved_index=num_unavailable_regions; moved_index > memory_region_index; --moved_index) {
 								unavailable_memory[moved_index]=unavailable_memory[moved_index-1];
 							}
-							unavailable_memory[memory_region_index].addr=reinterpret_cast<void*>(current_multiboot_memory->addr);
+							unavailable_memory[memory_region_index].addr=current_multiboot_memory->addr;
 							unavailable_memory[memory_region_index].len=static_cast<size_t>(current_multiboot_memory->len);
 							++num_unavailable_regions;
 							break;
@@ -171,14 +170,14 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 			}
 			//Otherwise, simply append it
 			else if (current_multiboot_memory->addr<4_GiB) {
-				new_memory->addr=reinterpret_cast<void*>(current_multiboot_memory->addr);
+				new_memory->addr=current_multiboot_memory->addr;
 				new_memory->len=static_cast<size_t>(min(current_multiboot_memory->len, 4_GiB-current_multiboot_memory->addr));
 				++num_unavailable_regions;
 			}
 			else {
 				kwarnf("Ignoring memory region starting at %#llx.", current_multiboot_memory->addr);
 			}
-			klogf("Unavailable memory region: at %p\t| length: %#zx", new_memory->addr, new_memory->len);
+			klogf("Unavailable memory region: at %p\t| length: %#zx", new_memory->addr.unsafe_raw_get(), new_memory->len);
 			++new_memory;
 		}
 
@@ -195,11 +194,10 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 	while (current_multiboot_memory<mbmp+(mbmp_len/sizeof(multiboot_memory_map_t))){
 		if (current_multiboot_memory->type==MULTIBOOT_MEMORY_AVAILABLE){
 			//If the list is out of order/has overlaps just abort (TODO: sort it)
-			if ((current_multiboot_memory->addr)<reinterpret_cast<uintptr_t>((new_memory-1)->addr)+reinterpret_cast<uintptr_t>((new_memory-1)->len)) {
+			if ((current_multiboot_memory->addr)<((new_memory-1)->addr+(new_memory-1)->len).as_int()) {
 				kcriticalf("Memory map out of order (new start: %#llx < last end: %#" PRIxPTR "). Sorting required but I haven't coded that yet.",
 						current_multiboot_memory->addr,
-						reinterpret_cast<uintptr_t>((new_memory-1)->addr)
-						+reinterpret_cast<uintptr_t>((new_memory-1)->len)
+						((new_memory-1)->addr+(new_memory-1)->len).as_int()
 					  );
 			}
 			//check for overlap with unavailable memory (in which case this region is at least partially invalid)
@@ -207,13 +205,13 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 			bool should_drop_region=false; //If a region should be dropped (eg. conflicts with an unavailable region)
 			for (size_t i=0; i<num_unavailable_regions; ++i) {
 				if (
-						current_multiboot_memory->addr > reinterpret_cast<uintptr_t>(unavailable_memory[i].addr) &&
+						current_multiboot_memory->addr > unavailable_memory[i].addr.as_int() &&
 						current_multiboot_memory->addr+current_multiboot_memory->len <
-						reinterpret_cast<uintptr_t>(unavailable_memory[i].addr) + unavailable_memory[i].len
+						(unavailable_memory[i].addr + unavailable_memory[i].len).as_int()
 				   ){
 					kerrorf("Available memory region %#llx-%#llx overlaps with unavailable memory region %p-%#" PRIxPTR ".",
 							current_multiboot_memory->addr, current_multiboot_memory->addr+current_multiboot_memory->len,
-							unavailable_memory[i].addr, reinterpret_cast<uintptr_t>(unavailable_memory[i].addr)+unavailable_memory[i].len
+							unavailable_memory[i].addr.unsafe_raw_get(), (unavailable_memory[i].addr+unavailable_memory[i].len).as_int()
 					       );
 					kerror("Dropping available region.");
 					should_drop_region=true;
@@ -222,10 +220,10 @@ int bootstrap_phys_mem_manager(multiboot_info_t *phys_mbp){
 			}
 
 			if (!should_drop_region){
-				new_memory->addr=reinterpret_cast<void*>(current_multiboot_memory->addr);
+				new_memory->addr=current_multiboot_memory->addr;
 				new_memory->len=static_cast<size_t>(current_multiboot_memory->len);
 				++num_available_regions;
-				klogf("Available memory region: at %p\t| length: %#zx", new_memory->addr, new_memory->len);
+				klogf("Available memory region: at %p\t| length: %#zx", new_memory->addr.unsafe_raw_get(), new_memory->len);
 				new_memory++;
 			}
 		}

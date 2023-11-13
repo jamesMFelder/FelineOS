@@ -19,9 +19,9 @@
 /* See the definition for dependencies */
 #if defined(__i386__)
 ASM int early_boot_setup();
-ASM void after_constructors_init(multiboot_info_t *mbp);
+ASM void after_constructors_init(PhysAddr<multiboot_info_t> mbp);
 #elif defined(__arm__)
-ASM int early_boot_setup(fdt_header *fdt);
+ASM int early_boot_setup(PhysAddr<fdt_header> fdt);
 #else
 #error "No architecture defined! Cannot declare early_boot_setup with the appropriate argument!"
 #endif

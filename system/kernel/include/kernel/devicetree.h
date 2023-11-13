@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
-#include <cstring>
 #ifndef _KERN_DEVICETREE_H
 #define _KERN_DEVICETREE_H 1
 
 #include <cstdint>
 #include <feline/endian.h>
+#include <kernel/phys_addr.h>
 
 struct fdt_header {
 	big_endian<uint32_t> magic;
@@ -61,7 +61,7 @@ struct devicetree_cell_size {
 };
 
 /* Initializes some state and maps it into virtual memory, returning the virtual address */
-fdt_header *init_devicetree(fdt_header *header);
+fdt_header *init_devicetree(PhysAddr<fdt_header> header);
 
 void for_each_prop_in_node(
 		char const *prefix,

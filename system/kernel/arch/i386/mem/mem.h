@@ -11,6 +11,6 @@
 #include <kernel/phys_mem.h>
 
 /* Start the memory manager */
-int bootstrap_phys_mem_manager(multiboot_info_t *mbp);
+int bootstrap_phys_mem_manager(PhysAddr<multiboot_info_t> mbp);
 
 #endif /* _KERN_ARCH_MEM_H */

@@ -21,15 +21,18 @@
 #include <cstdlib>
 #include <kernel/paging.h>
 #include <kernel/log.h>
+#include <kernel/phys_addr.h>
+#include <cinttypes>
 
 /* Return the value at addr in physical memory, aborting if an error occurs */
 template <class T>
-T read_pmem(T const * const addr) {
+T read_pmem(PhysAddr<T> const addr) {
 	T *tmp_ptr;
 	T value;
-	map_results type_mapping=map_range(addr, sizeof(T), reinterpret_cast<void**>(&tmp_ptr), 0);
+	//TODO: should volatile T imply MAP_DEVICE
+	map_results type_mapping=map_range(addr.unsafe_raw_get(), sizeof(T), reinterpret_cast<void**>(&tmp_ptr), 0);
 	if (type_mapping != map_success) {
-		kerrorf ("Cannot map physical memory %p. Error %d.", static_cast<void const * const>(addr), type_mapping);
+		kerrorf ("Cannot map physical memory %p. Error %d.", addr.unsafe_raw_get(), type_mapping);
 		std::abort();
 	}
 	value = *tmp_ptr;
@@ -39,11 +42,11 @@ T read_pmem(T const * const addr) {
 
 /* Copy num elements from addr(physical memory) to result(virtual memory), aborting if an error occurs */
 template <class T>
-void read_pmem(T const * const addr, size_t num, T * result) {
+void read_pmem(PhysAddr<T> const addr, size_t num, T * result) {
 	T *tmp_ptr;
-	map_results type_mapping=map_range(addr, sizeof(T) * num, reinterpret_cast<void**>(&tmp_ptr), 0);
+	map_results type_mapping=map_range(addr.unsafe_raw_get(), sizeof(T) * num, reinterpret_cast<void**>(&tmp_ptr), 0);
 	if (type_mapping != map_success) {
-		kerrorf ("Cannot map physical memory %p. Error %d.", static_cast<void const * const>(addr), type_mapping);
+		kerrorf ("Cannot map physical memory %p. Error %d.", addr.unsafe_raw_get(), type_mapping);
 		std::abort();
 	}
 	memmove(result, tmp_ptr, sizeof(T) * num);
@@ -52,11 +55,11 @@ void read_pmem(T const * const addr, size_t num, T * result) {
 
 /* Write value(virtual memory) to addr(physical memory), aborting if an error occurs */
 template <class T>
-void write_pmem(T * const addr, T value) {
+void write_pmem(PhysAddr<T> const addr, T value) {
 	T *tmp_ptr;
-	map_results type_mapping=map_range(addr, sizeof(T), &tmp_ptr, 0);
+	map_results type_mapping=map_range(addr.unsafe_raw_get(), sizeof(T), reinterpret_cast<void**>(&tmp_ptr), 0);
 	if (type_mapping != map_success) {
-		kerrorf ("Cannot map physical memory %p. Error %d.", static_cast<void const * const>(addr), type_mapping);
+		kerrorf ("Cannot map physical memory %p. Error %d.", addr.unsafe_raw_get(), type_mapping);
 		std::abort();
 	}
 	*tmp_ptr=value;
@@ -65,11 +68,11 @@ void write_pmem(T * const addr, T value) {
 
 /* Copy num elements from value(virtual memory) to addr(physical memory), aborting if an error occurs */
 template <class T>
-void write_pmem(T * addr, size_t num, T * value) {
+void write_pmem(PhysAddr<T> addr, size_t num, T * value) {
 	T *tmp_ptr;
-	map_results type_mapping=map_range(addr, sizeof(T) * num, reinterpret_cast<void**>(&tmp_ptr), 0);
+	map_results type_mapping=map_range(addr.unsafe_raw_get(), sizeof(T) * num, reinterpret_cast<void**>(&tmp_ptr), 0);
 	if (type_mapping != map_success) {
-		kerrorf ("Cannot map physical memory %p. Error %d.", static_cast<void const * const>(addr), type_mapping);
+		kerrorf ("Cannot map physical memory %p. Error %d.", addr.unsafe_raw_get(), type_mapping);
 		std::abort();
 	}
 	memmove(tmp_ptr, value, sizeof(T) * num);

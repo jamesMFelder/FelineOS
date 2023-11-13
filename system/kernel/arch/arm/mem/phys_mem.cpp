@@ -19,41 +19,34 @@
 /* Setup by the linker to be at the start and end of the kernel. */
 extern const char phys_kernel_start;
 extern const char phys_kernel_end;
+PhysAddr<void> phys_ptr_kernel_start = nullptr;
+PhysAddr<void> phys_ptr_kernel_end = nullptr;
 extern const char kernel_start;
 extern const char kernel_end;
-const uintptr_t uint_kernel_start = reinterpret_cast<uintptr_t>(&kernel_start);
-const uintptr_t uint_kernel_end = reinterpret_cast<uintptr_t>(&kernel_end);
-// const uintptr_t phys_uint_kernel_start = reinterpret_cast<uintptr_t>(&phys_kernel_start);
-// const uintptr_t phys_uint_kernel_end = reinterpret_cast<uintptr_t>(&phys_kernel_end);
-fdt_header *phys_devicetree_header;
+PhysAddr<fdt_header> phys_devicetree_header = nullptr;
 fdt_header *devicetree_header;
 
 /* TODO: make a generic system for registering reserved memory */
-struct reserved_mem {
-	void const *start;
-	void const *end;
-};
-
 enum find_actions {
 	fail, /* There is no way to make it work */
 	success, /* It works perfectley */
 	after, /* Try at the end of the current reserved area */
 };
 
-static void* find_space_in_area (void const *location, void const *end_of_available, size_t size_needed, size_t alignment_needed) {
-	auto is_overlap = [location, size_needed, end_of_available](void const *start_reserved, void const *end_reserved) -> find_actions {
+static PhysAddr<void> find_space_in_area (PhysAddr<void> location, PhysAddr<void> end_of_available, size_t size_needed, size_t alignment_needed) {
+	auto is_overlap = [location, size_needed, end_of_available](PhysAddr<void> start_reserved, PhysAddr<void> end_reserved) -> find_actions {
 		/* If there is any overlap */
 		if (
 				(location >= start_reserved && location <= end_reserved)
 				||
 				(
-				 reinterpret_cast<unsigned char const*>(location)+size_needed >= start_reserved
+				 location+size_needed >= start_reserved
 				 &&
-				 reinterpret_cast<unsigned char const*>(location)+size_needed < end_reserved
+				 location+size_needed < end_reserved
 				)
 		   ) {
 			/* And we do not fit after */
-			if (reinterpret_cast<unsigned char*>(const_cast<void*>(end_reserved))+size_needed > end_of_available) {
+			if (end_reserved+size_needed > end_of_available) {
 				/* Say we cannot use this area */
 				return fail;
 			}
@@ -66,19 +59,19 @@ static void* find_space_in_area (void const *location, void const *end_of_availa
 		return success;
 	};
 	/* Don't use unaligned memory (unpredictable results) */
-	location=round_up_to_alignment(location, alignment_needed);
+	location=round_up_to_alignment(location.as_int(), alignment_needed);
 	/* Check device-tree reserved area */
 	fdt_reserve_entry *reserved_mem=reinterpret_cast<fdt_reserve_entry*>(devicetree_header+devicetree_header->off_mem_rsvmap/sizeof(*devicetree_header));
 	while (reserved_mem->address!=0 || reserved_mem->size!=0) {
 		switch (is_overlap(
-					reinterpret_cast<void*>(static_cast<uintptr_t>(reserved_mem->address)),
-					reinterpret_cast<void*>(static_cast<uintptr_t>(reserved_mem->address+reserved_mem->size))
+					PhysAddr<void>(reserved_mem->address),
+					PhysAddr<void>(reserved_mem->address+reserved_mem->size)
 					)) {
 			case fail:
 				return nullptr;
 			case after:
 				return find_space_in_area(
-						reinterpret_cast<void*>(static_cast<uintptr_t>(reserved_mem->address+reserved_mem->size)+1),
+						PhysAddr<void>(reserved_mem->address+reserved_mem->size+1),
 						end_of_available, size_needed, alignment_needed
 						);
 			case success:
@@ -86,11 +79,11 @@ static void* find_space_in_area (void const *location, void const *end_of_availa
 		}
 		++reserved_mem;
 	}
-	switch (is_overlap(&phys_kernel_start, &phys_kernel_end)) {
+	switch (is_overlap(phys_ptr_kernel_start, phys_ptr_kernel_end)) {
 		case fail:
 			return nullptr;
 		case after:
-			return find_space_in_area(&phys_kernel_end+1, end_of_available, size_needed, alignment_needed);
+			return find_space_in_area(phys_ptr_kernel_end+1, end_of_available, size_needed, alignment_needed);
 		case success:
 			break;
 	}
@@ -104,7 +97,7 @@ static void* find_space_in_area (void const *location, void const *end_of_availa
 	}
 	++reserved_mem;
 	/* Nothing conflicted with the address, so we're good to go*/
-	return const_cast<void*>(location);
+	return location;
 };
 
 /* Start the physical memory manager */
@@ -116,11 +109,12 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 
 	klog("Starting bootstrap_phys_mem_manager.");
 	devicetree_header = devicetree;
+	phys_ptr_kernel_start = reinterpret_cast<uintptr_t>(&phys_kernel_start);
+	phys_ptr_kernel_end = reinterpret_cast<uintptr_t>(&phys_kernel_end);
 
 	/* Print debugging information */
 	klogf("Kernel starts at %p", static_cast<void const *>(&kernel_start));
 	klogf("Kernel ends at %p", static_cast<void const *>(&kernel_end));
-	klogf("It is %#" PRIxPTR " bytes long.", uint_kernel_end-uint_kernel_start);
 
 	/* Find the number of entries */
 	fdt_reserve_entry *reserved_mem=reinterpret_cast<fdt_reserve_entry*>(devicetree+devicetree->off_mem_rsvmap/sizeof(*devicetree));
@@ -140,31 +134,44 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 		// klogf("Sizes: addresses=%#" PRIx32 ", sizes=%#" PRIx32, sizes.address_cells, sizes.size_cells);
 	};
 	for_each_prop_in_node("memory", print_available_memory, reinterpret_cast<void*>(&num_available_entries));
-	size_t sorted_length=(num_reserved_entries*2+num_available_entries)*sizeof(bootloader_mem_region);
+	//reserved*2 for worst-case (available entry in the middle of each)
+	//+3 for kernel, devicetree and the range we are currently reserving
+	size_t sorted_length=(num_reserved_entries*2+num_available_entries+3)*sizeof(bootloader_mem_region);
 	klogf("There are %zu available memory ranges and %zu reserved memory ranges", num_available_entries, num_reserved_entries);
 	klogf("so we will need a maximum of %zu bytes of memory to sort them.", sorted_length);
 
+	/*
+	 * MASSIVE HACK ALERT!!!
+	 * nullptr is 0x0, and 0x0 is a valid location before we enable paging
+	 * we can't set found_space to nullptr as default,
+	 * because we check it against its default at the end to see if we
+	 * * jumped out of the loop (so we should continue, using 0x0 for storage)
+	 * * or reached the end of it (so we should abort)
+	 * so we don't want to abort just because there is enough free space at 0x0
+	 */
+#define IN_USE_LOCATION phys_ptr_kernel_start
 	struct placement_details {
 		size_t len_needed; //Input
-		void *where; //Output
+		PhysAddr<void> where; //Output
 	};
 	auto can_contain_memory_map = [](fdt_struct_entry *entry, devicetree_cell_size sizes[[maybe_unused]], char *strings, void *state) {
 		placement_details *memory_map_location=reinterpret_cast<placement_details*>(state);
-		void *addr=reinterpret_cast<void*>(static_cast<uintptr_t>(entry->prop.value[0]));
+		PhysAddr<void> addr=PhysAddr<void>(entry->prop.value[0]);
 		size_t len=entry->prop.value[1];
 		if (strcmp("reg", strings+entry->prop.nameoff)==0) {
-			klogf("Memory at %p for %#zx bytes.", addr, len);
-			if (!memory_map_location->where) {
+			klogf("Memory at %p for %#zx bytes.", addr.unsafe_raw_get(), len);
+			if (memory_map_location->where == IN_USE_LOCATION) {
 				/* Check if we overlap any data structure that we need to preserve */
-				memory_map_location->where=find_space_in_area(addr, reinterpret_cast<char const*>(addr)+len, memory_map_location->len_needed, alignof(bootloader_mem_region));
+				memory_map_location->where=find_space_in_area(addr, addr+len, memory_map_location->len_needed, alignof(bootloader_mem_region));
 			}
 		}
 		// klogf("Sizes: addresses=%#" PRIx32 ", sizes=%#" PRIx32, sizes.address_cells, sizes.size_cells);
 	};
-	placement_details memory_map_location = {.len_needed=sorted_length, .where=nullptr};
+	placement_details memory_map_location = {.len_needed=sorted_length, .where=IN_USE_LOCATION};
 	for_each_prop_in_node("memory", can_contain_memory_map, &memory_map_location);
-	if (memory_map_location.where) {
-		klogf("Found %#zx bytes at %p.", memory_map_location.len_needed, memory_map_location.where);
+	/* See above hack alert for we we don't use (!found_space) */
+	if (memory_map_location.where != IN_USE_LOCATION) {
+		klogf("Found %#zx bytes at %p.", memory_map_location.len_needed, memory_map_location.where.unsafe_raw_get());
 	}
 	else {
 		kcritical("Unable to find a location for bootstrapping the PMM! Aborting.");
@@ -173,7 +180,7 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 
 	size_t num_unavailable_regions=0;
 	bootloader_mem_region *unavailable_regions=nullptr;
-	map_results mapping = map_range(memory_map_location.where, memory_map_location.len_needed, reinterpret_cast<void**>(&unavailable_regions), 0);
+	map_results mapping = map_range(memory_map_location.where.unsafe_raw_get(), memory_map_location.len_needed, reinterpret_cast<void**>(&unavailable_regions), 0);
 	if (mapping != map_success) {
 		kcritical("Unable to map memory to start the PMM! Aborting!");
 		std::abort();
@@ -182,7 +189,7 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 	/* Reusing the same variable for the same loop */
 	reserved_mem=reinterpret_cast<fdt_reserve_entry*>(devicetree_header+devicetree_header->off_mem_rsvmap/sizeof(*devicetree_header));
 	while (reserved_mem->address!=0 || reserved_mem->size!=0) {
-		unavailable_regions[num_unavailable_regions].addr=reinterpret_cast<void*>(static_cast<uintptr_t>(reserved_mem->address));
+		unavailable_regions[num_unavailable_regions].addr=reserved_mem->address;
 		if (reserved_mem->size > SIZE_MAX) {
 			std::abort();
 		}
@@ -190,14 +197,21 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 		++num_unavailable_regions;
 		++reserved_mem;
 	}
-	unavailable_regions[num_unavailable_regions].addr=const_cast<char*>(&phys_kernel_start);
+	unavailable_regions[num_unavailable_regions].addr=phys_ptr_kernel_start;
 	/* Since phys_kernel_start and phys_kernel_end are setup in the linker file,
 	 * parsing the c++ code makes them look unrelated */
 	/* cppcheck-suppress comparePointers */
-	unavailable_regions[num_unavailable_regions].len=static_cast<size_t>(&phys_kernel_end-&phys_kernel_start);
+	unavailable_regions[num_unavailable_regions].len=(phys_ptr_kernel_end-phys_ptr_kernel_start.as_int()).as_int();
 	++num_unavailable_regions;
-	unavailable_regions[num_unavailable_regions].addr=(phys_devicetree_header);
+	unavailable_regions[num_unavailable_regions].addr=phys_devicetree_header;
 	unavailable_regions[num_unavailable_regions].len=devicetree->totalsize;
+	++num_unavailable_regions;
+	//FIXME: putting this region here means it never gets freed.
+	// How can we make sure it isn't overwritten until start_phys_mem_manager
+	// doesn't need it, but is freed after?
+	// Remember to decrease sorted_length afterwards.
+	unavailable_regions[num_unavailable_regions].addr=memory_map_location.where;
+	unavailable_regions[num_unavailable_regions].len=memory_map_location.len_needed;
 	++num_unavailable_regions;
 
 	struct available_memory_status {
@@ -206,10 +220,10 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 	};
 	auto add_available_memory_region = [](fdt_struct_entry *entry, devicetree_cell_size sizes[[maybe_unused]], char *strings, void *state) {
 		available_memory_status *memory_map_state=reinterpret_cast<available_memory_status*>(state);
-		void *addr=reinterpret_cast<void*>(static_cast<uintptr_t>(entry->prop.value[0]));
+		PhysAddr<void> addr=PhysAddr<void>(entry->prop.value[0]);
 		size_t len=entry->prop.value[1];
 		if (strcmp("reg", strings+entry->prop.nameoff)==0) {
-			klogf("Memory at %p for %#zx bytes.", addr, len);
+			klogf("Memory at %p for %#zx bytes.", addr.unsafe_raw_get(), len);
 			memory_map_state->start_of_available[memory_map_state->num_regions].addr=addr;
 			memory_map_state->start_of_available[memory_map_state->num_regions].len=len;
 			++memory_map_state->num_regions;
