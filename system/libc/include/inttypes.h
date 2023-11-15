@@ -26,7 +26,7 @@
 #elif defined(__i386__) && defined(__GNUC__) /* Oddly enough, for gcc on i386, int and long 32-bits, but it will only take an int. */
 #define PRIPTR PRI32
 #else
-#error Can't find correct size for a pointer
+#error "Can't find correct size for a pointer"
 #endif
 
 #define PRId8 PRI8 PRId
