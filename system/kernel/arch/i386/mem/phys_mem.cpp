@@ -43,6 +43,10 @@ int bootstrap_phys_mem_manager(PhysAddr<multiboot_info_t> phys_mbp){
 	size_t mbmp_len=mbp.mmap_length;
 	multiboot_memory_map_t *mbmp;
 	map_results mbmp_mapping=map_range(reinterpret_cast<multiboot_memory_map_t*>(mbp.mmap_addr), mbmp_len, reinterpret_cast<void**>(&mbmp), 0);
+	if (mbmp_mapping != map_success) {
+		kCriticalNoAlloc() << "Unable to map multiboot memory map: PMM cannot continue!";
+		std::abort();
+	}
 	assert(mbmp_mapping==map_success);
 
 	klog("Starting bootstrap_phys_mem_manager.");
