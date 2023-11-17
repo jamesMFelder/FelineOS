@@ -24,6 +24,9 @@ struct KGeneralAllocator {
 				std::abort();
 			}
 		}
+		else {
+			std::abort();
+		}
 	}
 	void deallocate(T* ptr, std::size_t n[[maybe_unused]]) {
 		free(ptr);
