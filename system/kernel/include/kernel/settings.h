@@ -42,7 +42,6 @@ namespace Settings {
 	}
 
 #define SETTINGS_LIST(_S) \
-	_S(unsigned long long, false, PMM, totalMem) \
 	_S(KStringView, false, Misc, commandline) \
 	_S(Settings::Logging::output_func, true, Logging, critical) \
 	_S(Settings::Logging::output_func, true, Logging, error) \

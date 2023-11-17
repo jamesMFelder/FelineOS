@@ -37,9 +37,6 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 	if (Settings::Misc::commandline) {
 		klogf("Commandline: %s", Settings::Misc::commandline.get().data());
 	}
-	if (Settings::PMM::totalMem) {
-		klogf("Total memory: %#llx", Settings::PMM::totalMem.get());
-	}
 
 #ifdef __i386__
 	if(cpuid_supported()){
@@ -95,7 +92,6 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 	kDbgNoAlloc("kernel/") << "result of write(0, '', 0): " << dec(write(0, "", 0));
 	kDbgNoAlloc("kernel/") << "result of close(0): " << dec(close(0));
 	kLog("kernel/") << "Testing new logging in function at " << reinterpret_cast<void*>(&kernel_main);
-	kLog("kernel/") << "Maximum memory = " << hex(Settings::PMM::totalMem.get());
 	kLog("kernel/") << "Debugged string: " << strDebug("\033[32mHello\tworld\0!\033[0m\r\n"_kstr);
 	kCritical("kernel/") << "Nothing to do... Pausing now."; /* boot.S should hang if we return */
 	return;
