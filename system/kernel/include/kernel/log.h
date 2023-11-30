@@ -72,14 +72,22 @@ SIGNED_CONV(bin);
 
 #undef SIGNED_CONV
 
+/* Make it easy to take an rvalue and lvalue with one definition.
+ * It just calls the lvalue version. */
+#define RVALUE_OVERLOAD(type) inline kout& operator<<(kout &&out, type ptr) { return out << ptr; }
+
 /* Various helper functions for formatting to a kout */
 inline kout& operator<<(kout &out, char const * str) {
 	return out << KStringView(str, strlen(str));
 }
+RVALUE_OVERLOAD(char const*)
 
 inline kout& operator<<(kout &out, void* ptr) {
 	return out << hex(reinterpret_cast<uintptr_t>(ptr));
 }
+RVALUE_OVERLOAD(void*)
+
+#undef RVALUE_OVERLOAD
 
 KString strDebug(KStringView);
 
