@@ -4,6 +4,8 @@
 #include <kernel/arch.h>
 #include <kernel/interrupts.h>
 #include <kernel/paging.h>
+#include <kernel/devicetree.h>
+#include <kernel/phys_addr.h>
 #include "mem/mem.h"
 #include <cstring>
 #include <kernel/misc.h>
@@ -32,7 +34,8 @@ If you write a real serial port driver using interrupts, note that you won't
 be able to log anything until the IDT is setup (attempts will triple-fault)
 Also note that the interrupts actually log stuff, so watch out!
 After this we should be good to go! */
-int early_boot_setup(PhysAddr<fdt_header> devicetree){
+int early_boot_setup(uintptr_t devicetree_header_addr){
+	PhysAddr<fdt_header> devicetree(devicetree_header_addr);
 	init_serial(); /* We can't do any logging before this gets setup */
 	Settings::Logging::critical.initialize(write_serial);
 	Settings::Logging::error.initialize(write_serial);
