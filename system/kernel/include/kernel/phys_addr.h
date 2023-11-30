@@ -35,6 +35,13 @@ class PhysAddr {
 		PhysAddr(PhysAddr<U> const &other)
 		: ptr(static_cast<void*>(other.unsafe_raw_get())) {};
 
+		/* Copy constructor and operator */
+		PhysAddr(PhysAddr const &other) : ptr(other.unsafe_raw_get()) {};
+		PhysAddr& operator=(PhysAddr const &other) {
+			ptr = other.unsafe_raw_get();
+			return *this;
+		};
+
 		/* Only use this for printing warnings or when mapping it.
 		 * Do not read or write from it! */
 		T * unsafe_raw_get() const {
@@ -53,7 +60,7 @@ class PhysAddr {
 			 * if it is void, convert ptr to a uintptr _before_ adding with num, and then convert to PhysAddr
 			 * otherwise, add them (get implicit *sizeof(T)), converting to uintptr_t _afterwards_
 			 * This also applies for operator- */
-			if (std::is_same_v<T, void>) {
+			if constexpr (std::is_same_v<T, void>) {
 				return PhysAddr(reinterpret_cast<uintptr_t>(ptr)+num);
 			}
 			else {
@@ -61,7 +68,7 @@ class PhysAddr {
 			}
 		}
 		PhysAddr operator-(uintmax_t num) const {
-			if (std::is_same_v<T, void>) {
+			if constexpr (std::is_same_v<T, void>) {
 				return PhysAddr(reinterpret_cast<uintptr_t>(ptr)-num);
 			}
 			else {
