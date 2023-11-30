@@ -23,39 +23,39 @@ class KVector {
 		using iterator = T*;
 		using const_iterator = T const *;
 
-		KVector() : items(nullptr), num_items(0), capacity(0), a() {}
-		KVector(pointer items, size_t size) : items(items), num_items(size), capacity(size), a() {}
+		constexpr KVector() : items(nullptr), num_items(0), capacity(0), a() {}
+		constexpr KVector(pointer items, size_t size) : items(items), num_items(size), capacity(size), a() {}
 
-		reference get(size_t index) {
+		constexpr reference get(size_t index) {
 			check_index(index, num_items);
 			return items[index];
 		};
-		const_reference get(size_t index) const {
-			check_index(index, num_items);
-			return items[index];
-		};
-
-		reference operator[](size_t index) {
-			check_index(index, num_items);
-			return items[index];
-		};
-		T const& operator[](size_t index) const {
+		constexpr const_reference get(size_t index) const {
 			check_index(index, num_items);
 			return items[index];
 		};
 
-		bool set(reference item, size_t index) {
+		constexpr reference operator[](size_t index) {
+			check_index(index, num_items);
+			return items[index];
+		};
+		constexpr T const& operator[](size_t index) const {
+			check_index(index, num_items);
+			return items[index];
+		};
+
+		constexpr void set(reference item, size_t index) {
 			check_index(index, num_items);
 			items[index] = item;
 		};
 
-		size_t size() const {
+		constexpr size_t size() const {
 			return num_items;
 		}
-		pointer data() {
+		constexpr pointer data() {
 			return items;
 		}
-		const_pointer data() const {
+		constexpr const_pointer data() const {
 			return items;
 		}
 
@@ -71,7 +71,7 @@ class KVector {
 		}
 
 		void append(value_type item) {
-			return append(KVector(&item, 1));
+			append(KVector(&item, 1));
 		}
 		void append(value_type item, size_t count) {
 			if (capacity < (num_items+count) || !items) {
@@ -124,7 +124,7 @@ class KVector {
 			return append(other);
 		}
 
-		iterator erase(iterator pos) {
+		constexpr iterator erase(iterator pos) {
 			if (pos == end(*this)) {
 				return pos;
 			}
@@ -132,7 +132,7 @@ class KVector {
 			--num_items;
 			return pos;
 		}
-		iterator erase(iterator first, iterator last) {
+		constexpr iterator erase(iterator first, iterator last) {
 			if (first == last) {
 				return last;
 			}
