@@ -33,7 +33,7 @@ class UserPtr {
 
 		/* Only use this for printing warnings!
 		 * Do not read or write from it! */
-		T * const unsafe_raw_get() {
+		T * unsafe_raw_get() {
 			return ptr;
 		}
 

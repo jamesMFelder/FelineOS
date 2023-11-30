@@ -37,7 +37,7 @@ class PhysAddr {
 
 		/* Only use this for printing warnings or when mapping it.
 		 * Do not read or write from it! */
-		T * const unsafe_raw_get() const {
+		T * unsafe_raw_get() const {
 			return ptr;
 		}
 
