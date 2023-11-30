@@ -16,19 +16,31 @@ concept container = requires(T c) {
 };
 
 template <typename T>
-concept needs_begin_end = requires(T container) {
-	!container.begin() && !container.end();
+concept has_begin_end = requires(T container) {
+	container.begin() && container.end();
 };
 
 template <container T>
-requires requires {needs_begin_end<T>;}
-T::iterator begin(T c) {
+requires has_begin_end<T>
+T::iterator begin(T& c) {
+	return c.begin();
+}
+
+template <container T>
+requires has_begin_end<T>
+T::iterator end(T& c) {
+	return c.end();
+}
+
+template <container T>
+requires (!has_begin_end<T>)
+T::iterator begin(T& c) {
 	return c.data();
 }
 
 template <container T>
-requires requires {needs_begin_end<T>;}
-T::iterator end(T c) {
+requires (!has_begin_end<T>)
+T::iterator end(T& c) {
 	return c.data() + c.size();
 }
 
