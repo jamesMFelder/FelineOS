@@ -370,6 +370,9 @@ int setup_paging(){
 	}
 	modifying_page_tables.release_lock();
 	/* Map the kernel and serial port */
+	/* Since phys_kernel_start and phys_kernel_end are setup in the linker file,
+	 * parsing the c++ code makes them look unrelated */
+	/* cppcheck-suppress comparePointers */
 	map_results kernel_mapping = map_range(&phys_kernel_start, static_cast<uintptr_t>(&phys_kernel_end-&phys_kernel_start), &kernel_start, 0);
 	if (kernel_mapping != map_success) {
 		kcriticalf("Unable to map kernel! Error %d.", kernel_mapping);

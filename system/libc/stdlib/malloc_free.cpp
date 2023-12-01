@@ -63,6 +63,8 @@ static void split_header(Header* &current_header, size_t split) {
 #else // __is_libk
 	static_assert(false, "Memory-allocation syscall not setup yet!");
 #endif // __is_libk (else)
+	/* If we get here, hdr was initialized in the call to get_mem */
+	/* cppcheck-suppress legacyUninitvar */
     hdr->next = nullptr;
     hdr->prev = nullptr;
     hdr->len = DEFAULT_MEMRESERVE_SIZE-sizeof(Header);
