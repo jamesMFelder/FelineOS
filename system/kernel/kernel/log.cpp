@@ -8,32 +8,36 @@
 #include <kernel/settings.h>
 #include <cstdarg>
 
-kout::kout(log_level level, KStringView module, std::source_location loc, bool alloc) :
+static constexpr inline KStringView relative_path(std::source_location loc) {
+	return &loc.file_name()[LOG_PATH_PREFIX_TRUNCATE_LEN];
+}
+
+kout::kout(log_level level, std::source_location loc, bool alloc) :
 	alloc(alloc)
 {
 	switch (level) {
 		case critical:
 			func = Settings::Logging::critical.get();
-			add_part("FelineOS Critical ");
+			add_part("FOS Critical ");
 			break;
 		case error:
 			func = Settings::Logging::error.get();
-			add_part("FelineOS Error ");
+			add_part("FOS Error ");
 			break;
 		case warning:
 			func = Settings::Logging::warning.get();
-			add_part("FelineOS Warning ");
+			add_part("FOS Warning ");
 			break;
 		case log:
 			func = Settings::Logging::log.get();
-			add_part("FelineOS Log ");
+			add_part("FOS Log ");
 			break;
 		case debug:
 			func = Settings::Logging::debug.get();
-			add_part("FelineOS Debug ");
+			add_part("FOS Debug ");
 			break;
 	}
-	*this << module << loc.file_name() << ':';
+	*this << relative_path(loc) << ':';
 
 	if (alloc) {
 		*this << dec(loc.line()) << ':' << dec(loc.column()) << '(' << loc.function_name() << "): ";

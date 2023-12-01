@@ -6,6 +6,9 @@ enable_language(ASM)
 
 set(CMAKE_CXX_STANDARD 23)
 
+SET(LOG_PATH_PREFIX_TRUNCATE_LEN 0 CACHE STRING "How many characters from the full path should be truncated in log messages")
+add_definitions(-DLOG_PATH_PREFIX_TRUNCATE_LEN=${LOG_PATH_PREFIX_TRUNCATE_LEN})
+
 # Each subdirectory's CMakeLists.txt must set ${MODULE_OBJS} to be every object
 # file that needs to be linked (use PARENT_SCOPE with the set() function)
 # The ${CMAKE_SYSTEM_PROCESSOR} variable can be used to switch between i686 and arm

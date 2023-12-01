@@ -30,7 +30,7 @@ enum log_level {
  * Not generally used, just a base for wrapper functions */
 class kout {
 	public:
-		kout(log_level, KStringView module, std::source_location loc=std::source_location::current(), bool alloc=true);
+		kout(log_level, std::source_location loc=std::source_location::current(), bool alloc=true);
 		~kout();
 
 		//output items
@@ -96,8 +96,8 @@ KString strDebug(KStringView);
  * stuff, but it's a lot to type out for every variation.
  * Don't call this macro directly! */
 #define GEN_LOG_INLINE(name, level, alloc) \
-	inline kout name(KStringView module, std::source_location location=std::source_location::current()) { \
-		return kout(log_level::level, module, location, alloc); \
+	inline kout name(std::source_location location=std::source_location::current()) { \
+		return kout(log_level::level, location, alloc); \
 	}
 
 /* Basic wrappers over creating a kout object */

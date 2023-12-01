@@ -9,7 +9,7 @@
 	auto unchecked_args = static_cast<UserPtr<__syscall_ ## syscall ## _args>>(sc_args); \
 	auto unchecked_result = static_cast<UserPtr<__syscall_ ## syscall ## _result>>(sc_result); \
 	if (!unchecked_args || !unchecked_result) { \
-		kWarning("kernel/") << "Unsafe pointer to syscall arguments (" << unchecked_args.unsafe_raw_get() << ") or result (" << unchecked_result.unsafe_raw_get() << ")!"; \
+		kWarning() << "Unsafe pointer to syscall arguments (" << unchecked_args.unsafe_raw_get() << ") or result (" << unchecked_result.unsafe_raw_get() << ")!"; \
 		std::abort(); \
 	} \
 	auto args[[maybe_unused]] = unchecked_args.get(); \
@@ -59,7 +59,7 @@ C_LINKAGE bool syscall_handler(syscall_number which, UserPtr<__syscall_noop_args
 			break;
 	}
 	if (!real_func) {
-		kWarning("kernel/") << "Invalid syscall " << dec(which) << " called. Returning false.";
+		kWarning() << "Invalid syscall " << dec(which) << " called. returning false.";
 		return false;
 	}
 	real_func(args, result);

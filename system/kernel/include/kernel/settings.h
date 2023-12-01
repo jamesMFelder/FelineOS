@@ -13,7 +13,7 @@ class Setting {
 		explicit Setting(T &&value) : value(value), initialized(true) {}
 		void initialize(T const &value) {
 			if (initialized) {
-				kCriticalNoAlloc("kernel/") << "Setting already initialized!";
+				kCriticalNoAlloc() << "Setting already initialized!";
 				std::abort();
 			}
 			this->value = value;
@@ -24,7 +24,7 @@ class Setting {
 				return value;
 			}
 			else {
-				kCriticalNoAlloc("kernel/") << "Attempt to get value for uninitialized setting!";
+				kCriticalNoAlloc() << "Attempt to get value for uninitialized setting!";
 				std::abort();
 			}
 		}
