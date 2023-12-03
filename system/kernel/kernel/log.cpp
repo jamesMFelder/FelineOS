@@ -120,30 +120,22 @@ kout& kout::operator<<(char c) {
 
 KString hex(uintmax_t n) {
 	KString str;
-	str.append('\0', 11);
-	str[0]='0';
-	str[1]='x';
-	xtostr(n, str.data()+2);
-	str.erase(end(str)-1, end(str));
+	str.append('0');
+	str.append('x');
+	str.append(xtostr(n));
 	return str;
 }
 
 KString bin(uintmax_t n) {
 	KString str;
-	str.append('\0', 11);
-	str[0]='0';
-	str[1]='b';
-	btostr(n, str.data()+2);
-	str.erase(end(str)-1, end(str));
+	str.append('0');
+	str.append('b');
+	str.append(btostr(n));
 	return str;
 }
 
 KString dec(uintmax_t n) {
-	KString str;
-	str.append('\0', 9);
-	ntostr(n, str.data(), 10);
-	str.erase(end(str)-1, end(str));
-	return str;
+	return ntostr(n, 10);
 }
 
 KString strDebug(KStringView str) {

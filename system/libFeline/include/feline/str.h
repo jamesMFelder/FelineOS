@@ -5,6 +5,41 @@
 #define _FELINE_STR_H 1
 
 #include <feline/cpp_only.h>
+#include <feline/kstring.h>
+
+KString ntostr(unsigned long long const num, unsigned const base);
+
+template<class T>
+KString xtostr(const T num, bool const upper=true) {
+	/* Do the conversion */
+	KString str=ntostr(num, 16);
+	/* Difference from the character after '9' to the first letter */
+	char toLetter=upper?'A'-('9'+1):'a'-('9'+1);
+	/* Loop through */
+	for (auto &c : str) {
+		/* If it isn't 0-9 */
+		if(c>'9'){
+			/* Shift it to A-F or a-f */
+			c+=toLetter;
+		}
+	}
+	return str;
+}
+
+template<class T>
+KString itostr(const T num) {
+	return ntostr(num, 10);
+}
+
+template<class T>
+KString otostr(const T num) {
+	return ntostr(num, 8);
+}
+
+template<class T>
+KString btostr(const T num) {
+	return ntostr(num, 2);
+}
 
 int ntostr(unsigned long long const num, char str[9], unsigned const base);
 

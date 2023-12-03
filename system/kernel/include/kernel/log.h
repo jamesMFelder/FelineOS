@@ -52,6 +52,12 @@ KString hex(uintmax_t);
 KString bin(uintmax_t);
 KString dec(uintmax_t);
 
+/* There is an operator<<(kout&, void*),
+ * but it can be verbose with non-void pointers (especially char*) */
+inline KString ptr(void const *ptr) {
+	return hex(reinterpret_cast<uintptr_t>(ptr));
+}
+
 /* A macro for generating templates for formatting signed numbers
  * This works because it prints the minus sign before calling to the
  * unsigned version */
