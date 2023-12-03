@@ -73,19 +73,21 @@ add_dependencies(FelineOS.kernel linkerscript crts)
 target_link_options(FelineOS.kernel PRIVATE -T ${ARCHDIR}/linker.ld)
 
 if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686")
+	# Setup files before creating the iso
+	add_custom_target(isodir_FelineOS.kernel
+		COMMAND ${CMAKE_COMMAND} -E copy
+		${CMAKE_CURRENT_BINARY_DIR}/FelineOS.kernel
+		${CMAKE_CURRENT_BINARY_DIR}/isodir/boot/FelineOS.kernel
+		DEPENDS FelineOS.kernel)
+	add_custom_target(grub.cfg
+		COMMAND ${CMAKE_COMMAND} -E copy
+		${CMAKE_CURRENT_SOURCE_DIR}/grub.cfg
+		${CMAKE_CURRENT_BINARY_DIR}/isodir/boot/grub/grub.cfg
+		DEPENDS grub.cfg)
 	# Add a target for an iso file (not used on all targets)
 	add_custom_target(FelineOS.iso
 		COMMAND grub-mkrescue -o FelineOS.iso isodir
-		DEPENDS FelineOS.kernel)
-	# Setup files before creating the iso
-	add_custom_command(TARGET FelineOS.iso PRE_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy
-		${CMAKE_CURRENT_BINARY_DIR}/FelineOS.kernel
-		${CMAKE_CURRENT_BINARY_DIR}/isodir/boot/FelineOS.kernel)
-	add_custom_command(TARGET FelineOS.iso PRE_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy
-		${CMAKE_CURRENT_SOURCE_DIR}/grub.cfg
-		${CMAKE_CURRENT_BINARY_DIR}/isodir/boot/grub/grub.cfg)
+		DEPENDS isodir_FelineOS.kernel grub.cfg)
 	# Add targets for running and debugging the os directly from qemu or using grub
 	add_custom_target(run_qemu
 		COMMAND qemu-system-i386 -serial stdio -kernel FelineOS.kernel
