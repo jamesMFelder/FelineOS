@@ -34,14 +34,14 @@ class kout {
 		~kout();
 
 		//output items
-		kout& operator<<(KString str);
-		kout& operator<<(KStringView str);
+		kout& operator<<(KString const str);
+		kout& operator<<(KStringView const str);
 		kout& operator<<(char c);
 
 	private:
 		KVector<KStringView, KGeneralAllocator<KStringView>> strings;
 		KVector<KString, KGeneralAllocator<KString>> lifetime_extender;
-		void add_part(KStringView str);
+		void add_part(KStringView const str);
 		void do_write();
 		void (*func)(const char*, size_t);
 		bool alloc;

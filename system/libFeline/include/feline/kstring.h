@@ -24,7 +24,7 @@ class KStringView {
 		constexpr KStringView() : characters(nullptr), len(0) {}
 		constexpr KStringView(char const *characters, size_t len) : characters(characters), len(len) {}
 		constexpr KStringView(char const *characters) : characters(characters), len(strlen(characters)) {}
-		constexpr KStringView(KStringView &other) { *this = other; }
+		constexpr KStringView(KStringView const &other) { *this = other; }
 		constexpr KStringView &operator=(KStringView const &other) {characters = other.data(); len = other.length(); return *this; }
 
 		constexpr const_reference get(size_t index) const {

@@ -62,7 +62,7 @@ kout::~kout() {
 	}
 }
 
-void kout::add_part(KStringView str) {
+void kout::add_part(KStringView const str) {
 	//if we aren't allocating, write it out immediately (breaks atomic writes)
 	//otherwise, save it for later
 	if (alloc) {
@@ -92,7 +92,7 @@ void kout::do_write() {
 	return;
 }
 
-kout& kout::operator<<(KStringView str) {
+kout& kout::operator<<(KStringView const str) {
 	add_part(str);
 	return *this;
 }
