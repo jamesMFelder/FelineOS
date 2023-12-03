@@ -73,16 +73,20 @@ add_dependencies(FelineOS.kernel linkerscript crts)
 target_link_options(FelineOS.kernel PRIVATE -T ${ARCHDIR}/linker.ld)
 
 if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686")
-	add_custom_command(TARGET FelineOS.kernel POST_BUILD
+	# Add a target for an iso file (not used on all targets)
+	add_custom_target(FelineOS.iso
+		COMMAND grub-mkrescue -o FelineOS.iso isodir
+		DEPENDS FelineOS.kernel)
+	# Setup files before creating the iso
+	add_custom_command(TARGET FelineOS.iso PRE_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy
 		${CMAKE_CURRENT_BINARY_DIR}/FelineOS.kernel
 		${CMAKE_CURRENT_BINARY_DIR}/isodir/boot/FelineOS.kernel)
-	add_custom_command(TARGET FelineOS.kernel POST_BUILD
+	add_custom_command(TARGET FelineOS.iso PRE_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy
 		${CMAKE_CURRENT_SOURCE_DIR}/grub.cfg
 		${CMAKE_CURRENT_BINARY_DIR}/isodir/boot/grub/grub.cfg)
-	add_custom_command(TARGET FelineOS.kernel POST_BUILD
-		COMMAND grub-mkrescue -o FelineOS.iso isodir)
+	# Add targets for running and debugging the os directly from qemu or using grub
 	add_custom_target(run_qemu
 		COMMAND qemu-system-i386 -serial stdio -kernel FelineOS.kernel
 		DEPENDS FelineOS.kernel)
@@ -91,14 +95,16 @@ if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686")
 		DEPENDS FelineOS.kernel)
 	add_custom_target(run_grub
 		COMMAND qemu-system-i386 -serial stdio -cdrom FelineOS.iso -boot d
-		DEPENDS FelineOS.kernel)
+		DEPENDS FelineOS.iso)
 	add_custom_target(debug_grub
 		COMMAND qemu-system-i386 -serial stdio -cdrom FelineOS.iso -boot d -S -s
-		DEPENDS FelineOS.kernel)
+		DEPENDS FelineOS.iso)
 elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm")
+	# Add a target for creating a raw binary file (not used on all targets)
 	add_custom_target(kernel.bin
 		COMMAND arm-none-eabi-objcopy -O binary FelineOS.kernel kernel.bin
 		DEPENDS FelineOS.kernel)
+	# Add targets for running and debugging the os directly from qemu
 	add_custom_target(run_qemu
 		COMMAND qemu-system-arm -M raspi1ap -serial stdio -dtb ../../bcm2708-rpi-b.dtb -device loader,file=kernel.bin,addr=0x8000,cpu-num=0
 		DEPENDS kernel.bin)
