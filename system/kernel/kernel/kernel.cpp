@@ -31,19 +31,19 @@ void kernel_main(){
 	boot_setup();
 
 	if (Settings::Misc::commandline) {
-		klogf("Commandline: %s", Settings::Misc::commandline.get().data());
+		kLog() << "Commandline: " << strDebug(Settings::Misc::commandline.get().data());
 	}
 
 #ifdef __i386__
 	if(cpuid_supported()){
 		unsigned char vendor[13];
 		cpuid_vendor(vendor);
-		printf("Your cpu is %s.\n", vendor);
+		kLog() << "Your cpu is " << vendor;
 	}
 #endif
 
-	printf("Kernel starts at %p\n", static_cast<const void *>(&kernel_start));
-	printf("Kernel ends at %p\n", static_cast<const void *>(&kernel_end));
+	kLog() << "Kernel starts at " << ptr(&kernel_start);
+	kLog() << "Kernel ends at " << ptr(&kernel_end);
 
 	extern framebuffer fb; /* the framebuffer is setup */
 	/* Fill each corner with a color */
