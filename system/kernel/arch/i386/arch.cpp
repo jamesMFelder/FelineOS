@@ -27,24 +27,12 @@ void write_to_term(char const *str, size_t len) {
 }
 
 static void screen_init(multiboot_info_t mbp){
-	klogf("Framebuffer at %p.", reinterpret_cast<void*>(mbp.framebuffer_addr));
-	klogf("Frame buffer pitch (in bytes): %u.", mbp.framebuffer_pitch);
-	klogf("It is %ux%u (in pixels).", mbp.framebuffer_width, mbp.framebuffer_height);
-	klogf("With %" PRIu8 " bits per pixel.", mbp.framebuffer_bpp);
 	switch(mbp.framebuffer_type){
 		case MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED:
-			klogf("Framebuffer type: %s.", "indexed");
-			klogf("Palette at %p with %d colors.", reinterpret_cast<void*>(mbp.fb_palette.framebuffer_palette_addr), mbp.fb_palette.framebuffer_palette_num_colors);
 			break;
 		case MULTIBOOT_FRAMEBUFFER_TYPE_RGB:
-			klogf("Framebuffer type: %s.", "RGB");
-			klogf("Red field position: %" PRIu8 ", mask size: %" PRIu8, mbp.fb_rgb.framebuffer_red_field_position, mbp.fb_rgb.framebuffer_red_mask_size);
-			klogf("Green field position: %" PRIu8 ", mask size: %" PRIu8, mbp.fb_rgb.framebuffer_green_field_position, mbp.fb_rgb.framebuffer_green_mask_size);
-			klogf("Blue field position: %" PRIu8 ", mask size: %" PRIu8, mbp.fb_rgb.framebuffer_blue_field_position, mbp.fb_rgb.framebuffer_blue_mask_size);
 			break;
 		case MULTIBOOT_FRAMEBUFFER_TYPE_EGA_TEXT:
-			klogf("Framebuffer type: %s.", "EGA text");
-			klogf("Not a framebuffer, not initializing!");
 			vga_is_text = true;
 			map_range(reinterpret_cast<void*>(0xb8000), 160*25, reinterpret_cast<void*>(0xb8000), 0);
 			return;

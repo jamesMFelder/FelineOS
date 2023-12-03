@@ -107,38 +107,27 @@ static PhysAddr<void> find_space_in_area (PhysAddr<void> location, PhysAddr<void
 /* Call after paging is active */
 int bootstrap_phys_mem_manager(fdt_header *devicetree){
 
-	klog("Starting bootstrap_phys_mem_manager.");
 	devicetree_header = devicetree;
 	phys_ptr_kernel_start = reinterpret_cast<uintptr_t>(&phys_kernel_start);
 	phys_ptr_kernel_end = reinterpret_cast<uintptr_t>(&phys_kernel_end);
-
-	/* Print debugging information */
-	klogf("Kernel starts at %p", static_cast<void const *>(&kernel_start));
-	klogf("Kernel ends at %p", static_cast<void const *>(&kernel_end));
 
 	/* Find the number of entries */
 	fdt_reserve_entry *reserved_mem=reinterpret_cast<fdt_reserve_entry*>(devicetree+devicetree->off_mem_rsvmap/sizeof(*devicetree));
 	size_t num_reserved_entries=0;
 	while (reserved_mem->address!=0 || reserved_mem->size!=0) {
-		klogf("Reserved memory at %#" PRIx64 " for %#" PRIx64 " bytes.", static_cast<uint64_t>(reserved_mem->address), static_cast<uint64_t>(reserved_mem->size));
 		++num_reserved_entries;
 		++reserved_mem;
 	}
-	klogf("%zu entries found.", num_reserved_entries);
 	size_t num_available_entries=0;
 	auto print_available_memory = [](fdt_struct_entry *entry, devicetree_cell_size sizes[[maybe_unused]], char *strings, void *state){
 		if (strcmp("reg", strings+entry->prop.nameoff)==0) {
-			klogf("Available memory at %#" PRIx32 " for %#" PRIx32 " bytes.", static_cast<uint32_t>(entry->prop.value[0]), static_cast<uint32_t>(entry->prop.value[1]));
 			(*reinterpret_cast<size_t*>(state))+=1;
 		}
-		// klogf("Sizes: addresses=%#" PRIx32 ", sizes=%#" PRIx32, sizes.address_cells, sizes.size_cells);
 	};
 	for_each_prop_in_node("memory", print_available_memory, reinterpret_cast<void*>(&num_available_entries));
 	//reserved*2 for worst-case (available entry in the middle of each)
 	//+3 for kernel, devicetree and the range we are currently reserving
 	size_t sorted_length=(num_reserved_entries*2+num_available_entries+3)*sizeof(bootloader_mem_region);
-	klogf("There are %zu available memory ranges and %zu reserved memory ranges", num_available_entries, num_reserved_entries);
-	klogf("so we will need a maximum of %zu bytes of memory to sort them.", sorted_length);
 
 	/*
 	 * MASSIVE HACK ALERT!!!
@@ -159,7 +148,6 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 		PhysAddr<void> addr=PhysAddr<void>(entry->prop.value[0]);
 		size_t len=entry->prop.value[1];
 		if (strcmp("reg", strings+entry->prop.nameoff)==0) {
-			klogf("Memory at %p for %#zx bytes.", addr.unsafe_raw_get(), len);
 			if (memory_map_location->where == IN_USE_LOCATION) {
 				/* Check if we overlap any data structure that we need to preserve */
 				memory_map_location->where=find_space_in_area(addr, addr+len, memory_map_location->len_needed, alignof(bootloader_mem_region));
@@ -170,10 +158,7 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 	placement_details memory_map_location = {.len_needed=sorted_length, .where=IN_USE_LOCATION};
 	for_each_prop_in_node("memory", can_contain_memory_map, &memory_map_location);
 	/* See above hack alert for we we don't use (!found_space) */
-	if (memory_map_location.where != IN_USE_LOCATION) {
-		klogf("Found %#zx bytes at %p.", memory_map_location.len_needed, memory_map_location.where.unsafe_raw_get());
-	}
-	else {
+	if (!(memory_map_location.where != IN_USE_LOCATION)) {
 		kcritical("Unable to find a location for bootstrapping the PMM! Aborting.");
 		std::abort();
 	}
@@ -223,7 +208,6 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 		PhysAddr<void> addr=PhysAddr<void>(entry->prop.value[0]);
 		size_t len=entry->prop.value[1];
 		if (strcmp("reg", strings+entry->prop.nameoff)==0) {
-			klogf("Memory at %p for %#zx bytes.", addr.unsafe_raw_get(), len);
 			memory_map_state->start_of_available[memory_map_state->num_regions].addr=addr;
 			memory_map_state->start_of_available[memory_map_state->num_regions].len=len;
 			++memory_map_state->num_regions;
@@ -232,7 +216,6 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 	};
 	available_memory_status available_memory_state = {.start_of_available=&unavailable_regions[num_unavailable_regions], .num_regions=0};
 	for_each_prop_in_node("memory", add_available_memory_region, &available_memory_state);
-	klog("Starting physical memory manager!");
 	/* Setup the actual physical memory manager */
 	return start_phys_mem_manager(unavailable_regions, num_unavailable_regions, available_memory_state.start_of_available, available_memory_state.num_regions);
 }

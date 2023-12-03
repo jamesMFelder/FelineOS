@@ -24,8 +24,6 @@ extern const char phys_kernel_start;
 extern const char phys_kernel_end;
 extern const char kernel_start;
 extern const char kernel_end;
-const uintptr_t uint_kernel_start = reinterpret_cast<uintptr_t>(&kernel_start);
-const uintptr_t uint_kernel_end = reinterpret_cast<uintptr_t>(&kernel_end);
 const uintptr_t phys_uint_kernel_start = reinterpret_cast<uintptr_t>(&phys_kernel_start);
 const uintptr_t phys_uint_kernel_end = reinterpret_cast<uintptr_t>(&phys_kernel_end);
 
@@ -49,17 +47,9 @@ int bootstrap_phys_mem_manager(PhysAddr<multiboot_info_t> phys_mbp){
 	}
 	assert(mbmp_mapping==map_success);
 
-	klog("Starting bootstrap_phys_mem_manager.");
-
-	/* Print debugging information */
-	klogf("Kernel starts at %p", static_cast<void const *>(&kernel_start));
-	klogf("Kernel ends at %p", static_cast<void const *>(&kernel_end));
-	klogf("It is %#" PRIxPTR " bytes long.", uint_kernel_end-uint_kernel_start);
-
 	/* Find the number of entries */
 	size_t num_entries=mbmp_len/sizeof(multiboot_memory_map_t);
 	size_t sorted_length=num_entries*sizeof(bootloader_mem_region);
-	klogf("There are %zu memory ranges, so we will need a maximum of %zu bytes of memory to sort them.", num_entries, sorted_length);
 
 	/*
 	 * MASSIVE HACK ALERT!!!
@@ -117,10 +107,8 @@ int bootstrap_phys_mem_manager(PhysAddr<multiboot_info_t> phys_mbp){
 	 * Don't forget to add new variables here when adding a new memory type */
 	unavailable_memory[0].addr=found_space;
 	unavailable_memory[0].len=sorted_length;
-	klogf("Unavailable memory region: at %p\t| length: %#zx", unavailable_memory[0].addr.unsafe_raw_get(), unavailable_memory[0].len);
 	unavailable_memory[1].addr=reinterpret_cast<uintptr_t>(&phys_kernel_start);
 	unavailable_memory[1].len=phys_uint_kernel_end-phys_uint_kernel_start;
-	klogf("Unavailable memory region: at %p\t| length: %#zx", unavailable_memory[1].addr.unsafe_raw_get(), unavailable_memory[1].len);
 	size_t num_unavailable_regions=2;
 
 	/* First, copy the number of unavailable entries over */
@@ -153,7 +141,6 @@ int bootstrap_phys_mem_manager(PhysAddr<multiboot_info_t> phys_mbp){
 								(unavailable_memory[memory_region_index].addr+unavailable_memory[memory_region_index].len).as_int()
 								)-unavailable_memory[memory_region_index].addr.as_int());
 						merged=true;
-						klogf("merged regions");
 						break;
 					}
 				}
@@ -181,7 +168,6 @@ int bootstrap_phys_mem_manager(PhysAddr<multiboot_info_t> phys_mbp){
 			else {
 				kwarnf("Ignoring memory region starting at %#llx.", current_multiboot_memory->addr);
 			}
-			klogf("Unavailable memory region: at %p\t| length: %#zx", new_memory->addr.unsafe_raw_get(), new_memory->len);
 			++new_memory;
 		}
 
@@ -227,7 +213,6 @@ int bootstrap_phys_mem_manager(PhysAddr<multiboot_info_t> phys_mbp){
 				new_memory->addr=current_multiboot_memory->addr;
 				new_memory->len=static_cast<size_t>(current_multiboot_memory->len);
 				++num_available_regions;
-				klogf("Available memory region: at %p\t| length: %#zx", new_memory->addr.unsafe_raw_get(), new_memory->len);
 				new_memory++;
 			}
 		}

@@ -31,9 +31,6 @@ ASM void kernel_main(multiboot_info_t *mbp, unsigned int magic);
 void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[maybe_unused]]){
 	boot_setup();
 
-	/* Announce that we are loaded */
-	klog("Hello kernel world!");
-
 	if (Settings::Misc::commandline) {
 		klogf("Commandline: %s", Settings::Misc::commandline.get().data());
 	}
@@ -48,27 +45,6 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 
 	printf("Kernel starts at %p\n", static_cast<const void *>(&kernel_start));
 	printf("Kernel ends at %p\n", static_cast<const void *>(&kernel_end));
-
-	printf("Testing memory allocation.\n");
-	void *old_mem_ptr, *mem_ptr;
-	mem_results mem;
-	mem=get_mem(&old_mem_ptr, 1);
-	if(mem!=mem_success){kcriticalf("Getting memory returned %u.", mem); std::abort();}
-	printf("Getting mem area returns %d.\n", mem);
-	printf("Got a page at %p.\n", old_mem_ptr);
-	mem=free_mem(old_mem_ptr, 1);
-	if(mem!=mem_success){kcriticalf("Getting memory returned %d.", mem); std::abort();}
-	printf("Freeing an allocated area returns %d.\n", mem);
-	mem=get_mem(&mem_ptr, 1);
-	if(mem!=mem_success){kcriticalf("Getting memory returned %d.", mem); std::abort();}
-	printf("Getting mem area returns %d.\n", mem);
-	printf("Got another page at %p.\n", mem_ptr);
-	if(mem_ptr==old_mem_ptr){
-		printf("Addresses match!\n");
-	}
-	else{
-		printf("Addresses do not match!\n");
-	}
 
 	extern framebuffer fb; /* the framebuffer is setup */
 	/* Fill each corner with a color */
@@ -86,13 +62,6 @@ void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[ma
 		fb.putRect(maxX/2, maxY/2, maxX/2-1, maxY/2-1, p); /* lower right */
 	}
 
-	//TODO: test syscalls better
-	kDbgNoAlloc() << "result of open('/', 0): " << dec(open("/", 0));
-	kDbgNoAlloc() << "result of read(0, nullptr 0): " << dec(read(0, nullptr, 0));
-	kDbgNoAlloc() << "result of write(0, '', 0): " << dec(write(0, "", 0));
-	kDbgNoAlloc() << "result of close(0): " << dec(close(0));
-	kLog() << "Testing new logging in function at " << reinterpret_cast<void*>(&kernel_main);
-	kLog() << "Debugged string: " << strDebug("\033[32mHello\tworld\0!\033[0m\r\n"_kstr);
 	kCritical() << "Nothing to do... Pausing now."; /* boot.S should hang if we return */
 	return;
 }

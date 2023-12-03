@@ -63,8 +63,6 @@ int start_phys_mem_manager(
 	size_t num_headers_needed = num_available_memory_regions+3;
 	size_t headers_needed_size = round_up_to_page(num_headers_needed*sizeof(PhysMemHeader)).getInt();
 
-	klogf("Using %zu memory regions.", num_headers_needed);
-
 	/* Is it possible to fit size_needed bytes into location..end_of_available without overlapping something important
 	 * If so, where in the area can we go; if not, nullptr */
 	auto find_space_in_area = [&unavailable_memory_regions, &num_unavailable_memory_regions](PhysAddr<void> location, PhysAddr<void> end_of_available, size_t size_needed, auto& recursive_self) -> PhysAddr<PhysMemHeaderList> {
@@ -141,22 +139,14 @@ int start_phys_mem_manager(
 		std::abort();
 	}
 
-	/* Note where we found the memory and stop searching */
-	klog("");
-	klogf("Headers start at %p.", phys_hdr_ptr.unsafe_raw_get());
-	klogf("Headers end at %p.", (phys_hdr_ptr+num_headers_needed).unsafe_raw_get());
-	klog("");
-
 	/* Map it, saving it's address to mark it reserved later. */
-	printf("Header chunk is at %p in physical memory...", phys_hdr_ptr.unsafe_raw_get());
 	map_results mapping=map_range(phys_hdr_ptr.unsafe_raw_get(),
 			headers_needed_size,
 			reinterpret_cast<void**>(&first_chunk), 0);
 	if(mapping!=map_success){
-		kcriticalf("\nUnable to map the physical memory manager (error code %d).", mapping);
+		kcriticalf("Unable to map the physical memory manager (error code %d).", mapping);
 		std::abort();
 	}
-	printf("and %p in virtual memory.\n", reinterpret_cast<void*>(first_chunk));
 	first_chunk->next = nullptr;
 	for (auto &hdr : first_chunk->headers) {
 		/* Clear each field (size=0-0 to choose integer overload instead of void* one for page constructor) */

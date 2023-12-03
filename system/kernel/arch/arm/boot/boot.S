@@ -32,10 +32,6 @@
 	translation_table_0:
 		.skip 0x20000 /* 4GiB/(1MiB*4B) = address range/(first level descriptor range*descriptor size) */
 
-.section .rodata, "a"
-	boot_msg:
-	.asciz "Running at %p.\n"
-
 .macro reset mode
 cps #\mode\()_mode
 ldr sp, =\mode\()_stack_top
@@ -150,11 +146,6 @@ paged_start:
 	/* Call the global constructors. */
 	.extern _init
 	bl _init
-
-	.extern printf
-	ldr r0, =boot_msg
-	mov r1, pc
-	bl printf
 
 	/* Transfer control to the main kernel. */
 	.extern kernel_main
