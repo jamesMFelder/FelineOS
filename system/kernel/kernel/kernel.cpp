@@ -7,7 +7,6 @@
 #include <fcntl.h>
 #include <kernel/arch.h>
 #include <kernel/log.h>
-#include <kernel/multiboot.h>
 #include <kernel/misc.h>
 #include <drivers/serial.h>
 #include <drivers/framebuffer.h>
@@ -26,9 +25,9 @@
 extern const char kernel_start;
 extern const char kernel_end;
 
-ASM void kernel_main(multiboot_info_t *mbp, unsigned int magic);
+ASM void kernel_main();
 
-void kernel_main(multiboot_info_t *mbp [[maybe_unused]], unsigned int magic [[maybe_unused]]){
+void kernel_main(){
 	boot_setup();
 
 	if (Settings::Misc::commandline) {
