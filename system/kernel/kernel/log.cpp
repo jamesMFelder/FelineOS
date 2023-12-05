@@ -170,8 +170,7 @@ KString strDebug(KStringView str) {
 						break;
 					default:
 						safe_str.append("\\x"_kstr_vec);
-						auto hex_str = hex(c);
-						safe_str.append(begin(hex_str)+8, end(hex_str));
+						safe_str.append(xtostr(c, false));
 				}
 			}
 			});
