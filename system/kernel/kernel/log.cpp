@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
 #include <cassert>
+#include <cctype>
 #include <cstdlib>
 #include <feline/shortcuts.h>
 #include <feline/str.h>
@@ -147,7 +148,7 @@ KString strDebug(KStringView str) {
 	//we will need at least this much, so reserve it in advance
 	safe_str.reserve(str.length());
 	std::for_each(begin(str), end(str), [&safe_str](auto &c){
-			if (c >= ' ' && c <= '~') {
+			if (isprint(c)) {
 				safe_str.append(c);
 			}
 			else {
