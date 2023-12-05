@@ -4,6 +4,7 @@
 #define _KERNEL_PHYS_ADDR_H
 
 #include <compare>
+#include <cstddef>
 #include <cstdint>
 #include <type_traits>
 
@@ -73,6 +74,15 @@ class PhysAddr {
 			}
 			else {
 				return PhysAddr(reinterpret_cast<uintptr_t>(ptr-num));
+			}
+		}
+
+		ptrdiff_t operator-(PhysAddr<T> const &other) const {
+			if constexpr (std::is_same_v<T, void>) {
+				return reinterpret_cast<ptrdiff_t>(ptr)-other.as_int();
+			}
+			else {
+				return reinterpret_cast<ptrdiff_t>(ptr-other.as_int());
 			}
 		}
 
