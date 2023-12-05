@@ -13,6 +13,7 @@ endif()
 set(LIBC_OBJS
 	system/libc/ctype/iscntrl.cpp
 	system/libc/ctype/isdigit.cpp
+	system/libc/ctype/isprint.cpp
 
 	system/libc/assert/assert.cpp
 
