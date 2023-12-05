@@ -8,8 +8,9 @@
 
 #include <kernel/mem.h>
 #include <kernel/devicetree.h>
+#include <kernel/phys_addr.h>
 
 /* Start the memory manager */
-int bootstrap_phys_mem_manager(fdt_header *devicetree);
+int bootstrap_phys_mem_manager(PhysAddr<fdt_header> devicetree);
 
 #endif /* _KERN_ARCH_MEM_H */

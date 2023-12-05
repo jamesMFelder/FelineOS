@@ -4,7 +4,6 @@
 #include <kernel/arch.h>
 #include <kernel/interrupts.h>
 #include <kernel/paging.h>
-#include <kernel/devicetree.h>
 #include <kernel/phys_addr.h>
 #include "mem/mem.h"
 #include <cstring>
@@ -44,7 +43,7 @@ int early_boot_setup(uintptr_t devicetree_header_addr){
 	Settings::Logging::debug.initialize(write_serial);
 	idt_init(); /* Actually display an error if we have a problem: don't just triple fault */
 	setup_paging(); /* Take control of it from the assembly! */
-	bootstrap_phys_mem_manager(init_devicetree(devicetree)); /* Get the physical memory manager working */
+	bootstrap_phys_mem_manager(devicetree); /* Get the physical memory manager working */
 	screen_init(); /* Initialize the framebuffer */
 	return 0;
 }

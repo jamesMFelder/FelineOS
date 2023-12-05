@@ -105,14 +105,15 @@ static PhysAddr<void> find_space_in_area (PhysAddr<void> location, PhysAddr<void
 /* Create a stack of pages for use */
 /* Create+fill in the bitmap */
 /* Call after paging is active */
-int bootstrap_phys_mem_manager(fdt_header *devicetree){
+int bootstrap_phys_mem_manager(PhysAddr<fdt_header> devicetree){
 
-	devicetree_header = devicetree;
+	phys_devicetree_header = devicetree;
+	devicetree_header = init_devicetree(devicetree);
 	phys_ptr_kernel_start = reinterpret_cast<uintptr_t>(&phys_kernel_start);
 	phys_ptr_kernel_end = reinterpret_cast<uintptr_t>(&phys_kernel_end);
 
 	/* Find the number of entries */
-	fdt_reserve_entry *reserved_mem=reinterpret_cast<fdt_reserve_entry*>(devicetree+devicetree->off_mem_rsvmap/sizeof(*devicetree));
+	fdt_reserve_entry *reserved_mem=reinterpret_cast<fdt_reserve_entry*>(devicetree_header+devicetree_header->off_mem_rsvmap/sizeof(fdt_header));
 	size_t num_reserved_entries=0;
 	while (reserved_mem->address!=0 || reserved_mem->size!=0) {
 		++num_reserved_entries;
@@ -189,7 +190,7 @@ int bootstrap_phys_mem_manager(fdt_header *devicetree){
 	unavailable_regions[num_unavailable_regions].len=(phys_ptr_kernel_end-phys_ptr_kernel_start.as_int()).as_int();
 	++num_unavailable_regions;
 	unavailable_regions[num_unavailable_regions].addr=phys_devicetree_header;
-	unavailable_regions[num_unavailable_regions].len=devicetree->totalsize;
+	unavailable_regions[num_unavailable_regions].len=devicetree_header->totalsize;
 	++num_unavailable_regions;
 	//FIXME: putting this region here means it never gets freed.
 	// How can we make sure it isn't overwritten until start_phys_mem_manager
