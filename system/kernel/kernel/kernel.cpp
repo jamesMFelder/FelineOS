@@ -27,11 +27,13 @@ extern const char kernel_end;
 
 ASM void kernel_main();
 
+#include <kernel/vtopmem.h>
+
 void kernel_main(){
 	boot_setup();
 
 	if (Settings::Misc::commandline) {
-		kLog() << "Commandline: " << strDebug(Settings::Misc::commandline.get().data());
+		kLog() << "Commandline: " << strDebug(Settings::Misc::commandline.get());
 	}
 
 #ifdef __i386__
