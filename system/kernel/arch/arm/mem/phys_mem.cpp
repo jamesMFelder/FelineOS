@@ -201,6 +201,8 @@ int bootstrap_phys_mem_manager(PhysAddr<fdt_header> devicetree){
 	++num_unavailable_regions;
 
 	struct available_memory_status {
+		bootloader_mem_region *unavailable_regions;
+		size_t num_unavailable_regions;
 		bootloader_mem_region *start_of_available;
 		size_t num_regions;
 	};
@@ -209,13 +211,45 @@ int bootstrap_phys_mem_manager(PhysAddr<fdt_header> devicetree){
 		PhysAddr<void> addr=PhysAddr<void>(entry->prop.value[0]);
 		size_t len=entry->prop.value[1];
 		if (strcmp("reg", strings+entry->prop.nameoff)==0) {
+			//assuming the unavailable regions don't overlap, otherwise we will ignore the second
+			for (size_t i = 0; i < memory_map_state->num_unavailable_regions; ++i) {
+				auto &curr_unavail_region = memory_map_state->unavailable_regions[i];
+				auto unavailable_end=curr_unavail_region.addr+curr_unavail_region.len;
+				bool found_overlapping_region=false;
+				// if the available region is completely covered by the unavailable one, skip adding it
+				if (curr_unavail_region.addr < addr && unavailable_end > addr+len) {
+					found_overlapping_region = true;
+				}
+				// if the unavailable region starts in the available region, add the part before it
+				if (curr_unavail_region.addr > addr && curr_unavail_region.addr < addr+len) {
+					memory_map_state->start_of_available[memory_map_state->num_regions].addr = addr;
+					memory_map_state->start_of_available[memory_map_state->num_regions].len = curr_unavail_region.addr-addr;
+					++memory_map_state->num_regions;
+					found_overlapping_region = true;
+				}
+				// if the unavailable region ends in the available region, add the part after it
+				if (unavailable_end > addr && unavailable_end < addr+len) {
+					memory_map_state->start_of_available[memory_map_state->num_regions].addr = unavailable_end;
+					memory_map_state->start_of_available[memory_map_state->num_regions].len = addr+len-unavailable_end;
+					++memory_map_state->num_regions;
+					found_overlapping_region = true;
+				}
+				// the above two cases combine to correctly add two pieces if the unavailable region is a subset of the available one
+				if (found_overlapping_region) {
+					return;
+				}
+			}
+			// no overlaps were found, add the full region
 			memory_map_state->start_of_available[memory_map_state->num_regions].addr=addr;
 			memory_map_state->start_of_available[memory_map_state->num_regions].len=len;
 			++memory_map_state->num_regions;
 		}
 		// klogf("Sizes: addresses=%#" PRIx32 ", sizes=%#" PRIx32, sizes.address_cells, sizes.size_cells);
 	};
-	available_memory_status available_memory_state = {.start_of_available=&unavailable_regions[num_unavailable_regions], .num_regions=0};
+	available_memory_status available_memory_state = {
+		.unavailable_regions=unavailable_regions, .num_unavailable_regions=num_unavailable_regions,
+		.start_of_available=&unavailable_regions[num_unavailable_regions], .num_regions=0
+	};
 	for_each_prop_in_node("memory", add_available_memory_region, &available_memory_state);
 	/* Setup the actual physical memory manager */
 	return start_phys_mem_manager(unavailable_regions, num_unavailable_regions, available_memory_state.start_of_available, available_memory_state.num_regions);
