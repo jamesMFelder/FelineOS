@@ -136,7 +136,7 @@ KString bin(uintmax_t n) {
 }
 
 KString dec(uintmax_t n) {
-	return ntostr(n, 10);
+	return itostr(n);
 }
 
 KString strDebug(KStringView str) {
