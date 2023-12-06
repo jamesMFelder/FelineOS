@@ -8,7 +8,11 @@
 KString ntostr(unsigned long long const num, unsigned const base) {
 	KString str;
 	/* Make sure we have a valid base */
-	if(base==0 || base>16){
+	if(base<2 || base>16){
+		return str;
+	}
+	if (num == 0) {
+		str.append('0');
 		return str;
 	}
 	size_t str_len = 0;
@@ -19,7 +23,7 @@ KString ntostr(unsigned long long const num, unsigned const base) {
 	/* Start with the 1s digits */
 	unsigned long long todivby=1;
 	/* Work right to left */
-	/* Do this until it is infront of the string */
+	/* Do this until it is in front of the string */
 	/* Go backwards, and shift digits each time */
 	for(size_t offset = str_len; offset > 0; --offset) {
 		/* I have no idea how this can happen */
@@ -35,7 +39,7 @@ KString ntostr(unsigned long long const num, unsigned const base) {
 /* TODO: dynamic str length */
 int ntostr(unsigned long long const num, char str[9], unsigned const base){
 	/* Make sure we have a valid base */
-	if(base==0 || base>16){
+	if(base<2 || base>16){
 		return -1;
 	}
 	/* Start with the 1s digits */
@@ -45,7 +49,7 @@ int ntostr(unsigned long long const num, char str[9], unsigned const base){
 	/* Add a null so it is a valid string */
 	*ptr='\0';
 	/* Start by decrementing ptr because it just added a null */
-	/* Do this until it is infront of the string */
+	/* Do this until it is in front of the string */
 	/* Go backwards, and shift digits each time */
 	for(ptr--;ptr>=str;ptr--,todivby*=base){
 		/* I have no idea how this can happen */
