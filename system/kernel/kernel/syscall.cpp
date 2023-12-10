@@ -62,6 +62,11 @@ C_LINKAGE bool syscall_handler(syscall_number which, UserPtr<__syscall_noop_args
 		kWarning() << "Invalid syscall " << dec(which) << " called. returning false.";
 		return false;
 	}
+	/* If the syscall would be called with (NULL, NULL), don't bother calling it,
+	 * just return that the syscall exists (this allows checking if syscalls exist). */
+	if (!args.unsafe_raw_get() && !result.unsafe_raw_get()) {
+		return true;
+	}
 	real_func(args, result);
 	return true;
 }

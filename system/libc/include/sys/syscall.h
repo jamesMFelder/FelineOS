@@ -22,7 +22,9 @@ enum syscall_number {
 };
 
 // Returns false if the syscall is not supported by the kernel (args and result are untouched)
+// Returns true if the syscall is supported. If args and result are NULL, it just does that.
 C_LINKAGE bool raw_syscall(syscall_number which, void* args, void* result);
+C_LINKAGE inline bool has_syscall(syscall_number which) { return raw_syscall(which, NULL, NULL);}
 
 typedef int fd_type;
 
