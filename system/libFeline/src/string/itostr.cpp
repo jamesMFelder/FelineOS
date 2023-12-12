@@ -16,7 +16,7 @@ KString ntostr(unsigned long long const num, unsigned const base) {
 		return str;
 	}
 	size_t str_len = 0;
-	for (unsigned long long n = 1; n < num; n *= base) {
+	for (unsigned long long n = 1; n <= num; n *= base) {
 		++str_len;
 	}
 	str.append('\0', str_len);
