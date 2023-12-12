@@ -101,6 +101,7 @@ void* malloc(size_t size) {
 	while (hdr->in_use || hdr->len < size) {
 		if (!hdr->next) {
 			hdr->next = allocate_more_mem(size);
+			hdr->next->prev = hdr;
 		}
 		hdr = hdr->next;
 	}
