@@ -1,0 +1,5 @@
+# Run git config blame.ignoreRevsFile .git-blame-ignore-revs
+# To have this automatically applied
+
+# Run clang-format on all files before using it by default in my editor
+bf544e6e5da421957ceba4e9cd09dae7ea0c00a7
