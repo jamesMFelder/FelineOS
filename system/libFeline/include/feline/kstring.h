@@ -8,7 +8,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <feline/cpp_only.h>
-#include <kernel/kstdallocator.h>
+#include <feline/kallocator.h>
 #include <feline/kvector.h>
 
 class KStringView {

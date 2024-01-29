@@ -9,7 +9,6 @@
 #include <kernel/asm_compat.h>
 #include <feline/kstring.h>
 #include <feline/kvector.h>
-#include <kernel/kstdallocator.h>
 #include <source_location>
 #include <type_traits>
 
