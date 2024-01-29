@@ -14,20 +14,33 @@ add_definitions(-DLOG_PATH_PREFIX_TRUNCATE_LEN=${LOG_PATH_PREFIX_TRUNCATE_LEN})
 # The ${CMAKE_SYSTEM_PROCESSOR} variable can be used to switch between i686 and arm
 # The ${ARCHDIR} variable can also be used when the paths are otherwise equivalent
 
-if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686")
-	set(ARCHDIR system/kernel/arch/i386)
-elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm")
-	set(ARCHDIR system/kernel/arch/arm)
+# If we're only building libFeline, don't build it as a kernel, or enforce one of our supported architectures (it should be arch-independent)
+if (${LIBFELINE_ONLY})
+	add_definitions(-DLIBFELINE_ONLY)
 else()
-	message(FATAL_ERROR "Unknown architecture " ${CMAKE_SYSTEM_PROCESSOR} ", expected i686 or arm")
+	if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686")
+		set(ARCHDIR system/kernel/arch/i386)
+	elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm")
+		set(ARCHDIR system/kernel/arch/arm)
+	else()
+		message(FATAL_ERROR "Unknown architecture " ${CMAKE_SYSTEM_PROCESSOR} ", expected i686 or arm")
+	endif()
+	add_compile_options(-ffreestanding)
 endif()
-add_compile_options(-ffreestanding -Werror -Wall -Wextra -fstack-protector -fno-omit-frame-pointer -fno-rtti -fno-exceptions)
+
+add_compile_options(-Werror -Wall -Wextra -fstack-protector -fno-omit-frame-pointer -fno-rtti -fno-exceptions)
 
 add_subdirectory(system/libFeline)
 add_library(feline STATIC ${FELINE_OBJS})
+target_include_directories(feline PUBLIC system/libFeline/include)
+
+# Stop before building the rest of the stuff
+if (${LIBFELINE_ONLY})
+return()
+endif()
+
 target_include_directories(feline PRIVATE system/libc/include system/libc/include/c++)
 target_include_directories(feline PRIVATE system/kernel/include)
-target_include_directories(feline PUBLIC system/libFeline/include)
 
 add_subdirectory(system/libc)
 add_library(c STATIC ${LIBC_OBJS})
