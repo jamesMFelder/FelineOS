@@ -4,8 +4,10 @@
 #include <kernel/settings.h>
 
 namespace Settings {
-#define _S(type, modifiable, ns, name) \
-	namespace ns {Setting<type, modifiable> name;};
+#define _S(type, modifiable, ns, name)                                         \
+	namespace ns {                                                             \
+	Setting<type, modifiable> name;                                            \
+	};
 SETTINGS_LIST(_S)
 #undef _S
-}
+} // namespace Settings

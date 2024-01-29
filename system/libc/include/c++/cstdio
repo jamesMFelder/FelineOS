@@ -9,10 +9,10 @@
 /* Including a c++ header means functions are in the std namespace */
 namespace std {
 
-	using ::printf;
-	using ::vprintf;
-	using ::putchar;
-	using ::puts;
+using ::printf;
+using ::putchar;
+using ::puts;
+using ::vprintf;
 
 } /* namespace std */
 

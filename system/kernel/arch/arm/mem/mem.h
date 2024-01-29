@@ -6,8 +6,8 @@
 #include <cstddef>
 #include <cstdint>
 
-#include <kernel/mem.h>
 #include <kernel/devicetree.h>
+#include <kernel/mem.h>
 #include <kernel/phys_addr.h>
 
 /* Start the memory manager */

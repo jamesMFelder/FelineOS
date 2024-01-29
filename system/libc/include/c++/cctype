@@ -9,9 +9,9 @@
 /* Including a c++ header means functions are in the std namespace */
 namespace std {
 
-	using ::isdigit;
-	using ::iscntrl;
-	using ::isprint;
+using ::iscntrl;
+using ::isdigit;
+using ::isprint;
 
 } /* namespace std */
 

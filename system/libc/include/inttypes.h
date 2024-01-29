@@ -14,7 +14,8 @@
 #define PRI8 "hh"
 #define PRI16 "h"
 
-#if defined(__clang__) /* For some reason, clang in insistent that uint32_t is unsigned int instead of unsigned long */
+#if defined(__clang__) /* For some reason, clang in insistent that uint32_t is \
+                          unsigned int instead of unsigned long */
 #define PRI32
 #else
 #define PRI32 "l"
@@ -23,7 +24,9 @@
 #define PRI64 "ll"
 #if defined(__arm__) || defined(__clang__) /* Uintptr is somehow int. */
 #define PRIPTR
-#elif defined(__i386__) && defined(__GNUC__) /* Oddly enough, for gcc on i386, int and long 32-bits, but it will only take an int. */
+#elif defined(__i386__) &&                                                     \
+	defined(__GNUC__) /* Oddly enough, for gcc on i386, int and long 32-bits,  \
+                         but it will only take an int. */
 #define PRIPTR PRI32
 #else
 #error "Can't find correct size for a pointer"

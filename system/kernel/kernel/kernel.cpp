@@ -1,21 +1,21 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
 
+#include <cinttypes>
 #include <cstdio>
 #include <cstdlib>
-#include <cinttypes>
-#include <fcntl.h>
-#include <kernel/arch.h>
-#include <kernel/log.h>
-#include <kernel/misc.h>
-#include <drivers/serial.h>
 #include <drivers/framebuffer.h>
+#include <drivers/serial.h>
+#include <fcntl.h>
+#include <feline/str.h>
+#include <kernel/arch.h>
+#include <kernel/asm_compat.h>
+#include <kernel/backtrace.h>
+#include <kernel/log.h>
+#include <kernel/mem.h>
+#include <kernel/misc.h>
 #include <kernel/settings.h>
 #include <sys/syscall.h>
-#include <kernel/backtrace.h>
-#include <feline/str.h>
-#include <kernel/mem.h>
-#include <kernel/asm_compat.h>
 #include <unistd.h>
 #ifdef __i386__
 #include <kernel/cpuid.h>
@@ -29,15 +29,16 @@ ASM void kernel_main();
 
 #include <kernel/vtopmem.h>
 
-void kernel_main(){
+void kernel_main() {
 	boot_setup();
 
 	if (Settings::Misc::commandline) {
-		kLog() << "Commandline: " << strDebug(Settings::Misc::commandline.get());
+		kLog() << "Commandline: "
+			   << strDebug(Settings::Misc::commandline.get());
 	}
 
 #ifdef __i386__
-	if(cpuid_supported()){
+	if (cpuid_supported()) {
 		unsigned char vendor[13];
 		cpuid_vendor(vendor);
 		kLog() << "Your cpu is " << vendor;
@@ -49,20 +50,22 @@ void kernel_main(){
 
 	extern framebuffer fb; /* the framebuffer is setup */
 	/* Fill each corner with a color */
-	pixel_t p={255, 255, 255}; /* white */
+	pixel_t p = {255, 255, 255}; /* white */
 	uint16_t maxX, maxY;
 	fb.getMax(&maxX, &maxY); /* get the maximum sizes */
 	/* If it exists */
-	if(maxX!=0 && maxY!=0){
-		fb.putRect(0,      0,      maxX/2,   maxY/2, p); /* upper left */
-		p={255, 0, 0}; /* red */
-		fb.putRect(maxX/2, 0,      maxX/2-1, maxY/2, p); /* uppper right */
-		p={0, 255, 0}; /* green */
-		fb.putRect(0,      maxY/2, maxX/2,   maxY/2-1, p); /* lower left */
-		p={0, 0, 255}; /* blue */
-		fb.putRect(maxX/2, maxY/2, maxX/2-1, maxY/2-1, p); /* lower right */
+	if (maxX != 0 && maxY != 0) {
+		fb.putRect(0, 0, maxX / 2, maxY / 2, p);            /* upper left */
+		p = {255, 0, 0};                                    /* red */
+		fb.putRect(maxX / 2, 0, maxX / 2 - 1, maxY / 2, p); /* uppper right */
+		p = {0, 255, 0};                                    /* green */
+		fb.putRect(0, maxY / 2, maxX / 2, maxY / 2 - 1, p); /* lower left */
+		p = {0, 0, 255};                                    /* blue */
+		fb.putRect(maxX / 2, maxY / 2, maxX / 2 - 1, maxY / 2 - 1,
+		           p); /* lower right */
 	}
 
-	kCritical() << "Nothing to do... Pausing now."; /* boot.S should hang if we return */
+	kCritical() << "Nothing to do... Pausing now."; /* boot.S should hang if we
+	                                                   return */
 	return;
 }

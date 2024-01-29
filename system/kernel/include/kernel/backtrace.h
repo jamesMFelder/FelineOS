@@ -10,5 +10,5 @@
 
 ASM void backtrace();
 ASM void backtrace_from(void *fp);
-ASM uint32_t walk_stack(void* array[], uint32_t max_len);
-ASM uint32_t walk_stack_from(void* array[], uint32_t max_len, void* fp);
+ASM uint32_t walk_stack(void *array[], uint32_t max_len);
+ASM uint32_t walk_stack_from(void *array[], uint32_t max_len, void *fp);

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
 
-/* assert.h takes care of all the multiple inclusion with/without NDEBUG for us */
+/* assert.h takes care of all the multiple inclusion with/without NDEBUG for us
+ */
 /* only thing everyone should see is `#define assert ...` */
 #include "assert.h"

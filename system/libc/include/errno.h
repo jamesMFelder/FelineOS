@@ -3,7 +3,7 @@
 #ifndef _ERRNO_H
 #define _ERRNO_H 1
 
-//FIXME: implement properly
+// FIXME: implement properly
 extern int __FelineOS_libc_errno;
 #define errno __FelineOS_libc_errno
 

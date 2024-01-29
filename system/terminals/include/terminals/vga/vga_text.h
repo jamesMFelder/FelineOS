@@ -38,15 +38,15 @@ enum vga_color {
 	VGA_COLOR_WHITE = 15,
 };
 
-static inline uint8_t vga_color(enum vga_color fg, enum vga_color bg){
+static inline uint8_t vga_color(enum vga_color fg, enum vga_color bg) {
 	return fg | bg << 4;
 }
 
 static inline vga_text_char vga_entry(unsigned char uc, uint8_t color) {
-	return (vga_text_char) uc | (vga_text_char) color << 8;
+	return (vga_text_char)uc | (vga_text_char)color << 8;
 }
 
-class vga_text_term:public terminal{
+class vga_text_term : public terminal {
 	public:
 		/* constructor and destructor */
 		vga_text_term();

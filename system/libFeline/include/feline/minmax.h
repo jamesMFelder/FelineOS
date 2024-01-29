@@ -5,22 +5,18 @@
 
 #include <feline/cpp_only.h>
 
-template<class T>
-inline T min(T a, T b){
-	if (a>b){
+template <class T> inline T min(T a, T b) {
+	if (a > b) {
 		return b;
-	}
-	else {
+	} else {
 		return a;
 	}
 }
 
-template<class T>
-inline T max(T a, T b){
-	if (a>b){
+template <class T> inline T max(T a, T b) {
+	if (a > b) {
 		return a;
-	}
-	else {
+	} else {
 		return b;
 	}
 }

@@ -6,9 +6,9 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <kernel/asm_compat.h>
 #include <feline/kstring.h>
 #include <feline/kvector.h>
+#include <kernel/asm_compat.h>
 #include <source_location>
 #include <type_traits>
 
@@ -29,20 +29,22 @@ enum log_level {
  * Not generally used, just a base for wrapper functions */
 class kout {
 	public:
-		kout(log_level, std::source_location loc=std::source_location::current(), bool alloc=true);
+		kout(log_level,
+		     std::source_location loc = std::source_location::current(),
+		     bool alloc = true);
 		~kout();
 
-		//output items
-		kout& operator<<(KString const str);
-		kout& operator<<(KStringView const str);
-		kout& operator<<(char c);
+		// output items
+		kout &operator<<(KString const str);
+		kout &operator<<(KStringView const str);
+		kout &operator<<(char c);
 
 	private:
 		KVector<KStringView, KGeneralAllocator<KStringView>> strings;
 		KVector<KString, KGeneralAllocator<KString>> lifetime_extender;
 		void add_part(KStringView const str);
 		void do_write();
-		void (*func)(const char*, size_t);
+		void (*func)(const char *, size_t);
 		bool alloc;
 };
 
@@ -60,15 +62,15 @@ inline KString ptr(void const *ptr) {
 /* A macro for generating templates for formatting signed numbers
  * This works because it prints the minus sign before calling to the
  * unsigned version */
-#define SIGNED_CONV(conv) \
-	template <typename T> \
-	requires std::is_signed_v<T> \
-	KString conv(T num) { \
-		KString str; \
-		if (num < 0) \
-			str.append('-'); \
-		str += conv(static_cast<uintmax_t>(std::abs(num))); \
-		return str; \
+#define SIGNED_CONV(conv)                                                      \
+	template <typename T>                                                      \
+		requires std::is_signed_v<T>                                           \
+	KString conv(T num) {                                                      \
+		KString str;                                                           \
+		if (num < 0)                                                           \
+			str.append('-');                                                   \
+		str += conv(static_cast<uintmax_t>(std::abs(num)));                    \
+		return str;                                                            \
 	}
 
 SIGNED_CONV(hex);
@@ -79,18 +81,19 @@ SIGNED_CONV(bin);
 
 /* Make it easy to take an rvalue and lvalue with one definition.
  * It just calls the lvalue version. */
-#define RVALUE_OVERLOAD(type) inline kout& operator<<(kout &&out, type ptr) { return out << ptr; }
+#define RVALUE_OVERLOAD(type)                                                  \
+	inline kout &operator<<(kout &&out, type ptr) { return out << ptr; }
 
 /* Various helper functions for formatting to a kout */
-inline kout& operator<<(kout &out, char const * str) {
+inline kout &operator<<(kout &out, char const *str) {
 	return out << KStringView(str, strlen(str));
 }
-RVALUE_OVERLOAD(char const*)
+RVALUE_OVERLOAD(char const *)
 
-inline kout& operator<<(kout &out, void* ptr) {
+inline kout &operator<<(kout &out, void *ptr) {
 	return out << hex(reinterpret_cast<uintptr_t>(ptr));
 }
-RVALUE_OVERLOAD(void*)
+RVALUE_OVERLOAD(void *)
 
 #undef RVALUE_OVERLOAD
 
@@ -100,9 +103,10 @@ KString strDebug(KStringView);
  * The first compile-time function call must have the source_location
  * stuff, but it's a lot to type out for every variation.
  * Don't call this macro directly! */
-#define GEN_LOG_INLINE(name, level, alloc) \
-	inline kout name(std::source_location location=std::source_location::current()) { \
-		return kout(log_level::level, location, alloc); \
+#define GEN_LOG_INLINE(name, level, alloc)                                     \
+	inline kout name(std::source_location location =                           \
+	                     std::source_location::current()) {                    \
+		return kout(log_level::level, location, alloc);                        \
 	}
 
 /* Basic wrappers over creating a kout object */
@@ -130,11 +134,12 @@ GEN_LOG_INLINE(kDbgNoAlloc, debug, false);
 #define kcritical(data) kcriticalf("%s", data)
 
 /* printf()-style logging functions */
-ASM __attribute__ ((format (printf, 1, 2))) void klogf(const char *format, ...);
-ASM __attribute__ ((format (printf, 1, 2))) void kwarnf(const char *format, ...);
-ASM __attribute__ ((format (printf, 1, 2))) void kerrorf(const char *format, ...);
+ASM __attribute__((format(printf, 1, 2))) void klogf(const char *format, ...);
+ASM __attribute__((format(printf, 1, 2))) void kwarnf(const char *format, ...);
+ASM __attribute__((format(printf, 1, 2))) void kerrorf(const char *format, ...);
 /* ONLY USE FOR WHEN THE OS IS ABOUT TO CRASH */
 /* TODO: Restrict access to kernel? */
-ASM __attribute__ ((format (printf, 1, 2))) void kcriticalf(const char *format, ...);
+ASM __attribute__((format(printf, 1, 2))) void kcriticalf(const char *format,
+                                                          ...);
 
 #endif /* _KERNEL_LOG_H */

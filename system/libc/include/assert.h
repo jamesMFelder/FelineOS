@@ -1,17 +1,20 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
 
-/* Only guard the function definition because the macro can be un/redefined by including this header file again. */
+/* Only guard the function definition because the macro can be un/redefined by
+ * including this header file again. */
 #ifndef _ASSERT_H
 #define _ASSERT_H 1
 
 #include <bits/c_compat.h>
 
 /* Print error message and call std::abort() */
-C_LINKAGE [[noreturn]] void _Assert(char const * const err_msg);
+C_LINKAGE [[noreturn]] void _Assert(char const *const err_msg);
 /* Print error message and call std::abort() */
-/* Extra parameters because __func__ can't be concatenated with a string literal. */
-C_LINKAGE [[noreturn]] void _Assert_func(char const * const, char const * const, char const * const);
+/* Extra parameters because __func__ can't be concatenated with a string
+ * literal. */
+C_LINKAGE [[noreturn]] void _Assert_func(char const *const, char const *const,
+                                         char const *const);
 
 /* Turn __LINE__ (a macro number) into a string */
 #define __symbol2value(x) #x
@@ -30,14 +33,18 @@ C_LINKAGE [[noreturn]] void _Assert_func(char const * const, char const * const,
 /* C>=C99 or C++>=C++11 means we have __func__ */
 #if __STDC_VERSION__ >= 199901L || __cplusplus >= 201103L
 
-#define assert(expr) ( (expr) ? (void)0 : \
-	_Assert_func("Assertion " #expr " failed in function ", __func__,\
-		" at " __FILE__ ":" __symbol2string(__LINE__) ".") )
+#define assert(expr)                                                           \
+	((expr)                                                                    \
+	     ? (void)0                                                             \
+	     : _Assert_func("Assertion " #expr " failed in function ", __func__,   \
+	                    " at " __FILE__ ":" __symbol2string(__LINE__) "."))
 
 #else /* __STDC_VERSION__ >= 199901L || __cplusplus >=201108L */
 
-#define assert(expr) ( (expr) ? (void)0 : \
-	_Assert("Assertion " #expr " failed at " __FILE__ ":" __symbol2string(__LINE__) ".") )
+#define assert(expr)                                                           \
+	((expr) ? (void)0                                                          \
+	        : _Assert("Assertion " #expr " failed at " __FILE__                \
+	                  ":" __symbol2string(__LINE__) "."))
 
 #endif /* __STDC_VERSION__ >= 199901L || __cplusplus >=201108L (else) */
 

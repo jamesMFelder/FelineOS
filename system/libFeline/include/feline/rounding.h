@@ -7,7 +7,7 @@
 #include <type_traits>
 
 template <typename T>
-requires std::is_integral_v<T> && std::is_unsigned_v<T>
+	requires std::is_integral_v<T> && std::is_unsigned_v<T>
 T round_to_multiple_of(T value, T multiple) {
 	if (multiple == 0) {
 		return value;

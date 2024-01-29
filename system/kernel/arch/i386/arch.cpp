@@ -3,17 +3,17 @@
 #include <kernel/arch.h>
 
 #include "gdt/gdt.h"
-#include <kernel/interrupts.h>
-#include <kernel/paging.h>
 #include "mem/mem.h"
+#include <cinttypes>
+#include <cstdlib>
 #include <cstring>
-#include <kernel/misc.h>
 #include <drivers/framebuffer.h>
 #include <drivers/serial.h>
-#include <cstdlib>
-#include <cinttypes>
-#include <kernel/vtopmem.h>
+#include <kernel/interrupts.h>
+#include <kernel/misc.h>
+#include <kernel/paging.h>
 #include <kernel/settings.h>
+#include <kernel/vtopmem.h>
 #include <terminals/vga/vga_text.h>
 
 framebuffer fb;
@@ -26,57 +26,68 @@ void write_to_term(char const *str, size_t len) {
 	}
 }
 
-static void screen_init(multiboot_info_t mbp){
-	switch(mbp.framebuffer_type){
-		case MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED:
-			break;
-		case MULTIBOOT_FRAMEBUFFER_TYPE_RGB:
-			break;
-		case MULTIBOOT_FRAMEBUFFER_TYPE_EGA_TEXT:
-			vga_is_text = true;
-			map_range(reinterpret_cast<void*>(0xb8000), 160*25, reinterpret_cast<void*>(0xb8000), 0);
-			return;
+static void screen_init(multiboot_info_t mbp) {
+	switch (mbp.framebuffer_type) {
+	case MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED:
+		break;
+	case MULTIBOOT_FRAMEBUFFER_TYPE_RGB:
+		break;
+	case MULTIBOOT_FRAMEBUFFER_TYPE_EGA_TEXT:
+		vga_is_text = true;
+		map_range(reinterpret_cast<void *>(0xb8000), 160 * 25,
+		          reinterpret_cast<void *>(0xb8000), 0);
+		return;
 	}
 	vga_is_text = false;
-	int fb_init_rval=fb.init(reinterpret_cast<pixel_bgr_t*>(mbp.framebuffer_addr), static_cast<uint16_t>(mbp.framebuffer_width), static_cast<uint16_t>(mbp.framebuffer_height), static_cast<uint16_t>(mbp.framebuffer_pitch), mbp.framebuffer_bpp);
-	if(fb_init_rval!=0){
-		kerrorf("Unable to initialize framebuffer! Failed with error %d.", fb_init_rval);
+	int fb_init_rval = fb.init(
+		reinterpret_cast<pixel_bgr_t *>(mbp.framebuffer_addr),
+		static_cast<uint16_t>(mbp.framebuffer_width),
+		static_cast<uint16_t>(mbp.framebuffer_height),
+		static_cast<uint16_t>(mbp.framebuffer_pitch), mbp.framebuffer_bpp);
+	if (fb_init_rval != 0) {
+		kerrorf("Unable to initialize framebuffer! Failed with error %d.",
+		        fb_init_rval);
 		std::abort();
 	}
 }
 
-char grub_cmdline[4096]="";
+char grub_cmdline[4096] = "";
 multiboot_uint32_t grub_flags;
 
-static void save_grub_params(PhysAddr<multiboot_info_t> phys_mbp){
-	multiboot_info_t mbp=read_pmem(phys_mbp);
-	grub_flags=mbp.flags;
-	if(get_flag(grub_flags, MULTIBOOT_INFO_CMDLINE)){
+static void save_grub_params(PhysAddr<multiboot_info_t> phys_mbp) {
+	multiboot_info_t mbp = read_pmem(phys_mbp);
+	grub_flags = mbp.flags;
+	if (get_flag(grub_flags, MULTIBOOT_INFO_CMDLINE)) {
 		char *mapped_cmdline;
-		map_results cmdline_mapping=map_range(reinterpret_cast<char*>(mbp.cmdline), 4_KiB, reinterpret_cast<void**>(&mapped_cmdline), 0);
+		map_results cmdline_mapping =
+			map_range(reinterpret_cast<char *>(mbp.cmdline), 4_KiB,
+		              reinterpret_cast<void **>(&mapped_cmdline), 0);
 		if (cmdline_mapping != map_success) {
-			kerrorf("Unable to map information from Grub. Error %d.", cmdline_mapping);
+			kerrorf("Unable to map information from Grub. Error %d.",
+			        cmdline_mapping);
 			goto after_cmdline;
 		}
-		size_t offset=0;
-		for (offset=0; offset < 4096; ++offset) {
-			grub_cmdline[offset]=mapped_cmdline[offset];
+		size_t offset = 0;
+		for (offset = 0; offset < 4096; ++offset) {
+			grub_cmdline[offset] = mapped_cmdline[offset];
 			if (grub_cmdline[offset] == '\0') {
 				break;
 			}
 		}
-		//size_t len=strlcpy(grub_cmdline, reinterpret_cast<char*>(mbp->cmdline), 4096);
-		if(offset==4096){
-			kerror("We were given too long a command line, truncating to 4096 characters.");
+		// size_t len=strlcpy(grub_cmdline,
+		// reinterpret_cast<char*>(mbp->cmdline), 4096);
+		if (offset == 4096) {
+			kerror("We were given too long a command line, truncating to 4096 "
+			       "characters.");
 		}
 		unmap_range(mapped_cmdline, 4096, 0);
-		Settings::Misc::commandline.initialize(KStringView(grub_cmdline, offset));
+		Settings::Misc::commandline.initialize(
+			KStringView(grub_cmdline, offset));
 	}
-after_cmdline: //Jump here if you need to abort processing the command line.
-	if(get_flag(grub_flags, MULTIBOOT_INFO_FRAMEBUFFER_INFO)){
+after_cmdline: // Jump here if you need to abort processing the command line.
+	if (get_flag(grub_flags, MULTIBOOT_INFO_FRAMEBUFFER_INFO)) {
 		screen_init(mbp);
-	}
-	else{
+	} else {
 		/* TODO: actually do this */
 		kwarn("Not finding screen info from GRUB, using serial port only.");
 	}
@@ -100,7 +111,7 @@ If you write a real serial port driver using interrupts, note that you won't
 be able to log anything until the IDT is setup (attempts will triple-fault)
 Also note that the interrupts actually log stuff, so watch out!
 After this we should be good to go! */
-int early_boot_setup(uintptr_t raw_mbp){
+int early_boot_setup(uintptr_t raw_mbp) {
 	PhysAddr<multiboot_info_t> mbp = PhysAddr<multiboot_info_t>(raw_mbp);
 	disable_gdt(); /* We don't use it because it's not cross platform */
 	init_serial(); /* We can't do any logging before this gets setup */
@@ -111,14 +122,16 @@ int early_boot_setup(uintptr_t raw_mbp){
 	Settings::Logging::warning.initialize(write_serial);
 	Settings::Logging::log.initialize(write_serial);
 	Settings::Logging::debug.initialize(write_serial);
-	idt_init(); /* Actually display an error if we have a problem: don't just triple fault */
+	idt_init(); /* Actually display an error if we have a problem: don't just
+	               triple fault */
 	setup_paging(); /* Take control of it from the assembly! */
 	save_grub_params(mbp);
-	bootstrap_phys_mem_manager(mbp); /* Get the physical memory manager working */
+	bootstrap_phys_mem_manager(
+		mbp); /* Get the physical memory manager working */
 	return 0;
 }
 
-void after_constructors_init(){
+void after_constructors_init() {
 	Settings::Logging::critical.initialize(write_serial);
 	Settings::Logging::error.initialize(write_serial);
 	Settings::Logging::warning.initialize(write_serial);
@@ -126,13 +139,17 @@ void after_constructors_init(){
 	Settings::Logging::debug.initialize(write_serial);
 }
 
-int boot_setup(){
+int boot_setup() {
 	// Reinitialize the commandline
 	// TODO don't have grub's settings clobbered by _init
 	if (grub_cmdline[0] != '\0') {
 		Settings::Misc::commandline.initialize(KStringView(grub_cmdline));
 	}
-	Settings::Logging::output_func write_both = [](char const *str, size_t len) -> void {write_serial(str, len); write_to_term(str, len);};
+	Settings::Logging::output_func write_both = [](char const *str,
+	                                               size_t len) -> void {
+		write_serial(str, len);
+		write_to_term(str, len);
+	};
 	if (vga_is_text) {
 		term.reset();
 		Settings::Logging::critical.set(write_both);

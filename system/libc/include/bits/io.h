@@ -6,8 +6,8 @@
 #define EOF (-1)
 
 #if defined(__is_libk)
-	int __internal_putchar(char c);
-	int __internal_writeStr(char const * const s);
+int __internal_putchar(char c);
+int __internal_writeStr(char const *const s);
 #else /* __is_libk */
 #error "Userspace stdio not implimented yet."
 #endif /* __is_libk (else) */

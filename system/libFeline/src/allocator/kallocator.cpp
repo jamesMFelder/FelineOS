@@ -12,6 +12,4 @@ void *get_memory(size_t min_len) {
 	return addr;
 }
 
-void return_memory(void *addr, size_t) {
-	free(addr);
-}
+void return_memory(void *addr, size_t) { free(addr); }

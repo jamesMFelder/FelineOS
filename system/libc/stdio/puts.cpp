@@ -6,11 +6,11 @@
 #include <bits/io.h>
 #endif /* __is_libk */
 
-int puts(const char* string) {
+int puts(const char *string) {
 #if defined(__is_libk)
 	__internal_writeStr(string);
 	__internal_putchar('\n');
-#else /* __is_libk */
+#else  /* __is_libk */
 	/* TODO: Implement stdio and the write system call. */
 #endif /* __is_libk (else) */
 	/* TODO: check return values */

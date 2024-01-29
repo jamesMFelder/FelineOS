@@ -16,19 +16,19 @@ Spinlock allocation_lock;
 
 static const size_t DEFAULT_MEMRESERVE_SIZE = 4096;
 struct Header {
-	Header *next;
-	Header *prev;
-	size_t len = DEFAULT_MEMRESERVE_SIZE;
-	bool in_use = false;
-	bool start_of_allocation;
-	uint8_t canary[2];
+		Header *next;
+		Header *prev;
+		size_t len = DEFAULT_MEMRESERVE_SIZE;
+		bool in_use = false;
+		bool start_of_allocation;
+		uint8_t canary[2];
 };
 
 static Header *first_header;
 
 // Split a chunk of memory into two pieces, the first split bytes long
 // and the other containing all the remaining memory
-static void split_header(Header* &current_header, size_t split) {
+static void split_header(Header *&current_header, size_t split) {
 	if (current_header->in_use) {
 		std::abort();
 	}
@@ -56,7 +56,7 @@ static void split_header(Header* &current_header, size_t split) {
 
 // Allocate a new header pointing to needed bytes of memory.
 // May add another one after to reduce the number of syscalls.
-[[nodiscard]] static Header* allocate_more_mem(size_t needed) {
+[[nodiscard]] static Header *allocate_more_mem(size_t needed) {
 	Header *hdr;
 #ifdef __is_libk
 	auto result =
@@ -92,7 +92,7 @@ static void return_mem(Header *hdr) {
 #endif // __is_libk (else)
 }
 
-void* malloc(size_t size) {
+void *malloc(size_t size) {
 	allocation_lock.aquire_lock();
 	if (first_header == nullptr) {
 		first_header = allocate_more_mem(size);
@@ -114,8 +114,8 @@ void* malloc(size_t size) {
 	return hdr + 1;
 }
 
-void free(void* ptr) {
-	if (ptr==nullptr) {
+void free(void *ptr) {
+	if (ptr == nullptr) {
 		return;
 	}
 	allocation_lock.aquire_lock();
@@ -171,8 +171,7 @@ void free(void* ptr) {
 			}
 			return_mem(hdr);
 			break;
-		}
-		else {
+		} else {
 			Header *to_del = hdr;
 			hdr += DEFAULT_MEMRESERVE_SIZE / sizeof(Header);
 			hdr->next = to_del->next;

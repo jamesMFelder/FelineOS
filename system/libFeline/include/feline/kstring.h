@@ -4,9 +4,9 @@
 #ifndef _FELINE_KSTRING_H
 #define _FELINE_KSTRING_H 1
 
-#include <cstring>
 #include <cstddef>
 #include <cstdlib>
+#include <cstring>
 #include <feline/cpp_only.h>
 #include <feline/kallocator.h>
 #include <feline/kvector.h>
@@ -22,10 +22,16 @@ class KStringView {
 		using iterator = const_pointer;
 
 		constexpr KStringView() : characters(nullptr), len(0) {}
-		constexpr KStringView(char const *characters, size_t len) : characters(characters), len(len) {}
-		constexpr KStringView(char const *characters) : characters(characters), len(strlen(characters)) {}
+		constexpr KStringView(char const *characters, size_t len)
+			: characters(characters), len(len) {}
+		constexpr KStringView(char const *characters)
+			: characters(characters), len(strlen(characters)) {}
 		constexpr KStringView(KStringView const &other) { *this = other; }
-		constexpr KStringView &operator=(KStringView const &other) {characters = other.data(); len = other.length(); return *this; }
+		constexpr KStringView &operator=(KStringView const &other) {
+			characters = other.data();
+			len = other.length();
+			return *this;
+		}
 
 		constexpr const_reference get(size_t index) const {
 			if (index >= len) {
@@ -46,11 +52,17 @@ class KStringView {
 		size_t len;
 };
 
-inline consteval KStringView operator""_kstr(char const *characters, size_t len) { return KStringView(characters, len); };
+inline consteval KStringView operator""_kstr(char const *characters,
+                                             size_t len) {
+	return KStringView(characters, len);
+};
 
 using KString = KVector<char, KGeneralAllocator<char>>;
 using KConstString = KVector<char const, KGeneralAllocator<char>>;
 
-inline consteval KConstString operator""_kstr_vec(char const *characters, size_t len) { return KConstString(characters, len); };
+inline consteval KConstString operator""_kstr_vec(char const *characters,
+                                                  size_t len) {
+	return KConstString(characters, len);
+};
 
 #endif /* _FELINE_KSTRING_H */

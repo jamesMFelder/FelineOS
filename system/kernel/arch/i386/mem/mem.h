@@ -6,8 +6,8 @@
 #include <cstddef>
 #include <cstdint>
 
-#include <kernel/multiboot.h>
 #include <kernel/mem.h>
+#include <kernel/multiboot.h>
 #include <kernel/phys_mem.h>
 
 /* Start the memory manager */

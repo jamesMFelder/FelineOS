@@ -6,14 +6,14 @@
 #include <cstddef>
 #include <cstdint>
 
-typedef struct term_color{
-	uint8_t r, g, b;
+typedef struct term_color {
+		uint8_t r, g, b;
 } term_color_t;
 
-constexpr term_color_t term_black={0, 0, 0};
-constexpr term_color_t term_white={255, 255, 255};
+constexpr term_color_t term_black = {0, 0, 0};
+constexpr term_color_t term_white = {255, 255, 255};
 
-class terminal{
+class terminal {
 	public:
 		/* constructor and destructor */
 		terminal();
@@ -22,7 +22,7 @@ class terminal{
 		/* utility functions */
 		virtual void clear();
 		virtual void reset();
-		virtual void scroll()=0;
+		virtual void scroll() = 0;
 
 		/* positioning the cursor */
 		/* move returns an error (specific one TBD) on invalid coordinates */
@@ -32,8 +32,8 @@ class terminal{
 
 		/* Put them at the current cursor position with current color */
 		/* Updates the cursor position */
-		virtual int putchar(char const c)=0;
-		virtual int puts(char const * const s);
+		virtual int putchar(char const c) = 0;
+		virtual int puts(char const *const s);
 
 	protected:
 		/* Location */

@@ -5,16 +5,16 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <kernel/log.h>
 #include <kernel/asm_compat.h>
+#include <kernel/log.h>
 
 /* This warning doesn't matter here, unlike a lot of the kernel */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpadded"
-struct GDT{
-	uintptr_t base;
-	size_t limit;
-	uint8_t type;
+struct GDT {
+		uintptr_t base;
+		size_t limit;
+		uint8_t type;
 };
 #pragma GCC diagnostic pop
 

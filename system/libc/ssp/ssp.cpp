@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
+#include <bits/c_compat.h>
 #include <cstdint>
 #include <cstdlib>
 #include <kernel/log.h>
-#include <bits/c_compat.h>
 
 #if UINT32_MAX == UINTPTR_MAX
 #define STACK_CHK_GUARD 0xe2dee396
@@ -19,8 +19,7 @@ uintptr_t __stack_chk_guard = STACK_CHK_GUARD;
 /* TODO: make this a stub for a specific syscall */
 C_LINKAGE __attribute__((noreturn)) void __stack_chk_fail(void);
 
-void __stack_chk_fail(void)
-{
+void __stack_chk_fail(void) {
 #if __STDC_HOSTED__
 	std::abort();
 	__builtin_unreachable();

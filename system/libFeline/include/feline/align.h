@@ -7,20 +7,19 @@
 #include <cstdint>
 
 inline uintptr_t round_up_to_alignment(uintptr_t addr, size_t align) {
-	if (addr%align == 0) {
+	if (addr % align == 0) {
 		return addr;
-	}
-	else {
-		return addr+align-(addr%align);
+	} else {
+		return addr + align - (addr % align);
 	}
 }
 
-inline void const* round_up_to_alignment(void const* addr, size_t align) {
-	return reinterpret_cast<void const*>(round_up_to_alignment(reinterpret_cast<uintptr_t>(addr), align));
+inline void const *round_up_to_alignment(void const *addr, size_t align) {
+	return reinterpret_cast<void const *>(
+		round_up_to_alignment(reinterpret_cast<uintptr_t>(addr), align));
 }
 
-template<typename T>
-inline T const* round_up_to_alignment(T const* addr) {
+template <typename T> inline T const *round_up_to_alignment(T const *addr) {
 	return round_up_to_alignment(addr, alignof(T));
 }
 

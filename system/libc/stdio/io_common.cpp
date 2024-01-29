@@ -4,14 +4,15 @@
 
 #if defined(__is_libk)
 
-int __internal_putchar(char const c){
-	//TODO: check if in text mode first
-	if (c=='\n') __internal_putchar('\r');
+int __internal_putchar(char const c) {
+	// TODO: check if in text mode first
+	if (c == '\n')
+		__internal_putchar('\r');
 	put_serial(c);
 	return 0;
 }
 
-int __internal_writeStr(char const * const s){
+int __internal_writeStr(char const *const s) {
 	writestr_serial(s);
 	return 0;
 }

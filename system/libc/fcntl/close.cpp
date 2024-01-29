@@ -11,25 +11,25 @@
 
 int close(int fd) {
 	__syscall_close_result res;
-	__syscall_close_args args = {.fd=fd};
+	__syscall_close_args args = {.fd = fd};
 	bool valid_syscall = __syscall_close(args, res);
 
-	//Please, never have this happen!
+	// Please, never have this happen!
 	if (!valid_syscall) {
-		//FIXME: how do we report the error (if at all)?
-		errno=ENOSYS;
+		// FIXME: how do we report the error (if at all)?
+		errno = ENOSYS;
 		return -1;
 	}
 
 	switch (res.error) {
-		case close_none:
-			return 0;
-			break;
+	case close_none:
+		return 0;
+		break;
 
-			//Correct errors shall be added
-		case close_any:
-			errno=ENOTSUP;
-			break;
+		// Correct errors shall be added
+	case close_any:
+		errno = ENOTSUP;
+		break;
 	}
 	return -1;
 }

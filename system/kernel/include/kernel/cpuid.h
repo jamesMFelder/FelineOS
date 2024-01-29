@@ -8,7 +8,8 @@
 #include <cstring>
 
 /* Returns true if cpuid is int cpuid_supported */
-/* Always call before any other calls as it sets an internal variable allowing exiting before calling any invalid instructions. */
+/* Always call before any other calls as it sets an internal variable allowing
+ * exiting before calling any invalid instructions. */
 bool cpuid_supported(void);
 
 /* Returns number of supported cpuid inputs */

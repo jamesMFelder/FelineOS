@@ -3,6 +3,6 @@
 
 #include <cstdint>
 
-inline bool get_flag(uint32_t flags, unsigned int which){
+inline bool get_flag(uint32_t flags, unsigned int which) {
 	return flags & which;
 }
