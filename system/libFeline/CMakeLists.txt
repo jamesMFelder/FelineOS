@@ -16,4 +16,6 @@ function(felineTest testname exename source)
 endfunction()
 
 felineTest(TESTNAME bool_int SOURCES tests/bool_int.cpp)
+felineTest(TESTNAME align SOURCES tests/align.cpp)
+felineTest(TESTNAME nonzero SOURCES tests/nonzero.cpp)
 endif()
