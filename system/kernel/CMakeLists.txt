@@ -38,6 +38,5 @@ set(KERNEL_OBJS
 	system/kernel/kernel/mem.cpp
 	system/kernel/kernel/page.cpp
 	system/kernel/kernel/phys_mem.cpp
-	system/kernel/kernel/settings.cpp
 	system/kernel/kernel/syscall.cpp
 	PARENT_SCOPE)

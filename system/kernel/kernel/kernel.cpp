@@ -7,6 +7,7 @@
 #include <drivers/framebuffer.h>
 #include <drivers/serial.h>
 #include <fcntl.h>
+#include <feline/settings.h>
 #include <feline/str.h>
 #include <kernel/arch.h>
 #include <kernel/asm_compat.h>
@@ -14,7 +15,6 @@
 #include <kernel/log.h>
 #include <kernel/mem.h>
 #include <kernel/misc.h>
-#include <kernel/settings.h>
 #include <sys/syscall.h>
 #include <unistd.h>
 #ifdef __i386__

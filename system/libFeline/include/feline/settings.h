@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
-#ifndef _KERN_SETTINGS_H
-#define _KERN_SETTINGS_H 1
+#ifndef _FELINE_SETTINGS_H
+#define _FELINE_SETTINGS_H 1
 
 #include <feline/kernel_exceptions.h>
-#include <kernel/log.h>
+#include <feline/logger.h>
 
 template <typename T, bool changeable> class Setting {
 	public:
@@ -60,4 +60,4 @@ SETTINGS_LIST(_S)
 
 }; // namespace Settings
 
-#endif /* _KERN_SETTINGS_H */
+#endif /* _FELINE_SETTINGS_H */

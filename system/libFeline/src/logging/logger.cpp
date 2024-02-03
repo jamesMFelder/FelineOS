@@ -3,9 +3,9 @@
 #include <cassert>
 #include <cctype>
 #include <feline/logger.h>
+#include <feline/settings.h>
 #include <feline/shortcuts.h>
 #include <feline/str.h>
-#include <kernel/settings.h>
 
 static inline KStringView relative_path(std::source_location loc) {
 	return &loc.file_name()[LOG_PATH_PREFIX_TRUNCATE_LEN];

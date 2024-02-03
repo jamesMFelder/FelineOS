@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
 
-#include <kernel/settings.h>
+#include <feline/settings.h>
 
 namespace Settings {
 #define _S(type, modifiable, ns, name)                                         \

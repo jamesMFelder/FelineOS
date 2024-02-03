@@ -8,12 +8,12 @@
 #include <feline/bool_int.h>
 #include <feline/fixed_width.h>
 #include <feline/minmax.h>
+#include <feline/settings.h>
 #include <feline/spinlock.h>
 #include <kernel/log.h>
 #include <kernel/mem.h>
 #include <kernel/paging.h>
 #include <kernel/phys_mem.h>
-#include <kernel/settings.h>
 #include <kernel/vtopmem.h>
 
 Spinlock modifying_pmm;

@@ -4,6 +4,7 @@ set(FELINE_OBJS
 	system/libFeline/src/vector/kvector.cpp
 	system/libFeline/src/locking/spinlock.cpp
 	system/libFeline/src/logging/logger.cpp
+	system/libFeline/src/settings/settings.cpp
 	PARENT_SCOPE)
 
 if (${LIBFELINE_ONLY})
