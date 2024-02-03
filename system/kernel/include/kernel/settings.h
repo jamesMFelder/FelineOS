@@ -3,8 +3,16 @@
 #ifndef _KERN_SETTINGS_H
 #define _KERN_SETTINGS_H 1
 
-#include <cstdlib>
 #include <kernel/log.h>
+
+class SettingError {
+	public:
+		SettingError(KStringView message) : msg(message) {}
+		KStringView what() const { return msg; }
+
+	private:
+		KStringView msg;
+};
 
 template <typename T, bool changeable> class Setting {
 	public:
@@ -12,8 +20,7 @@ template <typename T, bool changeable> class Setting {
 		explicit Setting(T &&value) : value(value), initialized(true) {}
 		void initialize(T const &value) {
 			if (initialized) {
-				kCriticalNoAlloc() << "Setting already initialized!";
-				std::abort();
+				throw SettingError("Setting already initialized!"_kstr);
 			}
 			this->value = value;
 			initialized = true;
@@ -22,9 +29,8 @@ template <typename T, bool changeable> class Setting {
 			if (initialized) {
 				return value;
 			} else {
-				kCriticalNoAlloc()
-					<< "Attempt to get value for uninitialized setting!";
-				std::abort();
+				throw SettingError(
+					"Attempt to get value for uninitialized setting!"_kstr);
 			}
 		}
 		void set(T const &value)
