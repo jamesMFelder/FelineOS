@@ -80,7 +80,7 @@ add_library(crts OBJECT ${ARCHDIR}/boot/crti.S ${ARCHDIR}/boot/crtn.S)
 
 add_executable(FelineOS.kernel ${ARCHDIR}/boot/boot.S)
 target_compile_definitions(FelineOS.kernel PRIVATE __is_kernel)
-target_link_libraries(FelineOS.kernel k c feline terminals gcc stdc++ -nostdlib)
+target_link_libraries(FelineOS.kernel k c feline terminals gcc supc++ -nostdlib)
 target_include_directories(FelineOS.kernel PRIVATE system/kernel/include ${ARCHDIR}/include)
 add_dependencies(FelineOS.kernel linkerscript crts)
 target_link_options(FelineOS.kernel PRIVATE -T ${ARCHDIR}/linker.ld)
