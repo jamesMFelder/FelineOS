@@ -1,0 +1,21 @@
+name: LibFeline Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: build-libfeline
+      run: cmake -B build/feline -DLIBFELINE_ONLY=YES -DCMAKE_BUILD_TYPE=Release && cmake --build build/feline
+
+    - name: test-libfeline
+      run: ctest --output-on-failure
+      working-directory: ./build/feline
