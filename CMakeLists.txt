@@ -28,7 +28,7 @@ else()
 	add_compile_options(-ffreestanding)
 endif()
 
-add_compile_options(-Werror -Wall -Wextra -fstack-protector -fno-omit-frame-pointer -fno-rtti -fno-exceptions)
+add_compile_options(-Werror -Wall -Wextra -fstack-protector -fno-omit-frame-pointer -fno-rtti)
 
 add_subdirectory(system/libFeline)
 add_library(feline STATIC ${FELINE_OBJS})

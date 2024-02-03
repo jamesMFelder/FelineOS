@@ -42,21 +42,22 @@ SECTIONS
 	.rodata ALIGN(4K) : AT (ADDR(.rodata) - VA_OFFSET)
 	{
 		*(.rodata*)
+
+		/* Exception stuff */
+		*(.eh_frame_hdr)
+		*(.eh_frame)
+		*(.gcc_except_table)
+        *(.ARM.extab* .gnu.linkonce.armextab.*)
+		__exidx_start = .;
+		*(.ARM.exidx*)
+		QUAD(0)
+		__exidx_end = .;
 	}
 
 	/* Read-write data (initialized) */
 	.data ALIGN(4K) : AT (ADDR(.data) - VA_OFFSET)
 	{
 		*(.data*)
-	}
-
-	.ARM.exidx ALIGN(4) : AT (ADDR(.ARM.exidx) - VA_OFFSET)
-	{
-		__exidx_start = .;
-		*(.eh_frame)
-		*(.ARM.exidx*)
-		QUAD(0)
-		__exidx_end = .;
 	}
 
 	/* Read-write data (uninitialized) and stack */
