@@ -3,16 +3,8 @@
 #ifndef _KERN_SETTINGS_H
 #define _KERN_SETTINGS_H 1
 
+#include <feline/kernel_exceptions.h>
 #include <kernel/log.h>
-
-class SettingError {
-	public:
-		SettingError(KStringView message) : msg(message) {}
-		KStringView what() const { return msg; }
-
-	private:
-		KStringView msg;
-};
 
 template <typename T, bool changeable> class Setting {
 	public:
@@ -20,7 +12,7 @@ template <typename T, bool changeable> class Setting {
 		explicit Setting(T &&value) : value(value), initialized(true) {}
 		void initialize(T const &value) {
 			if (initialized) {
-				throw SettingError("Setting already initialized!"_kstr);
+				throw GenericKernelError("Setting already initialized!"_kstr);
 			}
 			this->value = value;
 			initialized = true;
@@ -29,7 +21,7 @@ template <typename T, bool changeable> class Setting {
 			if (initialized) {
 				return value;
 			} else {
-				throw SettingError(
+				throw GenericKernelError(
 					"Attempt to get value for uninitialized setting!"_kstr);
 			}
 		}
