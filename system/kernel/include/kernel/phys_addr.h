@@ -6,6 +6,7 @@
 #include <compare>
 #include <cstddef>
 #include <cstdint>
+#include <feline/logger.h>
 #include <type_traits>
 
 /* A wrapper for a physical pointer */
@@ -100,6 +101,11 @@ bool operator==(PhysAddr<T> const &first, PhysAddr<U> const &second) {
 template <typename T>
 bool operator==(PhysAddr<T> const &addr, std::nullptr_t ptr) {
 	return addr.unsafe_raw_get() == ptr;
+}
+
+/* Allow outputting */
+template <typename T> inline kout &operator<<(kout &out, PhysAddr<T> ptr) {
+	return out << hex(ptr.as_int());
 }
 
 #endif // _KERNEL_PHYS_ADDR_H

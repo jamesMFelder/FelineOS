@@ -1,6 +1,6 @@
 #include <feline/kvector.h>
 #ifndef LIBFELINE_ONLY
-#include <kernel/log.h>
+#include <feline/logger.h>
 #else
 #include <iostream>
 #endif

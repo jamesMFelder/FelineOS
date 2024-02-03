@@ -7,8 +7,8 @@
 #include <cstring>
 #include <feline/bool_int.h>
 #include <feline/fixed_width.h>
+#include <feline/logger.h>
 #include <feline/minmax.h>
-#include <kernel/log.h>
 #include <kernel/mem.h>
 #include <kernel/paging.h>
 #include <kernel/phys_mem.h>
@@ -116,7 +116,7 @@ int bootstrap_phys_mem_manager(PhysAddr<multiboot_info_t> phys_mbp) {
 	}
 	/* See above hack alert for we we don't use (!found_space) */
 	if (found_space == in_use_location) {
-		kcriticalf("Cannot find enough memory.");
+		kCriticalNoAlloc() << "Cannot find enough memory.";
 		std::abort();
 	}
 
@@ -126,7 +126,8 @@ int bootstrap_phys_mem_manager(PhysAddr<multiboot_info_t> phys_mbp) {
 		map_range(found_space.unsafe_raw_get(), sorted_length,
 	              reinterpret_cast<void **>(&unavailable_memory), 0);
 	if (mapping != map_success) {
-		kcriticalf("Unable to map the needed memory for the PMM boostrapping!");
+		kCriticalNoAlloc()
+			<< "Unable to map the needed memory for the PMM boostrapping!";
 		std::abort();
 	}
 
@@ -219,8 +220,8 @@ int bootstrap_phys_mem_manager(PhysAddr<multiboot_info_t> phys_mbp) {
 				        4_GiB - current_multiboot_memory->addr));
 				++num_unavailable_regions;
 			} else {
-				kwarnf("Ignoring memory region starting at %#llx.",
-				       current_multiboot_memory->addr);
+				kWarning() << "Ignoring memory region starting at "
+						   << current_multiboot_memory->addr;
 			}
 			++new_memory;
 		}
@@ -242,12 +243,12 @@ int bootstrap_phys_mem_manager(PhysAddr<multiboot_info_t> phys_mbp) {
 			// it)
 			if ((current_multiboot_memory->addr) <
 			    ((new_memory - 1)->addr + (new_memory - 1)->len).as_int()) {
-				kcriticalf(
-					"Memory map out of order (new start: %#llx < last end: "
-				    "%#" PRIxPTR
-					"). Sorting required but I haven't coded that yet.",
-					current_multiboot_memory->addr,
-					((new_memory - 1)->addr + (new_memory - 1)->len).as_int());
+				kCriticalNoAlloc()
+					<< "Memory map out of order (new start: "
+					<< current_multiboot_memory->addr << " < last end: "
+					<< ((new_memory - 1)->addr + (new_memory - 1)->len)
+					<< "). Sorting required but I haven't coded that "
+					   "yet";
 			}
 			// check for overlap with unavailable memory (in which case this
 			// region is at least partially invalid)
@@ -262,16 +263,15 @@ int bootstrap_phys_mem_manager(PhysAddr<multiboot_info_t> phys_mbp) {
 				            current_multiboot_memory->len <
 				        (unavailable_memory[i].addr + unavailable_memory[i].len)
 				            .as_int()) {
-					kerrorf(
-						"Available memory region %#llx-%#llx overlaps with "
-					    "unavailable memory region %p-%#" PRIxPTR ".",
-						current_multiboot_memory->addr,
-						current_multiboot_memory->addr +
-							current_multiboot_memory->len,
-						unavailable_memory[i].addr.unsafe_raw_get(),
-						(unavailable_memory[i].addr + unavailable_memory[i].len)
-							.as_int());
-					kerror("Dropping available region.");
+					kError() << "Available memory region "
+							 << current_multiboot_memory->addr << '-'
+							 << current_multiboot_memory->addr +
+									current_multiboot_memory->len
+							 << " overlaps with unavailable memory region "
+							 << unavailable_memory[i].addr << '-'
+							 << unavailable_memory[i].addr +
+									unavailable_memory[i].len
+							 << ". Dropping available region.";
 					should_drop_region = true;
 					break;
 				}

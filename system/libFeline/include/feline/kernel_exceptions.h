@@ -22,7 +22,7 @@ class FelineError {
 
 #else
 
-#include <kernel/log.h>
+#include <feline/logger.h>
 
 [[noreturn]] void inline report_fatal_error(KStringView const &err) {
 	kCritical() << err;

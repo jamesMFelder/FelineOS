@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2023 James McNaughton Felder
 
-#include <kernel/log.h>
+#include <feline/logger.h>
 #include <sys/syscall.h>
 
 // FIXME: terminate process instead of the kernel
