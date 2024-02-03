@@ -24,7 +24,7 @@ class KStringView {
 		constexpr KStringView() : characters(nullptr), len(0) {}
 		constexpr KStringView(char const *characters, size_t len)
 			: characters(characters), len(len) {}
-		constexpr KStringView(char const *characters)
+		KStringView(char const *characters)
 			: characters(characters), len(strlen(characters)) {}
 		constexpr KStringView(KStringView const &other) { *this = other; }
 		constexpr KStringView &operator=(KStringView const &other) {
