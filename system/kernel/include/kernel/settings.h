@@ -12,7 +12,7 @@ template <typename T, bool changeable> class Setting {
 		explicit Setting(T &&value) : value(value), initialized(true) {}
 		void initialize(T const &value) {
 			if (initialized) {
-				throw GenericKernelError("Setting already initialized!"_kstr);
+				report_fatal_error("Setting already initialized!"_kstr);
 			}
 			this->value = value;
 			initialized = true;
@@ -21,7 +21,7 @@ template <typename T, bool changeable> class Setting {
 			if (initialized) {
 				return value;
 			} else {
-				throw GenericKernelError(
+				report_fatal_error(
 					"Attempt to get value for uninitialized setting!"_kstr);
 			}
 		}

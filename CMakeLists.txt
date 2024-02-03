@@ -25,7 +25,7 @@ else()
 	else()
 		message(FATAL_ERROR "Unknown architecture " ${CMAKE_SYSTEM_PROCESSOR} ", expected i686 or arm")
 	endif()
-	add_compile_options(-ffreestanding)
+	add_compile_options(-ffreestanding -fno-exceptions)
 endif()
 
 add_compile_options(-Werror -Wall -Wextra -fstack-protector -fno-omit-frame-pointer -fno-rtti)

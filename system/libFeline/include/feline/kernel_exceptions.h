@@ -5,13 +5,30 @@
 
 #include <feline/kstring.h>
 
-class GenericKernelError {
+#ifdef LIBFELINE_ONLY
+
+class FelineError {
 	public:
-		GenericKernelError(KStringView message) : msg(message) {}
+		FelineError(KStringView message) : msg(message) {}
 		KStringView what() const { return msg; }
 
 	private:
 		KStringView msg;
 };
+
+[[noreturn]] void inline report_fatal_error(KStringView const &err) {
+	throw FelineError(err);
+}
+
+#else
+
+#include <kernel/log.h>
+
+[[noreturn]] void inline report_fatal_error(KStringView const &err) {
+	kCritical() << err;
+	std::abort();
+}
+
+#endif
 
 #endif /* FELINE_KERNEL_EXCEPTIONS_H */
