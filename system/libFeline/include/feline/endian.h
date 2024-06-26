@@ -9,10 +9,17 @@
  *   with different endiannesses.
  */
 
+#include <cstddef>
 #include <feline/reverse_endian.h>
 
 template <EndianReverseable T> class native_endian {
 	public:
+		constexpr inline native_endian(const std::byte value[sizeof(T)])
+			: value(*reinterpret_cast<T *>(value)) {}
+
+		constexpr inline native_endian(std::byte value[sizeof(T)])
+			: value(*reinterpret_cast<T *>(value)) {}
+
 		constexpr inline operator T() const { return value; };
 
 	private:
@@ -21,6 +28,12 @@ template <EndianReverseable T> class native_endian {
 
 template <EndianReverseable T> class nonnative_endian {
 	public:
+		constexpr inline nonnative_endian(const std::byte value[sizeof(T)])
+			: value(*reinterpret_cast<T *>(value)) {}
+
+		constexpr inline nonnative_endian(std::byte value[sizeof(T)])
+			: value(*reinterpret_cast<T *>(value)) {}
+
 		constexpr inline operator T() const { return reverse_endian(value); };
 
 	private:
