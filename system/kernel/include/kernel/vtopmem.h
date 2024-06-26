@@ -28,7 +28,6 @@
 /* Return the value at addr in physical memory, aborting if an error occurs */
 template <class T> T read_pmem(PhysAddr<T> const addr) {
 	T *tmp_ptr;
-	T value;
 	// TODO: should volatile T imply MAP_DEVICE
 	map_results type_mapping =
 		map_range(addr.unsafe_raw_get(), sizeof(T),
@@ -38,7 +37,7 @@ template <class T> T read_pmem(PhysAddr<T> const addr) {
 		        addr.unsafe_raw_get(), type_mapping);
 		std::abort();
 	}
-	value = *tmp_ptr;
+	T value = *tmp_ptr;
 	unmap_range(tmp_ptr, sizeof(T), 0);
 	return value;
 }
