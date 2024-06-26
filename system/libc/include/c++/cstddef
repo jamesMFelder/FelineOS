@@ -6,6 +6,8 @@
 /* Just dump the definitions in the global namespace */
 #include "stddef.h"
 
+#include <bits/byte.h>
+
 /* Including a c++ header means functions are in the std namespace */
 namespace std {
 
