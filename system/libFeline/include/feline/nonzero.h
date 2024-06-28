@@ -3,7 +3,6 @@
 #ifndef FELINE_NONZERO_H
 #define FELINE_NONZERO_H 1
 
-#include <cstdlib>
 #include <feline/kernel_exceptions.h>
 #include <type_traits>
 

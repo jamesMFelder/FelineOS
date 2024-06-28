@@ -4,7 +4,6 @@
 #include <feline/kernel_exceptions.h>
 #include <feline/nonzero.h>
 #include <feline/tests.h>
-#include <type_traits>
 
 int main() {
 	NonZero<unsigned> one = 1;
