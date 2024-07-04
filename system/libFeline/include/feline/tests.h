@@ -4,9 +4,13 @@
 #ifndef FELINE_TESTS_H
 #define FELINE_TESTS_H 1
 
-#ifdef LIBFELINE_ONLY
+#include "kstring.h"
+#include "logger.h"
 #include "settings.h"
 #include <cstdlib>
+#include <initializer_list>
+
+#ifdef LIBFELINE_ONLY
 #include <iostream>
 
 inline void initialize_loggers() {
@@ -22,20 +26,22 @@ inline void initialize_loggers() {
 		[](char const *str, size_t len) { std::clog.write(str, len); });
 };
 
+#endif // LIBFELINE_ONLY
+
 template <typename T, typename Allocator>
-std::ostream &operator<<(std::ostream &output, std::vector<T, Allocator> vec) {
+inline kout &operator<<(kout &output, std::vector<T, Allocator> vec) {
 	output << '[';
 	if (!empty(vec)) {
-		output << *vec.begin();
-		std::for_each(vec.begin() + 1, vec.end(),
-		              [&output](const T value) { output << ", " << value; });
+		output << *begin(vec);
+		std::for_each(begin(vec) + 1, end(vec),
+		              [&output](const T &value) { output << ", " << value; });
 	}
 	output << ']';
 	return output;
 }
 
 template <typename T>
-std::ostream &operator<<(std::ostream &output, std::initializer_list<T> list) {
+kout &operator<<(kout &output, std::initializer_list<T> list) {
 	output << '[';
 	if (!empty(list)) {
 		output << *list.begin();
@@ -45,6 +51,18 @@ std::ostream &operator<<(std::ostream &output, std::initializer_list<T> list) {
 	output << ']';
 	return output;
 }
+
+#define OUTPUT_PTR(type)                                                       \
+	inline kout &operator<<(kout &output, type const *pointer) {               \
+		return output << ptr(pointer);                                         \
+	}
+
+OUTPUT_PTR(uint8_t)
+OUTPUT_PTR(uint16_t)
+OUTPUT_PTR(uint32_t)
+OUTPUT_PTR(uint64_t)
+
+#undef OUTPUT_PTR
 
 template <typename T, typename Allocator>
 bool operator==(std::vector<T, Allocator> vec, std::initializer_list<T> list) {
@@ -57,18 +75,14 @@ bool operator!=(std::vector<T, Allocator> vec, std::initializer_list<T> list) {
 }
 
 template <typename A, typename B>
-void require_eq(A a, std::string_view a_str, B b, std::string_view b_str) {
+void require_eq(A a, KStringView a_str, B b, KStringView b_str) {
 	if (a != b) {
-		std::clog << "FAILED " << a_str << "==" << b_str << " (got " << a
-				  << "==" << b << ")" << std::endl;
+		kCritical() << "FAILED " << a_str << "==" << b_str << " (got " << a
+					<< "==" << b << ")";
 		exit(EXIT_FAILURE);
 	}
 }
 
 #define REQUIRE_EQ(a, b) require_eq(a, #a, b, #b);
-
-#else
-#error "Freestanding output for tests not figured out yet!"
-#endif
 
 #endif /* FELINE_TESTS_H */

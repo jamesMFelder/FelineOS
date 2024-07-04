@@ -7,6 +7,7 @@
 #include <limits>
 
 int main() {
+	initialize_loggers();
 	// Testing round_up_to_alignment with uintptr and void* with an explicit
 	// alignment. Also the template that rounds up to natural alignment
 	const uintptr_t zero = 0;
@@ -24,9 +25,10 @@ int main() {
 	// Detecting existence of overload from
 	// https://www.cppstories.com/2019/07/detect-overload-from-chars/
 	if constexpr (!requires(void *addr) { round_up_to_alignment(addr); }) {
-		std::clog << "Void should not have a natural alignment, thus "
-					 "round_up_to_alignment should need an explicit alignment "
-					 "with it!";
+		kCritical()
+			<< "Void should not have a natural alignment, thus "
+			   "round_up_to_alignment should need an explicit alignment "
+			   "with it!";
 		return 1;
 	}
 	REQUIRE_EQ(round_up_to_alignment(0x1, sizeof(uint8_t)), 0x1ul);

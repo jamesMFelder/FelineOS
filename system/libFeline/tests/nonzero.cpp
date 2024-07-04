@@ -6,6 +6,7 @@
 #include <feline/tests.h>
 
 int main() {
+	initialize_loggers();
 	NonZero<unsigned> one = 1;
 	REQUIRE_EQ(one, 1u);
 
@@ -14,7 +15,7 @@ int main() {
 		NonZero<unsigned> zero [[maybe_unused]] = 0;
 		return 1;
 	} catch (FelineError &e) {
-		std::cout << e.what().data() << std::endl;
+		kLog() << e.what();
 	}
 	return 0;
 }

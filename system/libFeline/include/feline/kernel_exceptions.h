@@ -3,14 +3,15 @@
 #ifndef FELINE_KERNEL_EXCEPTIONS_H
 #define FELINE_KERNEL_EXCEPTIONS_H 1
 
+#include <exception>
 #include <feline/kstring.h>
 
 #ifdef LIBFELINE_ONLY
 
-class FelineError {
+class FelineError : std::exception {
 	public:
 		FelineError(KStringView message) : msg(message) {}
-		KStringView what() const { return msg; }
+		char const *what() const noexcept { return msg.data(); }
 
 	private:
 		KStringView msg;
