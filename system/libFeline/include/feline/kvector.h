@@ -22,9 +22,10 @@ template <typename T, typename Allocator> class KVector {
 		using iterator = T *;
 		using const_iterator = T const *;
 
-		constexpr KVector() : items(nullptr), num_items(0), capacity(0), a() {}
+		constexpr KVector()
+			: items(nullptr), num_items(0), m_capacity(0), a() {}
 		constexpr KVector(pointer items, size_t size)
-			: items(items), num_items(size), capacity(size), a() {}
+			: items(items), num_items(size), m_capacity(size), a() {}
 
 		constexpr reference get(size_t index) {
 			check_index(index, num_items);
@@ -49,6 +50,7 @@ template <typename T, typename Allocator> class KVector {
 			items[index] = item;
 		};
 
+		constexpr size_t capacity() const { return m_capacity; }
 		constexpr size_t size() const { return num_items; }
 		constexpr pointer data() { return items; }
 		constexpr const_pointer data() const { return items; }
@@ -59,14 +61,15 @@ template <typename T, typename Allocator> class KVector {
 			}
 			auto new_items = a.allocate(num);
 			items &&std::copy(begin(*this), end(*this), new_items);
-			a.deallocate(items, capacity);
-			capacity = num;
+			a.deallocate(items, m_capacity);
+			m_capacity = num;
 			items = new_items;
 		}
 
-		void append(value_type item) { append(KVector(&item, 1)); }
+		void push_back(value_type item) { append(item, 1); }
+		void append(value_type item) { append(item, 1); }
 		void append(value_type item, size_t count) {
-			if (capacity < (num_items + count) || !items) {
+			if (m_capacity < (num_items + count) || !items) {
 				reserve(num_items + count);
 			}
 			for (size_t i = 0; i < count; ++i) {
@@ -81,7 +84,7 @@ template <typename T, typename Allocator> class KVector {
 			append(KVector<T const, Allocator>(other, len));
 		}
 		void append(KVector<T, Allocator> other) {
-			if (capacity < (num_items + other.size()) || !items) {
+			if (m_capacity < (num_items + other.size()) || !items) {
 				reserve(num_items + other.size());
 			}
 			std::copy(begin(other), end(other), &items[num_items]);
@@ -90,7 +93,7 @@ template <typename T, typename Allocator> class KVector {
 		void append(KVector<T const, Allocator> other)
 			requires(std::is_same_v<std::remove_const_t<T>, T>)
 		{
-			if (capacity < (num_items + other.size()) || !items) {
+			if (m_capacity < (num_items + other.size()) || !items) {
 				reserve(num_items + other.size());
 			}
 			std::copy(begin(other), end(other), &items[num_items]);
@@ -129,10 +132,19 @@ template <typename T, typename Allocator> class KVector {
 			return last;
 		}
 
+		constexpr void clear() {
+			if constexpr (requires { items->~value_type; }) {
+				for (auto *elem : this) {
+					elem->~value_type();
+				}
+			}
+			num_items = 0;
+		}
+
 	private:
 		pointer items;
 		size_t num_items;
-		size_t capacity;
+		size_t m_capacity;
 		Allocator a;
 };
 
