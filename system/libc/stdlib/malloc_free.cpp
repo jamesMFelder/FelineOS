@@ -40,7 +40,7 @@ static void split_header(Header *&current_header, size_t split) {
 	if (current_header->len < split + sizeof(Header)) {
 		std::abort();
 	}
-	Header *new_header = reinterpret_cast<Header *>(
+	auto *new_header = reinterpret_cast<Header *>(
 		reinterpret_cast<uintptr_t>(current_header) + split + sizeof(Header));
 	new_header->next = current_header->next;
 	new_header->prev = current_header;
@@ -69,7 +69,7 @@ static void split_header(Header *&current_header, size_t split) {
 	static_assert(false, "Memory-allocation syscall not setup yet!");
 #endif // __is_libk (else)
 	/* If we get here, hdr was initialized in the call to get_mem */
-	/* cppcheck-suppress legacyUninitvar */
+	/* cppcheck-suppress uninitvar */
 	hdr->next = nullptr;
 	hdr->prev = nullptr;
 	hdr->len = DEFAULT_MEMRESERVE_SIZE - sizeof(Header);

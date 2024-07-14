@@ -7,7 +7,6 @@
 #include <cstddef>
 #include <cstdlib>
 #include <limits>
-#include <optional>
 
 void *get_memory(size_t min_len);
 void return_memory(void *addr, size_t len);
