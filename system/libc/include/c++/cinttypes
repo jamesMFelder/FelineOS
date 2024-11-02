@@ -4,9 +4,9 @@
 #define _CINTTYPES 1
 
 /* We're allowed to include this! */
-#include <cstdint>
+#include <cstdint> // IWYU pragma: export (required by the standard)
 
 /* Just dump the definitions in the global namespace */
-#include "inttypes.h"
+#include "inttypes.h" // IWYU pragma: export (no need to redefine the macros here)
 
 #endif /* _CINTTYPES */
