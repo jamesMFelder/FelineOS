@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
+#include "kernel/mem.h"
+#include "kernel/paging.h"
 #include <cstddef>
 #include <drivers/serial.h>
 #include <feline/fixed_width.h>
@@ -40,6 +42,11 @@ struct pl011 {
  * for use in the I/O space, turn the 0x20 prefix into 0x7E
  * */
 static struct pl011 *serial_port = reinterpret_cast<pl011 *>(0x2020'1000);
+
+map_results map_serial() {
+	return map_range(reinterpret_cast<void *>(0x2020'1000), sizeof(pl011),
+	                 reinterpret_cast<void **>(&serial_port), MAP_DEVICE);
+}
 
 static void set(pl011_reg &reg, uint32_t const value) { reg = value; }
 

@@ -34,8 +34,7 @@ static void screen_init(multiboot_info_t mbp) {
 		break;
 	case MULTIBOOT_FRAMEBUFFER_TYPE_EGA_TEXT:
 		vga_is_text = true;
-		map_range(reinterpret_cast<void *>(0xb8000), 160 * 25,
-		          reinterpret_cast<void *>(0xb8000), 0);
+		term.init(reinterpret_cast<vga_text_char *>(0xB8000));
 		return;
 	}
 	vga_is_text = false;

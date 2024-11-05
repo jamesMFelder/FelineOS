@@ -3,19 +3,21 @@
 
 #include <cctype>
 #include <cstring>
+#include <kernel/paging.h>
 #include <terminals/vga/vga_text.h>
 
 unsigned char terminal::maxX = VGA_TEXT_WIDTH;
 unsigned char terminal::maxY = VGA_TEXT_HEIGHT;
 
-/* Pointer to the video memory */
-vga_text_char *vga_text_term::vga_hardware_mem =
-	reinterpret_cast<vga_text_char *>(0xB8000ul);
-
 vga_text_term::vga_text_term() {}
 
 /* TODO: clear screen at end? */
 vga_text_term::~vga_text_term() {}
+
+int vga_text_term::init(vga_text_char *addr) {
+	return map_range(addr, VGA_TEXT_WIDTH * VGA_TEXT_HEIGHT,
+	                 reinterpret_cast<void **>(&vga_hardware_mem), MAP_DEVICE);
+}
 
 /* Clear the screen */
 void vga_text_term::clear() {

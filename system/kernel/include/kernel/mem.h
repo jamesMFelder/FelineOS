@@ -3,6 +3,7 @@
 #ifndef _KERN_MEM_H
 #define _KERN_MEM_H 1
 
+#include <cstddef>
 #include <cstdint>
 #include <feline/fixed_width.h>
 
@@ -99,18 +100,17 @@ enum mem_results {
 	                 */
 };
 
-mem_results get_mem_from(void *phys_addr, void **new_virt_addr, uintptr_t len);
-mem_results get_mem_at(void *virt_addr, uintptr_t len);
-mem_results get_mem(void **new_virt_addr, uintptr_t len);
-mem_results free_mem(void *addr, uintptr_t len);
+mem_results get_mem_from(void *phys_addr, void **new_virt_addr, size_t len);
+mem_results get_mem(void **new_virt_addr, size_t len);
+mem_results free_mem(void *addr, size_t len);
 
 /* Aquire len unused bytes */
-pmm_results get_mem_area(void **addr, uintptr_t len);
+pmm_results get_mem_area(void **addr, size_t len);
 /* Reserve len unused bytes from addr (if available) */
-pmm_results get_mem_area(void const *const addr, uintptr_t len);
+pmm_results get_mem_area(void const *const addr, size_t len);
 
 /* Return len bytes starting at addr(TODO: keep track of who can free what) */
-pmm_results free_mem_area(void const *const addr, uintptr_t len);
+pmm_results free_mem_area(void const *const addr, size_t len);
 
 /* Utility function to turn a number of bytes into a number of pages */
 /* Just a division rounding up with overflow checking. */

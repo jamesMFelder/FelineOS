@@ -3,7 +3,6 @@
 #ifndef _TERMINAL_H
 #define _TERMINAL_H 1
 
-#include <cstddef>
 #include <cstdint>
 
 typedef struct term_color {

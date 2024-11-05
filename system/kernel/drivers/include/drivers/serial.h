@@ -9,6 +9,13 @@
 /* Setup the serial port (ASM because of emergency at initialization
  * possibility) */
 ASM int init_serial();
+
+#ifdef __arm__
+/* Create a virtual memory mapping for the serial port (only needed on ARM) */
+#include <kernel/mem.h>
+map_results map_serial();
+#endif // __arm__
+
 /* Read a character from the serial port */
 char read_serial();
 /* Write a character to the serial port */

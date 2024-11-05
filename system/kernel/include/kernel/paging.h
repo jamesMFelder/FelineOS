@@ -3,25 +3,19 @@
 #ifndef _KERN_PAGING_H
 #define _KERN_PAGING_H 1
 
+#include <cstddef>
 #include <cstdint>
 #include <feline/fixed_width.h>
 #include <kernel/asm_compat.h>
 #include <kernel/mem.h>
 
-// TODO: take size_t instead of uintptr_t for length
-/* Map len bytes from phys_addr to virt_addr */
-map_results map_range(void const *const phys_addr, uintptr_t len,
-                      void const *const virt_addr, unsigned int opts);
 /* Map len bytes from phys_addr to any free virtual address */
-map_results map_range(void const *const phys_addr, uintptr_t len,
-                      void **virt_addr, unsigned int opts);
-/* Map len bytes from anywhere to virt_addr */
-map_results map_range(uintptr_t len, void const *const virt_addr,
+map_results map_range(void const *const phys_addr, size_t len, void **virt_addr,
                       unsigned int opts);
 /* Map len bytes from anywhere to any free virtual address */
-map_results map_range(uintptr_t len, void **virt_addr, unsigned int opts);
+map_results map_range(uintptr_t len, void **virt_addr, size_t opts);
 /* Unmap all the pages from virt_addr to virt_addr+len */
-map_results unmap_range(void const *const virt_addr, uintptr_t len,
+map_results unmap_range(void const *const virt_addr, size_t len,
                         unsigned int opts);
 
 /* tells unmap_{page,range} to deallocate the memory from the pmm */

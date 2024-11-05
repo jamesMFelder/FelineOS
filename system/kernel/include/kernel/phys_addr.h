@@ -3,7 +3,6 @@
 #ifndef _KERNEL_PHYS_ADDR_H
 #define _KERNEL_PHYS_ADDR_H
 
-#include <compare>
 #include <cstddef>
 #include <cstdint>
 #include <feline/logger.h>
@@ -12,11 +11,11 @@
 /* A wrapper for a physical pointer */
 template <class T> class PhysAddr {
 	public:
-		PhysAddr(std::nullptr_t) : ptr(nullptr){};
+		PhysAddr(std::nullptr_t) : ptr(nullptr) {};
 
 		/* Create a PhysPtr<T> from a uintptr_t */
 		explicit PhysAddr(uintptr_t int_ptr)
-			: ptr(reinterpret_cast<T *>(int_ptr)){};
+			: ptr(reinterpret_cast<T *>(int_ptr)) {};
 
 		/* Assign from a uintptr_t */
 		PhysAddr &operator=(uintptr_t other) {
@@ -28,7 +27,7 @@ template <class T> class PhysAddr {
 		 * It's safe because we don't dereference the value,
 		 * and immediately put it behind another UserPtr */
 		PhysAddr(PhysAddr<void> &other)
-			: ptr(static_cast<T *>(other.unsafe_raw_get())){};
+			: ptr(static_cast<T *>(other.unsafe_raw_get())) {};
 
 		/* Create PhysPtr<void> from PhysPtr<U>.
 		 * It's safe because we don't dereference the value,
@@ -39,7 +38,7 @@ template <class T> class PhysAddr {
 			: ptr(static_cast<void *>(other.unsafe_raw_get())){};
 
 		/* Copy constructor and operator */
-		PhysAddr(PhysAddr const &other) : ptr(other.unsafe_raw_get()){};
+		PhysAddr(PhysAddr const &other) : ptr(other.unsafe_raw_get()) {};
 		PhysAddr &operator=(PhysAddr const &other) {
 			ptr = other.unsafe_raw_get();
 			return *this;

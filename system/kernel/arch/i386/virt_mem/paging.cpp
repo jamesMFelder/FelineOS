@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
 #include <cassert>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <feline/spinlock.h>
@@ -133,12 +134,12 @@ inline void *get_virt_addr(unsigned int const pdindex,
 
 /* Check if needed pages are free starting at virt_addr_base */
 /* Don't call this function if you haven't locked `modifying_page_tables` */
-bool free_from_here(page virt_addr_base, uintptr_t needed);
-bool free_from_here(page *virt_addr_base, uintptr_t needed);
+bool free_from_here(page virt_addr_base, size_t needed);
+bool free_from_here(page *virt_addr_base, size_t needed);
 
 /* Find len bytes of unmapped memory */
 /* Don't call this function if you haven't locked `modifying_page_tables` */
-void *find_free_virtmem(uintptr_t len);
+void *find_free_virtmem(size_t len);
 
 /* Map phys_addr to virt_addr */
 /* Don't call this function if you haven't locked `modifying_page_tables` */
@@ -210,7 +211,7 @@ page_table_entry *create_new_page_table() {
  * than what it was */
 /*	or 0 if it would wrap around */
 /* lock modifying_page_tables before calling this */
-bool free_from_here(page *virt_addr_base, uintptr_t needed) {
+bool free_from_here(page *virt_addr_base, size_t needed) {
 	/* If we would overflow */
 	/* read as (virt_addr_base->getInt()+needed >= MAX_VIRT_MEM) that actually
 	 * checks for overflow */
@@ -234,12 +235,12 @@ bool free_from_here(page *virt_addr_base, uintptr_t needed) {
 	return true;
 }
 /* Same as above, except doesn't modify virt_addr_base */
-bool free_from_here(page virt_addr_base, uintptr_t needed) {
+bool free_from_here(page virt_addr_base, size_t needed) {
 	return free_from_here(&virt_addr_base, needed);
 }
 
 /* Find len bytes of unmapped memory */
-void *find_free_virtmem(uintptr_t len) {
+void *find_free_virtmem(size_t len) {
 	/* Loop through all of the virtual memory */
 	for (page base = 4_KiB;
 	     base.getInt() < (MAX_VIRT_MEM - PHYS_MEM_CHUNK_SIZE) && !base.isNull();
@@ -311,8 +312,7 @@ map_results map_page(page const phys_addr, page const virt_addr,
 
 /* Map len bytes from phys_addr to virt_addr (internal use only) */
 /* Don't call this function if you haven't locked `modifying_page_tables` */
-static map_results internal_map_range(void const *const phys_addr,
-                                      uintptr_t len,
+static map_results internal_map_range(void const *const phys_addr, size_t len,
                                       void const *const virt_addr,
                                       unsigned int opts) {
 	/* Verify correct alignment */
@@ -372,19 +372,9 @@ static map_results internal_map_range(void const *const phys_addr,
 	return map_already_mapped;
 }
 
-/* Mapping a range with phys_addr and virt_addr specified */
-map_results map_range(void const *const phys_addr, uintptr_t len,
-                      void const *const virt_addr, unsigned int opts) {
-	/* Synchronize access */
-	modifying_page_tables.aquire_lock();
-	map_results temp = internal_map_range(phys_addr, len, virt_addr, opts);
-	modifying_page_tables.release_lock();
-	return temp;
-}
-
 /* Mapping a range with only phys_addr specified */
-map_results map_range(void const *const phys_addr, uintptr_t len,
-                      void **virt_addr, unsigned int opts) {
+map_results map_range(void const *const phys_addr, size_t len, void **virt_addr,
+                      unsigned int opts) {
 	modifying_page_tables.aquire_lock();
 	/* Round up, instead of down. */
 	len += page_offset(phys_addr);
@@ -400,30 +390,8 @@ map_results map_range(void const *const phys_addr, uintptr_t len,
 	return temp;
 }
 
-/* Mapping a range with only virt_addr specified */
-map_results map_range(uintptr_t len, void const *const virt_addr,
-                      unsigned int opts) {
-	modifying_page_tables.aquire_lock();
-	void *phys_addr;
-	/* attempt to get the physical memory */
-	pmm_results attempt = get_mem_area(&phys_addr, len);
-	/* if we are out */
-	if (attempt == pmm_nomem) {
-		modifying_page_tables.release_lock();
-		/* return the error */
-		return map_no_physmem;
-	}
-	/* Set it to the correct offset in the page */
-	phys_addr = reinterpret_cast<void *>(
-		reinterpret_cast<uintptr_t>(phys_addr) + page_offset(virt_addr));
-	map_results temp;
-	temp = internal_map_range(phys_addr, len, virt_addr, opts);
-	modifying_page_tables.release_lock();
-	return temp;
-}
-
 /* Mapping a range with nothing specified */
-map_results map_range(uintptr_t len, void **virt_addr, unsigned int opts) {
+map_results map_range(size_t len, void **virt_addr, unsigned int opts) {
 	modifying_page_tables.aquire_lock();
 	*virt_addr = find_free_virtmem(len);
 	if (*virt_addr == nullptr) {
@@ -463,7 +431,7 @@ map_results unmap_page(page const virt_addr,
 	}
 }
 
-map_results unmap_range(void const *const virt_addr, uintptr_t len,
+map_results unmap_range(void const *const virt_addr, size_t len,
                         unsigned int opts [[maybe_unused]]) {
 	modifying_page_tables.aquire_lock();
 	/* Loop through */

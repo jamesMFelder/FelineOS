@@ -1,9 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
 
+#include "feline/logger.h"
+#include "kernel/halt.h"
 #include "mem/mem.h"
 #include <cinttypes>
-#include <cstdlib>
 #include <cstring>
 #include <drivers/framebuffer.h>
 #include <drivers/serial.h>
@@ -23,6 +24,7 @@ static void screen_init() {}
    Turn on the serial port before we log anything
    Setup the IDT before any errors can occur
    Take control of paging (start the VMM) before the PMM or devicetree need it
+   Re-enable the serial port ASAP once the physical address will no-longer work
    Setup the device tree before the PMM
    Initialize the framebuffer
 Flexibility:
@@ -41,7 +43,10 @@ int early_boot_setup(uintptr_t devicetree_header_addr) {
 	Settings::Logging::debug.initialize(write_serial);
 	idt_init(); /* Actually display an error if we have a problem: don't just
 	               triple fault */
-	setup_paging(); /* Take control of it from the assembly! */
+	if (setup_paging() != 0) {
+		kCriticalNoAlloc() << "Error enabling paging! Halting now!";
+		halt();
+	} /* Take control of it from the assembly! */
 	bootstrap_phys_mem_manager(
 		devicetree); /* Get the physical memory manager working */
 	screen_init();   /* Initialize the framebuffer */

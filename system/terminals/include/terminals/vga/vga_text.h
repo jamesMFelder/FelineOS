@@ -3,7 +3,6 @@
 #ifndef _TERMINAL_VGA_TEXT_H
 #define _TERMINAL_VGA_TEXT_H 1
 
-#include <cstddef>
 #include <cstdint>
 #include <terminals/terminal.h>
 
@@ -52,6 +51,9 @@ class vga_text_term : public terminal {
 		vga_text_term();
 		~vga_text_term();
 
+		/* Initialize */
+		int init(vga_text_char *addr);
+
 		/* utility functions */
 		void clear();
 		void reset();
@@ -69,7 +71,7 @@ class vga_text_term : public terminal {
 
 	private:
 		/* Pointer to the video memory */
-		static vga_text_char *vga_hardware_mem;
+		vga_text_char *vga_hardware_mem;
 
 		/* Color */
 		uint8_t color;
