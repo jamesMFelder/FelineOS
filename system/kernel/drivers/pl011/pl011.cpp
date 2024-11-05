@@ -3,8 +3,11 @@
 #include "kernel/mem.h"
 #include "kernel/paging.h"
 #include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 #include <drivers/serial.h>
 #include <feline/fixed_width.h>
+#include <limits>
 
 typedef uint32_t volatile pl011_reg;
 
@@ -56,85 +59,81 @@ static bool is_set(pl011_reg const &reg, unsigned which_bit) {
 	return reg & (0b1 << which_bit);
 }
 
+namespace magic_numbers {
+constexpr uint32_t disable_all = 0;
+namespace brd {
+/* Set to 115200 baud (with a 48MHz uart clock
+ * [https://forums.raspberrypi.com/viewtopic.php?t=226881#p1391755]) */
+constexpr uint32_t clock_speed = 48 * 1'000'000;
+constexpr float baud = 115200;
+constexpr float baud_rate_divisor = clock_speed / (16 * baud);
+constexpr uint16_t ibrd = static_cast<uint16_t>(baud_rate_divisor);
+constexpr uint8_t fbrd = (baud_rate_divisor - ibrd) * 64 + 0.5;
+} // namespace brd
+namespace cr {
+constexpr uint32_t enable = 1 << 0;
+constexpr uint32_t loopback = 1 << 7;
+constexpr uint32_t transmit = 1 << 8;
+constexpr uint32_t receive = 1 << 9;
+constexpr uint32_t hw_flow_control_rx = 1 << 14;
+constexpr uint32_t hw_flow_control_tx = 1 << 15;
+} // namespace cr
+namespace imsc {
+constexpr uint32_t CTSMIM = 1 << 1; // TODO: why did I enable this?
+constexpr uint32_t RXIM = 1 << 4;   // receive interrupt
+constexpr uint32_t TXIM = 1 << 5;   // transmit interrupt
+constexpr uint32_t RTIM = 1 << 4;   // receive timeout
+constexpr uint32_t FEIM = 1 << 4;   // framing error
+} // namespace imsc
+namespace lcr {
+constexpr uint32_t FIFO = 1 << 4;
+constexpr uint32_t WORD_LEN = (std::numeric_limits<char>::digits - 5) << 5;
+} // namespace lcr
+} // namespace magic_numbers
+
 int init_serial() {
 	/* Disable the mini UART */
-	set(serial_port->cr, 0b0);
+	set(serial_port->cr, magic_numbers::disable_all);
 	/* Disable all interrupts */
-	set(serial_port->imsc, 0b000011110010);
-	//                       ┃┃┃┃┃┃┃┃┃┃┃┗━ unsupported (write 0)
-	//                       ┃┃┃┃┃┃┃┃┃┃┗━━ uartcts modem
-	//                       ┃┃┃┃┃┃┃┃┗┻━━━ unsupported [drsmim and dcdmim]
-	//                       (write 0) ┃┃┃┃┃┃┗┻━━━━━ receive and transmit
-	//                       ┃┃┃┃┃┗━━━━━━━ receive timeout
-	//                       ┃┃┃┃┗━━━━━━━━ framing error
-	//                       ┃┃┃┗━━━━━━━━━ parity error
-	//                       ┃┃┗━━━━━━━━━━ break error
-	//                       ┃┗━━━━━━━━━━━ overrun error
-	//                       ┗━━━━━━━━━━━━ reserved for this and all more
-	//                       significant bits (write 0)
+	set(serial_port->imsc,
+	    magic_numbers::imsc::CTSMIM | magic_numbers::imsc::RXIM |
+	        magic_numbers::imsc::TXIM | magic_numbers::imsc::RTIM |
+	        magic_numbers::imsc::FEIM);
 	/* Clear all old interrupts */
 	set(serial_port->icr,
-	    0b0); /* Everything is either "write 0 to clear", "unsupported - write
-	             0" or "reserved - write 0" */
+	    magic_numbers::disable_all); /* Everything is either "write 0 to clear",
+	                                    "unsupported - write 0" or "reserved -
+	                                    write 0" */
 	/* Set sending rate to highest possible */
-	/* Set to 115200 baud (with a 48MHz uart clock
-	 * [https://forums.raspberrypi.com/viewtopic.php?t=226881#p1391755]) */
-	/* Baud Rate Divisor=(48*10^6)/(16*115200)=26.041666*/
-	/* BRD[i]=26 */
-	/* BRD[f]=integer((0.041666*64)+0.5)=3*/
-	set(serial_port->ibrd, 26);
-	set(serial_port->fbrd, 3);
+	set(serial_port->ibrd, magic_numbers::brd::ibrd);
+	set(serial_port->fbrd, magic_numbers::brd::fbrd);
 	/* General setup */
+	set(serial_port->lcrh,
+	    magic_numbers::lcr::FIFO | magic_numbers::lcr::WORD_LEN);
 	set(serial_port->lcrh, 0b001110000);
-	//                       ┃┃┃┃┃┃┃┃┗━ don't send break
-	//                       ┃┃┃┃┃┃┃┗━━ disable parity
-	//                       ┃┃┃┃┃┃┗━━━  set parity type to odd(0) or even(1)
-	//                       (doesn't matter when disabled) ┃┃┃┃┃┗━━━━ only send
-	//                       one stop bit ┃┃┃┃┗━━━━━ enable FIFOs ┃┃┗┻━━━━━━ 8
-	//                       bits per word ┃┗━━━━━━━━ disable stick parity (what
-	//                       is it?) ┗━━━━━━━━━ reserved for this and all more
-	//                       significant bits (write 0)
 	/* Enable the UART in loopback mode */
-	// set(serial_port->cr, 0b01100001110000001);
-	//                        ┃┃┃┃┃?┃┃┃┃┃┃┃┃┃┃┗━ enable the UART
-	//                        ┃┃┃┃┃┃┃┃┃┃┃┃┃┃┗┻━━ unsupported (write 0)
-	//                        ┃┃┃┃┃┃┃┃┃┃┗┻┻┻━━━━ reserved (write 0)
-	//                        ┃┃┃┃┃┃┃┃┃┗━━━━━━━━ enable loop-back (for testing)
-	//                        ┃┃┃┃┃┃┃┃┗━━━━━━━━━ enable transmitting
-	//                        ┃┃┃┃┃┃┃┗━━━━━━━━━━ enable receiving
-	//                        ┃┃┃┃┃┃┗━━━━━━━━━━━ unsupported (write 0)
-	//                        ┃┃┃┃┃┗━━━━━━━━━━━━ RTS
-	//                        ┃┃┃┃┗━━━━━━━━━━━━━ unsupported (write 0)
-	//                        ┃┃┃┗━━━━━━━━━━━━━━ unsupported (write 0)
-	//                        ┃┃┗━━━━━━━━━━━━━━━ receiving hardware flow control
-	//                        ┃┗━━━━━━━━━━━━━━━━ transmitting hardware flow
-	//                        control ┗━━━━━━━━━━━━━━━━━ reserved for this and
-	//                        all more significant bits (write 0)
+	set(serial_port->cr,
+	    magic_numbers::cr::enable | magic_numbers::cr::loopback |
+	        magic_numbers::cr::transmit | magic_numbers::cr::receive |
+	        magic_numbers::cr::hw_flow_control_rx |
+	        magic_numbers::cr::hw_flow_control_tx);
 	/* enable IRQs (not now) */
 	/* Test with loop-back mode */
-	// put_serial('*');
+	put_serial('*');
 	/* if the byte returned is different */
-	// if (read_serial() != '*') {
-	/* turn off the serial port, return an error */
-	// set(serial_port->cr, 0b0);
-	// return 1;
-	//}
+	if (read_serial() != '*') {
+		/* turn off the serial port, return an error */
+		set(serial_port->cr, 0b0);
+		return 1;
+	}
 	/* Enable the UART for normal operation */
-	set(serial_port->cr, 0b01100001100000001);
-	//                     ┃┃┃┃┃?┃┃┃┃┃┃┃┃┃┃┗━ enable the UART
-	//                     ┃┃┃┃┃┃┃┃┃┃┃┃┃┃┗┻━━ unsupported (write 0)
-	//                     ┃┃┃┃┃┃┃┃┃┃┗┻┻┻━━━━ reserved (write 0)
-	//                     ┃┃┃┃┃┃┃┃┃┗━━━━━━━━ disable loop-back
-	//                     ┃┃┃┃┃┃┃┃┗━━━━━━━━━ enable transmitting
-	//                     ┃┃┃┃┃┃┃┗━━━━━━━━━━ enable receiving
-	//                     ┃┃┃┃┃┃┗━━━━━━━━━━━ unsupported (write 0)
-	//                     ┃┃┃┃┃┗━━━━━━━━━━━━ RTS
-	//                     ┃┃┃┃┗━━━━━━━━━━━━━ unsupported (write 0)
-	//                     ┃┃┃┗━━━━━━━━━━━━━━ unsupported (write 0)
-	//                     ┃┃┗━━━━━━━━━━━━━━━ receiving hardware flow control
-	//                     ┃┗━━━━━━━━━━━━━━━━ transmitting hardware flow control
-	//                     ┗━━━━━━━━━━━━━━━━━ reserved for this and all more
-	//                     significant bits (write 0)
+	set(serial_port->cr,
+	    magic_numbers::cr::enable | magic_numbers::cr::transmit |
+	        magic_numbers::cr::receive | magic_numbers::cr::hw_flow_control_rx |
+	        magic_numbers::cr::hw_flow_control_tx);
+	// FIXME: loopback mode still prints the test character in QEMU, so this
+	// lets the next character overwrite it.
+	put_serial('\b');
 	return 0;
 }
 
