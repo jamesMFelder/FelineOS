@@ -28,11 +28,6 @@ int vprintf(const char *format, va_list parameters) {
 
 	int written = 0;
 
-	bool alt_form = false;
-	bool padded = false;
-	bool left_justified = false;
-	bool always_signed = false;
-
 	size_t min_width = 0;
 	/* size_t min_precision; */
 	size_t width = 0;
@@ -62,8 +57,14 @@ int vprintf(const char *format, va_list parameters) {
 			continue;
 		}
 
-		/* Prepair the buffer */
+		/* Prepare the buffer */
 		bufPtr = intStrBuf;
+
+		/* Reset the flags */
+		bool alt_form = false;
+		bool padded = false;
+		bool left_justified = false;
+		bool always_signed = false;
 
 		/* Get flags */
 		while (true) {
