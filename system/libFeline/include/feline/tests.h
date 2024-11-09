@@ -74,6 +74,13 @@ bool operator!=(std::vector<T, Allocator> vec, std::initializer_list<T> list) {
 	return !(vec == list);
 }
 
+void require(bool a, KStringView a_str) {
+	if (!a) {
+		kCritical() << "FAILED " << a_str;
+		exit(EXIT_FAILURE);
+	}
+}
+
 template <typename A, typename B>
 void require_eq(A a, KStringView a_str, B b, KStringView b_str) {
 	if (a != b) {
@@ -83,6 +90,8 @@ void require_eq(A a, KStringView a_str, B b, KStringView b_str) {
 	}
 }
 
+#define REQUIRE(a) require(a, #a);
+#define REQUIRE_NOT(a) require(!a, "!" #a);
 #define REQUIRE_EQ(a, b) require_eq(a, #a, b, #b);
 
 #endif /* FELINE_TESTS_H */
