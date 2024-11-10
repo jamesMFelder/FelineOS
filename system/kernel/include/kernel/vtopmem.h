@@ -18,7 +18,6 @@
  * this file */
 #if defined(__cplusplus) && !defined(__ASSEMBLER__)
 
-#include <cinttypes>
 #include <cstddef>
 #include <cstdlib>
 #include <kernel/log.h>

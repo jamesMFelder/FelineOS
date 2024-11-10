@@ -3,10 +3,11 @@
 #ifndef FELINE_KERNEL_EXCEPTIONS_H
 #define FELINE_KERNEL_EXCEPTIONS_H 1
 
-#include <exception>
 #include <feline/kstring.h>
 
 #ifdef LIBFELINE_ONLY
+
+#include <exception>
 
 class FelineError : std::exception {
 	public:

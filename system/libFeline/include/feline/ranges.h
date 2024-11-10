@@ -16,4 +16,5 @@ struct range {
 template <typename T> bool overlap(range<T> a, range<T> b) {
 	return max(a.start, a.end) >= b.start && min(a.start, a.end) <= b.end;
 }
+
 #endif // FELINE_RANGES_H

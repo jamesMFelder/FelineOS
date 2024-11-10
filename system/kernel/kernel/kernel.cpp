@@ -2,11 +2,10 @@
 /* Copyright (c) 2023 James McNaughton Felder */
 
 #include <cinttypes>
-#include <cstdio>
-#include <cstdlib>
 #include <drivers/framebuffer.h>
 #include <drivers/serial.h>
 #include <fcntl.h>
+#include <feline/logger.h>
 #include <feline/settings.h>
 #include <feline/str.h>
 #include <kernel/arch.h>
