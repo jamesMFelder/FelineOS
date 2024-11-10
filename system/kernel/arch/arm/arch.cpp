@@ -2,6 +2,7 @@
 /* Copyright (c) 2023 James McNaughton Felder */
 
 #include "feline/logger.h"
+#include "kernel/devicetree.h"
 #include "kernel/halt.h"
 #include "mem/mem.h"
 #include <cinttypes>
@@ -54,10 +55,15 @@ int early_boot_setup(uintptr_t devicetree_header_addr) {
 }
 
 int boot_setup() {
+	/* Re-initialized logging */
+	Settings::Logging::critical.initialize(write_serial);
+	Settings::Logging::error.initialize(write_serial);
+	Settings::Logging::warning.initialize(write_serial);
+	Settings::Logging::log.initialize(write_serial);
+	Settings::Logging::debug.initialize(write_serial);
 	for_each_prop_in_node(
 		"chosen",
-		[](fdt_struct_entry *entry, devicetree_cell_size, char *,
-	       void *_ [[maybe_unused]]) {
+		[](fdt_struct_entry *entry, devicetree_cell_size, char *, void *) {
 			if (strcmp(entry->node_name, "cmdline")) {
 				Settings::Misc::commandline.initialize(
 					KStringView(reinterpret_cast<char *>(&(entry->prop.value)),
