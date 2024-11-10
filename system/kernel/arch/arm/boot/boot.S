@@ -146,6 +146,8 @@ paged_start:
 	/* Call the global constructors. */
 	.extern _init
 	bl _init
+	.extern init
+	bl init
 
 	/* Transfer control to the main kernel. */
 	.extern kernel_main
@@ -154,6 +156,8 @@ paged_start:
 	/* Call destructors (shouldn't reach here) */
 	.extern _fini
 	bl _fini
+	.extern fini
+	bl fini
 	mov r0, #0
 	.extern __cxa_finalize
 	bl __cxa_finalize

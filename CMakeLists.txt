@@ -78,7 +78,11 @@ add_custom_command(OUTPUT ${ARCHDIR}/linker.ld
 	)
 add_custom_target(linkerscript DEPENDS ${ARCHDIR}/linker.ld)
 
-add_library(crts OBJECT ${ARCHDIR}/boot/crti.S ${ARCHDIR}/boot/crtn.S)
+if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm")
+	add_library(crts OBJECT ${ARCHDIR}/boot/crti.cpp ${ARCHDIR}/boot/crtn.cpp)
+else()
+	add_library(crts OBJECT ${ARCHDIR}/boot/crti.S ${ARCHDIR}/boot/crtn.S)
+endif()
 
 add_executable(FelineOS.kernel ${ARCHDIR}/boot/boot.S)
 target_compile_definitions(FelineOS.kernel PRIVATE __is_kernel)
@@ -86,6 +90,10 @@ target_link_libraries(FelineOS.kernel k c feline terminals gcc supc++ -nostdlib)
 target_include_directories(FelineOS.kernel PRIVATE system/kernel/include ${ARCHDIR}/include)
 add_dependencies(FelineOS.kernel linkerscript crts)
 target_link_options(FelineOS.kernel PRIVATE -T ${ARCHDIR}/linker.ld)
+
+# Ask GCC to get the full path name of crtbegin. and crtend.o
+execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=crtbegin.o OUTPUT_VARIABLE CRTBEGIN_O OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=crtend.o OUTPUT_VARIABLE CRTEND_O OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686")
 	# Setup files before creating the iso
@@ -116,6 +124,11 @@ if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686")
 	add_custom_target(debug_grub
 		COMMAND qemu-system-i386 -serial stdio -cdrom FelineOS.iso -boot d -S -s
 		DEPENDS FelineOS.iso)
+
+	# Objects 'crti.o' and 'crtbegin.o' will be linked before all other objects and libraries.
+	# Objects 'crtend.o' and 'crtn.o' will be linked after all other objects and libraries.
+	SET(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_CXX_COMPILER> <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> CMakeFiles/crts.dir/${ARCHDIR}/boot/crti.S.obj ${CRTBEGIN_O} <OBJECTS> -o <TARGET> <LINK_LIBRARIES> ${CRTEND_O} CMakeFiles/crts.dir/${ARCHDIR}/boot/crtn.S.obj")
+
 elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm")
 	# Add a target for creating a raw binary file (not used on all targets)
 	add_custom_target(kernel.bin
@@ -128,14 +141,10 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm")
 	add_custom_target(debug_qemu
 		COMMAND qemu-system-arm -M raspi1ap -serial stdio -dtb ../../bcm2708-rpi-b.dtb -device loader,file=kernel.bin,addr=0x8000,cpu-num=0 -S -s
 		DEPENDS kernel.bin)
+
+	# Objects 'crti.o' and 'crtbegin.o' will be linked before all other objects and libraries.
+	# Objects 'crtend.o' and 'crtn.o' will be linked after all other objects and libraries.
+	SET(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_CXX_COMPILER> <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> CMakeFiles/crts.dir/${ARCHDIR}/boot/crti.cpp.obj ${CRTBEGIN_O} <OBJECTS> -o <TARGET> <LINK_LIBRARIES> ${CRTEND_O} CMakeFiles/crts.dir/${ARCHDIR}/boot/crtn.cpp.obj")
 else()
 	message(FATAL_ERROR "Unknown architecture " ${CMAKE_SYSTEM_PROCESSOR} ", expected i686 or arm")
 endif()
-
-# Ask GCC to get the full path name of crtbegin. and crtend.o
-execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=crtbegin.o OUTPUT_VARIABLE CRTBEGIN_O OUTPUT_STRIP_TRAILING_WHITESPACE)
-execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=crtend.o OUTPUT_VARIABLE CRTEND_O OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-# Objects 'crti.o' and 'crtbegin.o' will be linked before all other objects and libraries.
-# Objects 'crtend.o' and 'crtn.o' will be linked after all other objects and libraries.
-SET(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_CXX_COMPILER> <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> CMakeFiles/crts.dir/${ARCHDIR}/boot/crti.S.obj ${CRTBEGIN_O} <OBJECTS> -o <TARGET> <LINK_LIBRARIES> ${CRTEND_O} CMakeFiles/crts.dir/${ARCHDIR}/boot/crtn.S.obj")
