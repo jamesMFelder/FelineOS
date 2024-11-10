@@ -1,10 +1,9 @@
 /* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2023 James McNaughton Felder */
-#ifndef _TERMINAL_VGA_TEXT_H
-#define _TERMINAL_VGA_TEXT_H 1
+/* Copyright (c) 2024 James McNaughton Felder */
+#ifndef _KERN_DRIVER_TERMINAL_H
+#define _KERN_DRIVER_TERMINAL_H 1
 
 #include <cstdint>
-#include <terminals/terminal.h>
 
 /* Width and height */
 #define VGA_TEXT_HEIGHT 25
@@ -12,6 +11,10 @@
 
 /* Tabstops (VGA_TEXT_WIDTH%TABSTOP must equal zero or '\t' breaks) */
 #define TABSTOP 4
+
+static_assert(VGA_TEXT_WIDTH % TABSTOP == 0,
+              "VGA_TEXT_WIDTH is not a multiple of TABSTOP: tab character "
+              "handling will be broken");
 
 /* The size of a VGA character+attributes */
 typedef uint16_t vga_text_char;
@@ -45,7 +48,7 @@ static inline vga_text_char vga_entry(unsigned char uc, uint8_t color) {
 	return (vga_text_char)uc | (vga_text_char)color << 8;
 }
 
-class vga_text_term : public terminal {
+class vga_text_term {
 	public:
 		/* constructor and destructor */
 		vga_text_term();
@@ -73,8 +76,11 @@ class vga_text_term : public terminal {
 		/* Pointer to the video memory */
 		vga_text_char *vga_hardware_mem;
 
+		/* Current cursor location */
+		uint8_t x, y;
+
 		/* Color */
 		uint8_t color;
 };
 
-#endif /* _TERMINAL_VGA_TEXT_H */
+#endif /* _KERN_DRIVER_TERMINAL_H */

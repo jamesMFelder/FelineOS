@@ -1,13 +1,7 @@
-/* SPDX-License-Identifier: MIT */
-/* Copyright (c) 2023 James McNaughton Felder */
-
 #include <cctype>
 #include <cstring>
+#include <drivers/terminal.h>
 #include <kernel/paging.h>
-#include <terminals/vga/vga_text.h>
-
-unsigned char terminal::maxX = VGA_TEXT_WIDTH;
-unsigned char terminal::maxY = VGA_TEXT_HEIGHT;
 
 vga_text_term::vga_text_term() {}
 
@@ -44,12 +38,6 @@ void vga_text_term::scroll() {
 	            VGA_TEXT_WIDTH * sizeof(vga_text_char));
 }
 
-/* Get the maximum positions */
-void vga_text_term::getMaxPosition(unsigned char &maxX, unsigned char &maxY) {
-	maxX = VGA_TEXT_WIDTH;
-	maxY = VGA_TEXT_HEIGHT;
-}
-
 /* Add a character */
 int vga_text_term::putchar(char const c) {
 	/* Check if it needs special handling */
@@ -67,7 +55,7 @@ int vga_text_term::putchar(char const c) {
 				y--;
 			}
 			return 0;
-		/* Carridge return */
+		/* Carriage return */
 		case '\r':
 			/* Go to the start of the line */
 			x = 0;
@@ -155,7 +143,7 @@ int vga_text_term::setbg(uint8_t const bg) {
 	if (bg > 0xf) {
 		return -1;
 	}
-	/* Create a temporary to make this preemptible */
+	/* Create a temporary to make this preemptble */
 	uint8_t temp_color = color;
 	/* Mask out the background */
 	temp_color &= 0x0f;

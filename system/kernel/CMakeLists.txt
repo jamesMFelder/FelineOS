@@ -7,6 +7,7 @@ if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686")
 		system/kernel/arch/i386/interrupts/isr.S
 		system/kernel/arch/i386/io/io.cpp
 		system/kernel/drivers/uart/uart.cpp
+		system/kernel/drivers/vga/vga.cpp
 		)
 elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm")
 	set(KERN_ARCH_OBJS

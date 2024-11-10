@@ -9,12 +9,12 @@
 #include <cstring>
 #include <drivers/framebuffer.h>
 #include <drivers/serial.h>
+#include <drivers/terminal.h>
 #include <feline/settings.h>
 #include <kernel/interrupts.h>
 #include <kernel/misc.h>
 #include <kernel/paging.h>
 #include <kernel/vtopmem.h>
-#include <terminals/vga/vga_text.h>
 
 framebuffer fb;
 vga_text_term term;
