@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
+#include "kernel/phys_addr.h"
 #include "mem.h"
 #include <cassert>
 #include <cinttypes>
@@ -9,6 +10,7 @@
 #include <feline/bool_int.h>
 #include <feline/fixed_width.h>
 #include <feline/minmax.h>
+#include <feline/ranges.h>
 #include <kernel/devicetree.h>
 #include <kernel/log.h>
 #include <kernel/mem.h>
@@ -29,21 +31,25 @@ fdt_header *devicetree_header;
 /* TODO: make a generic system for registering reserved memory */
 enum find_actions {
 	fail,    /* There is no way to make it work */
-	success, /* It works perfectley */
+	success, /* It works perfectly */
 	after,   /* Try at the end of the current reserved area */
 };
 
+/* WARNING: returns invalid_location instead of nullptr for if space cannot be
+ * found See the "MASSIVE HACK ALERT" below for details on why (TLDR: 0x0 is
+ * valid!)
+ */
 static PhysAddr<void> find_space_in_area(PhysAddr<void> location,
                                          PhysAddr<void> end_of_available,
                                          size_t size_needed,
-                                         size_t alignment_needed) {
+                                         size_t alignment_needed,
+                                         PhysAddr<void> invalid_location) {
 	auto is_overlap = [location, size_needed, end_of_available](
 						  PhysAddr<void> start_reserved,
 						  PhysAddr<void> end_reserved) -> find_actions {
 		/* If there is any overlap */
-		if ((location >= start_reserved && location <= end_reserved) ||
-		    (location + size_needed >= start_reserved &&
-		     location + size_needed < end_reserved)) {
+		if (overlap(range{.start = location, .end = location + size_needed},
+		            range{.start = start_reserved, .end = end_reserved})) {
 			/* And we do not fit after */
 			if (end_reserved + size_needed > end_of_available) {
 				/* Say we cannot use this area */
@@ -68,11 +74,12 @@ static PhysAddr<void> find_space_in_area(PhysAddr<void> location,
 			PhysAddr<void>(reserved_mem->address),
 			PhysAddr<void>(reserved_mem->address + reserved_mem->size))) {
 		case fail:
-			return nullptr;
+			return invalid_location;
 		case after:
 			return find_space_in_area(
 				PhysAddr<void>(reserved_mem->address + reserved_mem->size + 1),
-				end_of_available, size_needed, alignment_needed);
+				end_of_available, size_needed, alignment_needed,
+				invalid_location);
 		case success:
 			break;
 		}
@@ -80,10 +87,11 @@ static PhysAddr<void> find_space_in_area(PhysAddr<void> location,
 	}
 	switch (is_overlap(phys_ptr_kernel_start, phys_ptr_kernel_end)) {
 	case fail:
-		return nullptr;
+		return invalid_location;
 	case after:
 		return find_space_in_area(phys_ptr_kernel_end + 1, end_of_available,
-		                          size_needed, alignment_needed);
+		                          size_needed, alignment_needed,
+		                          invalid_location);
 	case success:
 		break;
 	}
@@ -91,12 +99,12 @@ static PhysAddr<void> find_space_in_area(PhysAddr<void> location,
 	                   phys_devicetree_header +
 	                       devicetree_header->totalsize / sizeof(fdt_header))) {
 	case fail:
-		return nullptr;
+		return invalid_location;
 	case after:
 		return find_space_in_area(
 			phys_devicetree_header +
 				devicetree_header->totalsize / sizeof(fdt_header) + 1,
-			end_of_available, size_needed, alignment_needed);
+			end_of_available, size_needed, alignment_needed, invalid_location);
 	case success:
 		break;
 	}
@@ -169,7 +177,7 @@ int bootstrap_phys_mem_manager(PhysAddr<fdt_header> devicetree) {
 				     * preserve */
 					memory_map_location->where = find_space_in_area(
 						addr, addr + len, memory_map_location->len_needed,
-						alignof(bootloader_mem_region));
+						alignof(bootloader_mem_region), IN_USE_LOCATION);
 				}
 			}
 			// klogf("Sizes: addresses=%#" PRIx32 ", sizes=%#" PRIx32,
@@ -217,7 +225,7 @@ int bootstrap_phys_mem_manager(PhysAddr<fdt_header> devicetree) {
 	 * parsing the c++ code makes them look unrelated */
 	/* cppcheck-suppress comparePointers */
 	unavailable_regions[num_unavailable_regions].len =
-		(phys_ptr_kernel_end - phys_ptr_kernel_start.as_int()).as_int();
+		(phys_ptr_kernel_end - phys_ptr_kernel_start);
 	++num_unavailable_regions;
 	unavailable_regions[num_unavailable_regions].addr = phys_devicetree_header;
 	unavailable_regions[num_unavailable_regions].len =
@@ -248,53 +256,6 @@ int bootstrap_phys_mem_manager(PhysAddr<fdt_header> devicetree) {
 		PhysAddr<void> addr = PhysAddr<void>(entry->prop.value[0]);
 		size_t len = entry->prop.value[1];
 		if (strcmp("reg", strings + entry->prop.nameoff) == 0) {
-			// assuming the unavailable regions don't overlap, otherwise we will
-			// ignore the second
-			for (size_t i = 0; i < memory_map_state->num_unavailable_regions;
-			     ++i) {
-				auto &curr_unavail_region =
-					memory_map_state->unavailable_regions[i];
-				auto unavailable_end =
-					curr_unavail_region.addr + curr_unavail_region.len;
-				bool found_overlapping_region = false;
-				// if the available region is completely covered by the
-				// unavailable one, skip adding it
-				if (curr_unavail_region.addr < addr &&
-				    unavailable_end > addr + len) {
-					found_overlapping_region = true;
-				}
-				// if the unavailable region starts in the available region, add
-				// the part before it
-				if (curr_unavail_region.addr > addr &&
-				    curr_unavail_region.addr < addr + len) {
-					memory_map_state
-						->start_of_available[memory_map_state->num_regions]
-						.addr = addr;
-					memory_map_state
-						->start_of_available[memory_map_state->num_regions]
-						.len = curr_unavail_region.addr - addr;
-					++memory_map_state->num_regions;
-					found_overlapping_region = true;
-				}
-				// if the unavailable region ends in the available region, add
-				// the part after it
-				if (unavailable_end > addr && unavailable_end < addr + len) {
-					memory_map_state
-						->start_of_available[memory_map_state->num_regions]
-						.addr = unavailable_end;
-					memory_map_state
-						->start_of_available[memory_map_state->num_regions]
-						.len = addr + len - unavailable_end;
-					++memory_map_state->num_regions;
-					found_overlapping_region = true;
-				}
-				// the above two cases combine to correctly add two pieces if
-				// the unavailable region is a subset of the available one
-				if (found_overlapping_region) {
-					return;
-				}
-			}
-			// no overlaps were found, add the full region
 			memory_map_state->start_of_available[memory_map_state->num_regions]
 				.addr = addr;
 			memory_map_state->start_of_available[memory_map_state->num_regions]

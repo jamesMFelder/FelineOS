@@ -287,9 +287,6 @@ map_results map_range(void const *const phys_addr, size_t len, void **virt_addr,
 		reinterpret_cast<uintptr_t>(*virt_addr) + page_offset(phys_addr));
 	/* Set it to the correct offset in the page */
 	map_results temp = internal_map_range(phys_addr, len, *virt_addr, opts);
-	// *virt_addr =
-	// reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(*virt_addr) +
-	// page_offset(phys_addr));
 	modifying_page_tables.release_lock();
 	return temp;
 }
@@ -320,7 +317,13 @@ map_results map_range(size_t len, void **virt_addr, unsigned int opts) {
 map_results unmap_page(page const virt_addr,
                        unsigned int opts [[maybe_unused]]) {
 	if (isMapped(virt_addr)) {
+		/* Invalidate the searchable cache */
 		page_tables_searchable[searchable_page_table_offset(virt_addr)] = false;
+		/* Clear it in the table */
+		auto offset = page_table_offset(virt_addr);
+		reinterpret_cast<second_level_descriptor *>(
+			first_level_table_system[offset.first_level])[offset.second_level] =
+			0;
 		/* Invalidate the cpu's cache */
 		invlpg(virt_addr);
 		return map_success;
@@ -469,4 +472,5 @@ void dump_pagetables() {
 		       reinterpret_cast<void *>(prev_phys_addr.getInt() + 0xfff),
 		       num_contiguous_mappings * PHYS_MEM_CHUNK_SIZE);
 	}
+	printf("\n");
 }

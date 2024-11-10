@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
+#include "feline/ranges.h"
 #include <cassert>
 #include <cinttypes>
 #include <cstdlib>
@@ -174,93 +175,88 @@ int start_phys_mem_manager(
 	/* Copy the available bootloader_mem_regions to the linked list */
 	/* Don't bother keeping the unavailable ones, because we can never free them
 	 */
-	size_t cur_avail_region_offset = 0, cur_header_offset = 0;
-	/* Loop while we still have a header to copy over */
-	while (cur_avail_region_offset < num_available_memory_regions) {
-		/* Verify we're not copying to much (most likely from splitting a region
-		 * to include the headers) */
-		if (cur_header_offset >= num_headers_needed) {
-			kcritical(
-				"BUG: miscalculated the number of headers needed for the PMM!");
-			std::abort();
-		}
-		if (available_memory_regions[cur_avail_region_offset].addr <=
-		        phys_hdr_ptr &&
-		    available_memory_regions[cur_avail_region_offset].addr +
-		            available_memory_regions[cur_avail_region_offset].len >=
-		        (phys_hdr_ptr + headers_needed_size)) {
-			if (available_memory_regions[cur_avail_region_offset].addr !=
-			    phys_hdr_ptr) {
-				first_header[cur_header_offset].next = nullptr;
+	size_t cur_header_offset = 0;
+	auto try_add_available_memory_region =
+		[&unavailable_memory_regions, &num_unavailable_memory_regions,
+	     &cur_header_offset](this auto &try_add_available_memory_region,
+	                         bootloader_mem_region available_region) {
+			for (size_t unavail_offset = 0;
+		         unavail_offset < num_unavailable_memory_regions;
+		         ++unavail_offset) {
+				bootloader_mem_region unavail_region =
+					unavailable_memory_regions[unavail_offset];
+				auto available_range =
+					range{.start = available_region.addr,
+			              .end = available_region.addr + available_region.len};
+				auto unavailable_range =
+					range{.start = unavail_region.addr,
+			              .end = unavail_region.addr + unavail_region.len};
+
+				// If the two ranges do not overlap at all, then we're good
+				if (!overlap(available_range, unavailable_range)) {
+					continue;
+				}
+				// If the available region is completely covered by an
+			    // unavailable region, we can't use it
+				else if (unavailable_range.start <= available_range.start &&
+			             unavailable_range.end >= available_range.end) {
+					return;
+				}
+				// If the unavailable region is a strict subset of the available
+			    // region, split the available region into two pieces
+				else if (unavailable_range.start > available_range.start &&
+			             unavailable_range.end < available_range.end) {
+					try_add_available_memory_region(bootloader_mem_region{
+						.addr = available_region.addr,
+						.len = static_cast<size_t>(unavailable_range.start -
+				                                   available_range.start -
+				                                   PHYS_MEM_CHUNK_SIZE)});
+					available_region.addr =
+						unavailable_range.end + PHYS_MEM_CHUNK_SIZE;
+					available_region.len =
+						available_range.end - available_region.addr;
+				}
+				// If it only cuts off the start or end, adjust the range
+				else if (unavailable_range.start <= available_range.start &&
+			             unavailable_range.end >= available_range.start) {
+					available_region.addr =
+						unavailable_range.end + PHYS_MEM_CHUNK_SIZE;
+					available_region.len = available_range.end -
+				                           unavailable_range.end -
+				                           PHYS_MEM_CHUNK_SIZE;
+				} else if (unavailable_range.start <= available_range.end &&
+			               unavailable_range.end >= available_range.end) {
+					available_region.len = unavailable_range.end -
+				                           available_range.start -
+				                           PHYS_MEM_CHUNK_SIZE;
+				} else {
+					kcritical("What case am I missing in the PMM?");
+					std::abort();
+				}
+			}
+			if (cur_header_offset != 0) {
 				first_header[cur_header_offset].prev =
 					&first_header[cur_header_offset - 1];
-				first_header[cur_header_offset].memory = addr_round_up_to_page(
-					available_memory_regions[cur_avail_region_offset].addr);
-				first_header[cur_header_offset].size =
-					(phys_hdr_ptr -
-				     addr_round_up_to_page(
-						 available_memory_regions[cur_header_offset].addr)
-				         .getInt())
-						.as_int();
-				first_header[cur_header_offset].in_use = false;
-				first_header[cur_header_offset].header_in_use = true;
-				first_header[cur_header_offset].prev->next =
+				first_header[cur_header_offset - 1].next =
 					&first_header[cur_header_offset];
-				++cur_header_offset;
 			}
-			first_header[cur_header_offset].next = nullptr;
-			first_header[cur_header_offset].prev =
-				&first_header[cur_header_offset - 1];
-			first_header[cur_header_offset].memory = first_header;
-			first_header[cur_header_offset].size = headers_needed_size;
-			first_header[cur_header_offset].in_use = true;
-			first_header[cur_header_offset].header_in_use = true;
-			first_header[cur_header_offset].prev->next =
-				&first_header[cur_header_offset];
-			++cur_header_offset;
-			if (available_memory_regions[cur_avail_region_offset].addr +
-			        available_memory_regions[cur_avail_region_offset].len !=
-			    PhysAddr<void>((first_header[cur_header_offset - 1].memory +
-			                    first_header[cur_header_offset - 1].size)
-			                       .getInt())) {
-				first_header[cur_header_offset].next = nullptr;
-				first_header[cur_header_offset].prev =
-					&first_header[cur_header_offset - 1];
-				first_header[cur_header_offset].memory =
-					first_header[cur_header_offset - 1].memory +
-					first_header[cur_header_offset - 1].size;
-				first_header[cur_header_offset].size =
-					(available_memory_regions[cur_avail_region_offset].addr +
-				     available_memory_regions[cur_avail_region_offset].len -
-				     (first_header[cur_header_offset - 1].memory +
-				      first_header[cur_header_offset - 1].size)
-				         .getInt())
-						.as_int();
-				first_header[cur_header_offset].in_use = false;
-				first_header[cur_header_offset].header_in_use = true;
-				first_header[cur_header_offset].prev->next =
-					&first_header[cur_header_offset];
-				++cur_header_offset;
-			}
-		} else {
-			first_header[cur_header_offset].next = nullptr;
-			first_header[cur_header_offset].prev =
-				&first_header[cur_header_offset - 1];
-			first_header[cur_header_offset].memory = addr_round_up_to_page(
-				available_memory_regions[cur_avail_region_offset].addr);
-			first_header[cur_header_offset].size =
-				available_memory_regions[cur_avail_region_offset].len -
-				page_offset(
-					available_memory_regions[cur_avail_region_offset].addr);
+			first_header[cur_header_offset].memory =
+				available_region.addr.as_int();
+			first_header[cur_header_offset].size = available_region.len;
 			first_header[cur_header_offset].in_use = false;
+			first_header[cur_header_offset].canary[0] = 0xCC;
+			first_header[cur_header_offset].canary[1] = 0xFF;
 			first_header[cur_header_offset].header_in_use = true;
-			first_header[cur_header_offset].prev->next =
-				&first_header[cur_header_offset];
 			++cur_header_offset;
-		}
-		++cur_avail_region_offset;
+		};
+	for (size_t avail_region_offset = 0;
+	     avail_region_offset < num_available_memory_regions;
+	     ++avail_region_offset) {
+		try_add_available_memory_region(
+			available_memory_regions[avail_region_offset]);
 	}
 	/* Avoid walking off the start of the chain */
+	first_header = &first_chunk->headers[0];
 	first_header[0].prev = nullptr;
 	/* And reserve the location the headers are currently at */
 	modifying_pmm.release_lock();
