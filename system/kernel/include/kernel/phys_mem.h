@@ -8,7 +8,7 @@
 
 /* Used for passing in information from the bootloader */
 struct bootloader_mem_region {
-		PhysAddr<void> addr;
+		PhysAddr<void const> addr;
 		size_t len;
 };
 

@@ -1,13 +1,14 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
 #include <cinttypes>
+#include <cstdint>
 #include <cstdlib>
 #include <kernel/devicetree.h>
 #include <kernel/log.h>
 #include <kernel/paging.h>
 #include <kernel/vtopmem.h>
 
-fdt_header *devicetree;
+fdt_header const *devicetree;
 fdt_struct_entry *structs;
 char *strings;
 
@@ -118,11 +119,11 @@ void for_each_prop_in_node(char const *prefix,
 	                             {.address_cells = 2, .size_cells = 1}, state);
 }
 
-fdt_header *init_devicetree(PhysAddr<fdt_header> header) {
-	fdt_header dt_header = read_pmem<fdt_header>(header);
+fdt_header const *init_devicetree(PhysAddr<fdt_header const> header) {
+	fdt_header dt_header = read_pmem(header);
 	map_results dt_mapping =
-		map_range(header.unsafe_raw_get(), dt_header.totalsize,
-	              reinterpret_cast<void **>(&devicetree), 0);
+		map_range(header, dt_header.totalsize,
+	              reinterpret_cast<void const **>(&devicetree), 0);
 	switch (dt_mapping) {
 	// It worked!
 	case map_success:
@@ -144,6 +145,13 @@ fdt_header *init_devicetree(PhysAddr<fdt_header> header) {
 		kerrorf("Unexpected error mapping the devicetree: %d. Aborting now!",
 		        dt_mapping);
 		std::abort();
+	}
+	if (devicetree->magic != FDT_MAGIC) {
+		kerrorf("Device tree magic %#" PRIx32 " is not the expected %#" PRIx32
+		        "!",
+		        static_cast<uint32_t>(devicetree->magic),
+		        static_cast<uint32_t>(FDT_MAGIC));
+		abort();
 	}
 	strings = reinterpret_cast<char *>(reinterpret_cast<uintptr_t>(devicetree) +
 	                                   devicetree->off_dt_strings);

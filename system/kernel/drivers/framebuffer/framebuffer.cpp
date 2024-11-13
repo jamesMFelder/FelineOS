@@ -2,15 +2,13 @@
 /* Copyright (c) 2023 James McNaughton Felder */
 
 #include <cassert>
-#include <cstdlib>
 #include <drivers/framebuffer.h>
 #include <kernel/log.h>
 #include <kernel/paging.h>
 
-int framebuffer::init(pixel_bgr_t *addr, uint16_t width, uint16_t height,
-                      uint16_t pitch, uint8_t bpp) {
+int framebuffer::init(PhysAddr<pixel_bgr_t> addr, uint16_t width,
+                      uint16_t height, uint16_t pitch, uint8_t bpp) {
 	/* TODO: verify anything? */
-	fb.addr = addr;
 	fb.width = width;
 	fb.height = height;
 	fb.pitch = pitch;

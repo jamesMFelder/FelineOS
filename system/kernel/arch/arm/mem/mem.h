@@ -3,14 +3,11 @@
 #ifndef _KERN_ARCH_MEM_H
 #define _KERN_ARCH_MEM_H 1
 
-#include <cstddef>
-#include <cstdint>
-
 #include <kernel/devicetree.h>
 #include <kernel/mem.h>
 #include <kernel/phys_addr.h>
 
 /* Start the memory manager */
-int bootstrap_phys_mem_manager(PhysAddr<fdt_header> devicetree);
+int bootstrap_phys_mem_manager(PhysAddr<fdt_header const> devicetree);
 
 #endif /* _KERN_ARCH_MEM_H */

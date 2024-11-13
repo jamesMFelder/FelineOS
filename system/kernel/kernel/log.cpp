@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
 #include <cstdarg>
-#include <cstdlib>
+#include <cstdio>
 #include <kernel/log.h>
 
 /* Add a log. Logging functions should always use this so I can change the

@@ -1,14 +1,18 @@
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2024 James McNaughton Felder */
+
 #include <cctype>
 #include <cstring>
 #include <drivers/terminal.h>
 #include <kernel/paging.h>
+#include <kernel/phys_addr.h>
 
 vga_text_term::vga_text_term() {}
 
 /* TODO: clear screen at end? */
 vga_text_term::~vga_text_term() {}
 
-int vga_text_term::init(vga_text_char *addr) {
+int vga_text_term::init(PhysAddr<vga_text_char> addr) {
 	return map_range(addr, VGA_TEXT_WIDTH * VGA_TEXT_HEIGHT,
 	                 reinterpret_cast<void **>(&vga_hardware_mem), MAP_DEVICE);
 }
@@ -40,6 +44,9 @@ void vga_text_term::scroll() {
 
 /* Add a character */
 int vga_text_term::putchar(char const c) {
+	if (!vga_hardware_mem) {
+		return 1;
+	}
 	/* Check if it needs special handling */
 	if (std::iscntrl(c)) {
 		switch (c) {
@@ -115,6 +122,15 @@ int vga_text_term::putchar(char const c) {
 		if (y >= VGA_TEXT_HEIGHT) {
 			scroll();
 			y--;
+		}
+	}
+	return 0;
+}
+
+int vga_text_term::putstr(char const *s) {
+	if (vga_hardware_mem) {
+		for (char const *c = s; *c != '\0'; ++c) {
+			putchar(*c);
 		}
 	}
 	return 0;

@@ -2,6 +2,7 @@
 /* Copyright (c) 2023 James McNaughton Felder */
 #include "kernel/mem.h"
 #include "kernel/paging.h"
+#include "kernel/phys_addr.h"
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -41,14 +42,32 @@ struct pl011 {
 /**
  * \brief The PL011 UART
  *
+ * Setup in the linker file.
  * It is the kernel virtual address space version;
  * for use in the I/O space, turn the 0x20 prefix into 0x7E
  * */
-static struct pl011 *serial_port = reinterpret_cast<pl011 *>(0x2020'1000);
+extern pl011 _serial_port_physical_address;
+constexpr PhysAddr<pl011> serial_port_phys_addr(&_serial_port_physical_address);
+
+/* Safe to use physical address as virtual address here because:
+ * - before paging is enabled, they are the same
+ * - this pointer is changed by map_serial() immediately before
+ *   paging is enabled.
+ */
+static struct pl011 *serial_port;
 
 map_results map_serial() {
-	return map_range(reinterpret_cast<void *>(0x2020'1000), sizeof(pl011),
-	                 reinterpret_cast<void **>(&serial_port), MAP_DEVICE);
+	map_results result =
+		map_range(serial_port_phys_addr, sizeof(pl011),
+	              reinterpret_cast<void **>(&serial_port), MAP_DEVICE);
+	if (result != map_success) {
+		/* If the mapping failed, make sure the serial port is pointing to the
+		 * physical address This is safe because we *will* be halting without
+		 * enabling paging if we get here
+		 */
+		serial_port = &_serial_port_physical_address;
+	}
+	return result;
 }
 
 static void set(pl011_reg &reg, uint32_t const value) { reg = value; }
@@ -92,6 +111,7 @@ constexpr uint32_t WORD_LEN = (std::numeric_limits<char>::digits - 5) << 5;
 } // namespace magic_numbers
 
 int init_serial() {
+	serial_port = &_serial_port_physical_address;
 	/* Disable the mini UART */
 	set(serial_port->cr, magic_numbers::disable_all);
 	/* Disable all interrupts */

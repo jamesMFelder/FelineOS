@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
-#include <kernel/arch.h>
 
 #include "gdt/gdt.h"
 #include "mem/mem.h"
@@ -11,9 +10,12 @@
 #include <drivers/serial.h>
 #include <drivers/terminal.h>
 #include <feline/settings.h>
+#include <kernel/arch.h>
+#include <kernel/halt.h>
 #include <kernel/interrupts.h>
 #include <kernel/misc.h>
 #include <kernel/paging.h>
+#include <kernel/phys_addr.h>
 #include <kernel/vtopmem.h>
 
 framebuffer fb;
@@ -34,15 +36,15 @@ static void screen_init(multiboot_info_t mbp) {
 		break;
 	case MULTIBOOT_FRAMEBUFFER_TYPE_EGA_TEXT:
 		vga_is_text = true;
-		term.init(reinterpret_cast<vga_text_char *>(0xB8000));
+		term.init(PhysAddr<vga_text_char>(0xB8000));
 		return;
 	}
 	vga_is_text = false;
-	int fb_init_rval = fb.init(
-		reinterpret_cast<pixel_bgr_t *>(mbp.framebuffer_addr),
-		static_cast<uint16_t>(mbp.framebuffer_width),
-		static_cast<uint16_t>(mbp.framebuffer_height),
-		static_cast<uint16_t>(mbp.framebuffer_pitch), mbp.framebuffer_bpp);
+	int fb_init_rval = fb.init(PhysAddr<pixel_bgr_t>(mbp.framebuffer_addr),
+	                           static_cast<uint16_t>(mbp.framebuffer_width),
+	                           static_cast<uint16_t>(mbp.framebuffer_height),
+	                           static_cast<uint16_t>(mbp.framebuffer_pitch),
+	                           mbp.framebuffer_bpp);
 	if (fb_init_rval != 0) {
 		kerrorf("Unable to initialize framebuffer! Failed with error %d.",
 		        fb_init_rval);
@@ -57,10 +59,10 @@ static void save_grub_params(PhysAddr<multiboot_info_t> phys_mbp) {
 	multiboot_info_t mbp = read_pmem(phys_mbp);
 	grub_flags = mbp.flags;
 	if (get_flag(grub_flags, MULTIBOOT_INFO_CMDLINE)) {
-		char *mapped_cmdline;
+		char const *mapped_cmdline;
 		map_results cmdline_mapping =
-			map_range(reinterpret_cast<char *>(mbp.cmdline), 4_KiB,
-		              reinterpret_cast<void **>(&mapped_cmdline), 0);
+			map_range(PhysAddr<char const>(mbp.cmdline), 4_KiB,
+		              reinterpret_cast<void const **>(&mapped_cmdline), 0);
 		if (cmdline_mapping != map_success) {
 			kerrorf("Unable to map information from Grub. Error %d.",
 			        cmdline_mapping);
@@ -111,7 +113,6 @@ be able to log anything until the IDT is setup (attempts will triple-fault)
 Also note that the interrupts actually log stuff, so watch out!
 After this we should be good to go! */
 int early_boot_setup(uintptr_t raw_mbp) {
-	PhysAddr<multiboot_info_t> mbp = PhysAddr<multiboot_info_t>(raw_mbp);
 	disable_gdt(); /* We don't use it because it's not cross platform */
 	init_serial(); /* We can't do any logging before this gets setup */
 	/* Initialize the logging categories. Note that they will be clobbered when
@@ -124,6 +125,7 @@ int early_boot_setup(uintptr_t raw_mbp) {
 	idt_init(); /* Actually display an error if we have a problem: don't just
 	               triple fault */
 	setup_paging(); /* Take control of it from the assembly! */
+	PhysAddr<multiboot_info_t> mbp = PhysAddr<multiboot_info_t>(raw_mbp);
 	save_grub_params(mbp);
 	bootstrap_phys_mem_manager(
 		mbp); /* Get the physical memory manager working */

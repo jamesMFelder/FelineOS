@@ -76,7 +76,7 @@ _start:
 	//Only map the kernel
 	cmpl $identity_map_from_here, %esi
 	jl 2f
-	cmpl $phys_kernel_end, %esi
+	cmpl $_phys_kernel_end, %esi
 	jge 3f
 
 	//Map the addresses as "present, writeable". Not secure - get rid of quick

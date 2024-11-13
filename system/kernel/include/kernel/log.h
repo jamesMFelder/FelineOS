@@ -3,9 +3,6 @@
 #ifndef _KERNEL_LOG_H
 #define _KERNEL_LOG_H 1
 
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
 #include <kernel/asm_compat.h>
 
 /* Basic logging functions */

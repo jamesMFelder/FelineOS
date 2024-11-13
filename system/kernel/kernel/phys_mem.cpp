@@ -1,19 +1,19 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
-#include "feline/ranges.h"
 #include <cassert>
-#include <cinttypes>
 #include <cstdlib>
 #include <cstring>
 #include <feline/align.h>
 #include <feline/bool_int.h>
 #include <feline/fixed_width.h>
 #include <feline/minmax.h>
+#include <feline/ranges.h>
 #include <feline/settings.h>
 #include <feline/spinlock.h>
 #include <kernel/log.h>
 #include <kernel/mem.h>
 #include <kernel/paging.h>
+#include <kernel/phys_addr.h>
 #include <kernel/phys_mem.h>
 #include <kernel/vtopmem.h>
 
@@ -23,7 +23,7 @@ Spinlock modifying_pmm;
 inline uintptr_t page_offset(uintptr_t const addr) {
 	return addr & (PHYS_MEM_CHUNK_SIZE - 1);
 }
-inline uintptr_t page_offset(PhysAddr<void> addr) {
+inline uintptr_t page_offset(PhysAddr<void const> addr) {
 	return page_offset(addr.as_int());
 }
 
@@ -32,7 +32,7 @@ inline page round_up_to_page(uintptr_t len) {
 	len &= ~(PHYS_MEM_CHUNK_SIZE - 1);
 	return len;
 }
-inline page addr_round_up_to_page(PhysAddr<void> len) {
+inline page addr_round_up_to_page(PhysAddr<void const> len) {
 	return round_up_to_page(len.as_int());
 }
 
@@ -75,9 +75,9 @@ int start_phys_mem_manager(
 	 * go; if not, nullptr */
 	auto find_space_in_area =
 		[&unavailable_memory_regions, &num_unavailable_memory_regions](
-			PhysAddr<void> location, PhysAddr<void> end_of_available,
-			size_t size_needed,
-			auto &recursive_self) -> PhysAddr<PhysMemHeaderList> {
+			PhysAddr<void const> location,
+			PhysAddr<void const> end_of_available, size_t size_needed,
+			auto &recursive_self) -> PhysAddr<PhysMemHeaderList const> {
 		/* Align the area to the minimum chunk alignment we can reserve */
 		location =
 			round_up_to_alignment(location.as_int(), PHYS_MEM_CHUNK_SIZE);
@@ -87,9 +87,10 @@ int start_phys_mem_manager(
 			after,   /* Try at the end of the current reserved area */
 		};
 		/* Check if a location works */
-		auto is_overlap = [location, size_needed, end_of_available](
-							  PhysAddr<void> start_reserved,
-							  PhysAddr<void> end_reserved) -> find_actions {
+		auto is_overlap =
+			[location, size_needed, end_of_available](
+				PhysAddr<void const> start_reserved,
+				PhysAddr<void const> end_reserved) -> find_actions {
 			/* See if there is no overlap */
 			if (location > end_reserved ||
 			    location + size_needed < start_reserved) {
@@ -128,10 +129,10 @@ int start_phys_mem_manager(
 		}
 		/* Because we reached the end of the loop and did the switch for
 		 * everything else, nothing conflicted with the address, so it works */
-		return static_cast<PhysAddr<PhysMemHeaderList>>(location);
+		return location;
 	};
 	/* For each available memory region, check if we can use it */
-	PhysAddr<void> phys_hdr_ptr = nullptr;
+	PhysAddr<void const> phys_hdr_ptr = nullptr;
 	for (size_t i = 0; i < num_available_memory_regions; ++i) {
 		phys_hdr_ptr = find_space_in_area(
 			available_memory_regions[i].addr,
@@ -150,9 +151,8 @@ int start_phys_mem_manager(
 	}
 
 	/* Map it, saving it's address to mark it reserved later. */
-	map_results mapping =
-		map_range(phys_hdr_ptr.unsafe_raw_get(), headers_needed_size,
-	              reinterpret_cast<void **>(&first_chunk), 0);
+	map_results mapping = map_range(phys_hdr_ptr, headers_needed_size,
+	                                reinterpret_cast<void **>(&first_chunk), 0);
 	if (mapping != map_success) {
 		kcriticalf("Unable to map the physical memory manager (error code %d).",
 		           mapping);
@@ -309,12 +309,14 @@ static PhysMemHeader *find_free_pages(page len, allocation_strategy strategy
 }
 
 /* Find the header for addr, making sure it is available and has enough space */
-static PhysMemHeader *find_header_for_page(void const *const addr, size_t len) {
+static PhysMemHeader *find_header_for_page(PhysAddr<void const> const addr,
+                                           size_t len) {
 	for (PhysMemHeader *cur_header = first_header; cur_header != nullptr;
 	     cur_header = cur_header->next) {
 		assert(cur_header->header_in_use);
-		if (cur_header->memory <= addr &&
-		    cur_header->memory + cur_header->size >= addr) {
+		if (cur_header->memory.getInt() <= addr.as_int() &&
+		    cur_header->memory.getInt() + cur_header->size.getInt() >=
+		        addr.as_int()) {
 			/* We found the header, now we just need to check if we can use it
 			 */
 			if (cur_header->in_use || cur_header->size.getInt() < len) {
@@ -374,7 +376,7 @@ static pmm_results internal_claim_mem_area(PhysMemHeader &header) {
 }
 
 /* Reserve len unused bytes from addr (if available) */
-pmm_results get_mem_area(void const *const addr, uintptr_t len) {
+pmm_results get_mem_area(PhysAddr<void const> const addr, uintptr_t len) {
 	modifying_pmm.aquire_lock();
 	PhysMemHeader *header = find_header_for_page(addr, len);
 	if (!header) {
@@ -387,7 +389,7 @@ pmm_results get_mem_area(void const *const addr, uintptr_t len) {
 }
 
 /* Aquire len unused bytes */
-pmm_results get_mem_area(void **addr, uintptr_t len) {
+pmm_results get_mem_area(PhysAddr<void const> *addr, uintptr_t len) {
 	modifying_pmm.aquire_lock();
 	auto *header = find_free_pages(round_up_to_page(len), first_fit);
 	if (header == nullptr) {
@@ -397,7 +399,7 @@ pmm_results get_mem_area(void **addr, uintptr_t len) {
 	split_header_at_len(*header, round_up_to_page(len));
 	pmm_results result = internal_claim_mem_area(*header);
 	if (result == pmm_success) {
-		*addr = header->memory;
+		*addr = PhysAddr<void>(header->memory.getInt());
 	}
 	modifying_pmm.release_lock();
 	return result;
@@ -426,19 +428,21 @@ static void merge_adjacent_headers(PhysMemHeader &header) {
 }
 
 /* Free len bytes from addr */
-pmm_results free_mem_area(void const *const addr, uintptr_t len) {
+pmm_results free_mem_area(PhysAddr<void const> const addr, uintptr_t len) {
 	modifying_pmm.aquire_lock();
 	for (PhysMemHeader *cur_header = first_header; cur_header != nullptr;
 	     cur_header = cur_header->next) {
 		assert(cur_header->header_in_use);
-		if (cur_header->memory <= addr &&
-		    cur_header->memory + cur_header->size > addr) {
-			auto end = static_cast<unsigned char const *>(addr) + len;
-			if (cur_header->memory + cur_header->size < end) {
+		if (cur_header->memory.getInt() <= addr.as_int() &&
+		    cur_header->memory.getInt() + cur_header->size.getInt() >
+		        addr.as_int()) {
+			auto end = addr + len;
+			if (cur_header->memory.getInt() + cur_header->size.getInt() <
+			    end.as_int()) {
 				/* We only know about part of the area? */
 				kwarnf(
 					"Attempt to free area %p-%p, but header covers area %p-%p!",
-					addr, static_cast<const void *>(end),
+					addr.unsafe_raw_get(), end.unsafe_raw_get(),
 					cur_header->memory.get(),
 					(cur_header->memory + cur_header->size).get());
 				/* TODO: should we abort? */

@@ -1,13 +1,16 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
 #include <cassert>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <drivers/serial.h>
+#include <feline/logger.h>
 #include <feline/spinlock.h>
 #include <kernel/log.h>
 #include <kernel/mem.h>
 #include <kernel/paging.h>
+#include <kernel/phys_addr.h>
 #include <kernel/vtopmem.h>
 
 /* Begin Private Declarations */
@@ -21,11 +24,17 @@ inline uintptr_t page_offset(uintptr_t const addr) {
 inline uintptr_t page_offset(void const *const addr) {
 	return page_offset(reinterpret_cast<uintptr_t>(addr));
 }
+inline uintptr_t page_offset(PhysAddr<void const> const addr) {
+	return page_offset(addr.as_int());
+}
 inline uintptr_t large_page_offset(uintptr_t const addr) {
 	return addr & (LARGE_CHUNK_SIZE - 1);
 }
 inline uintptr_t large_page_offset(void const *const addr) {
-	return page_offset(reinterpret_cast<uintptr_t>(addr));
+	return large_page_offset(reinterpret_cast<uintptr_t>(addr));
+}
+inline uintptr_t large_page_offset(PhysAddr<void const> const addr) {
+	return large_page_offset(addr.as_int());
 }
 
 /* Return the index of the searchable page tables for addr */
@@ -77,12 +86,6 @@ map_results unmap_page(page const virt_addr, unsigned int opts);
 
 /* Lock this before modifying any page tables */
 Spinlock modifying_page_tables;
-
-/* Only take the address of these! */
-extern char const phys_kernel_start;
-extern char const phys_kernel_end;
-extern char const kernel_start;
-extern char const kernel_end;
 
 /* Maximuim amount of virtual memory */
 /* Change for 64-bit */
@@ -156,7 +159,7 @@ void *find_free_virtmem(size_t len) {
 		}
 		/* If it set base to null, we are out of room */
 		if (base.isNull()) {
-			kwarn("No memory left!");
+			kCriticalNoAlloc() << "No memory left!";
 			return nullptr;
 		}
 		/* free_from_here() moves base to blocked memory if it isn't at the
@@ -183,6 +186,7 @@ set_second_level_page_table(largePage const addr,
 map_results map_page(page const phys_addr, page const virt_addr,
                      unsigned int opts) {
 	static const uint32_t small_page = 0b10;
+	// TODO: support read-only pages
 	static const uint32_t full_access = 0b110000;
 	static const uint32_t global = 0x800;
 	static const uint32_t default_opts = small_page | full_access | global;
@@ -197,7 +201,8 @@ map_results map_page(page const phys_addr, page const virt_addr,
 	auto offset = page_table_offset(virt_addr).first_level;
 	first_level_descriptor &first_level = first_level_table_system[offset];
 	if (!(first_level & page_table)) {
-		kcritical("Code not written for allocating a new page table!");
+		kCriticalNoAlloc()
+			<< "Code not written for allocating a new page table!";
 		std::abort();
 		// TODO: allocate a new table
 	}
@@ -213,8 +218,8 @@ map_results map_page(page const phys_addr, page const virt_addr,
 
 /* Map len bytes from phys_addr to virt_addr (internal use only) */
 /* Don't call this function if you haven't locked `modifying_page_tables` */
-static map_results internal_map_range(void const *const phys_addr, size_t len,
-                                      void const *const virt_addr,
+static map_results internal_map_range(PhysAddr<void const> const phys_addr,
+                                      size_t len, void const *const virt_addr,
                                       unsigned int opts) {
 	/* Verify correct alignment */
 	if (page_offset(phys_addr) != page_offset(virt_addr)) {
@@ -222,7 +227,7 @@ static map_results internal_map_range(void const *const phys_addr, size_t len,
 	}
 	/* Create the page objects for internal use */
 	page virt_to_map = virt_addr;
-	page phys_to_map = phys_addr;
+	page phys_to_map = phys_addr.as_int();
 	/* If we can map it */
 	if ((opts & MAP_OVERWRITE) != 0 || free_from_here(virt_to_map, len)) {
 		/* Figure out how many pages we need to map */
@@ -274,8 +279,9 @@ static map_results internal_map_range(void const *const phys_addr, size_t len,
 }
 
 /* Mapping a range with only phys_addr specified */
-map_results map_range(void const *const phys_addr, size_t len, void **virt_addr,
-                      unsigned int opts) {
+map_results map_range(PhysAddr<void const> const phys_addr, size_t len,
+                      void const **virt_addr, unsigned int opts) {
+	/* Synchronize access */
 	modifying_page_tables.aquire_lock();
 	/* Round up, instead of down. */
 	len += page_offset(phys_addr);
@@ -291,6 +297,13 @@ map_results map_range(void const *const phys_addr, size_t len, void **virt_addr,
 	return temp;
 }
 
+map_results map_range(PhysAddr<void> phys_addr, size_t len, void **virt_addr,
+                      unsigned int opts) {
+	// TODO: map as read-write vs. read-only?
+	return map_range(PhysAddr<const void>(phys_addr), len,
+	                 const_cast<void const **>(virt_addr), opts);
+}
+
 /* Mapping a range with nothing specified */
 map_results map_range(size_t len, void **virt_addr, unsigned int opts) {
 	modifying_page_tables.aquire_lock();
@@ -298,9 +311,9 @@ map_results map_range(size_t len, void **virt_addr, unsigned int opts) {
 	if (*virt_addr == nullptr) {
 		return map_no_virtmem;
 	}
-	void *phys_addr;
+	PhysAddr<void const> const phys_addr;
 	/* attempt to get the physical memory */
-	pmm_results attempt = get_mem_area(&phys_addr, len);
+	pmm_results attempt = get_mem_area(phys_addr, len);
 	/* if we are out */
 	if (attempt == pmm_nomem) {
 		modifying_page_tables.release_lock();
@@ -332,8 +345,7 @@ map_results unmap_page(page const virt_addr,
 	}
 }
 
-map_results unmap_range(void const *const virt_addr, size_t len,
-                        unsigned int opts) {
+map_results unmap_range(void const *virt_addr, size_t len, unsigned int opts) {
 	modifying_page_tables.aquire_lock();
 	/* Loop through */
 	page to_unmap = virt_addr;
@@ -348,13 +360,12 @@ map_results unmap_range(void const *const virt_addr, size_t len,
 	/* If we are managing the physical memory */
 	if ((opts & PHYS_ADDR_AUTO) != 0) {
 		/* Attempt to free it */
-		auto virt_to_phys = [](void const *virt) -> void const * {
+		auto virt_to_phys = [](void const *virt) -> PhysAddr<void const> {
 			auto offsets = page_table_offset(virt);
 			auto &first_level = first_level_table_system[offsets.first_level];
 			auto &second_level = reinterpret_cast<second_level_descriptor *>(
 				first_level & ~0x3ff_uint32_t)[offsets.second_level];
-			return reinterpret_cast<void const *>(second_level &
-			                                      ~0x3ff_uint32_t);
+			return PhysAddr<void const>(second_level & ~0x3ff_uint32_t);
 		};
 		pmm_results attempt = free_mem_area(virt_to_phys(virt_addr), len);
 		/* If the attempt failed */
@@ -385,19 +396,22 @@ int setup_paging() {
 	/* Map the kernel and serial port */
 	/* Since phys_kernel_start and phys_kernel_end are setup in the linker file,
 	 * parsing the c++ code makes them look unrelated */
+	/* cppcheck-suppress subtractPointers */
 	map_results kernel_mapping = internal_map_range(
-		&phys_kernel_start,
-		/* cppcheck-suppress subtractPointers */
-		static_cast<size_t>(&phys_kernel_end - &phys_kernel_start),
-		&kernel_start, MAP_OVERWRITE);
+		phys_kernel_start,
+		static_cast<size_t>(phys_kernel_end - phys_kernel_start), &kernel_start,
+		MAP_OVERWRITE);
 	if (kernel_mapping != map_success) {
 		kcriticalf("Unable to map kernel! Error %d.", kernel_mapping);
 		std::abort();
 	}
-	modifying_page_tables.release_lock();
 	/* Basic sanity check */
 	/* If this fails, we probably would crash on the instruction after enabling
 	 * paging */
+	assert(isMapped(&kernel_start));
+	assert(isMapped(&kernel_end));
+	modifying_page_tables.release_lock();
+
 	map_results serial_mapping = map_serial();
 	if (serial_mapping != map_success) {
 		kcriticalf("Mapping the serial port failed with error %d. Not enabling "
@@ -405,9 +419,8 @@ int setup_paging() {
 		           serial_mapping);
 		return 1;
 	}
+
 	modifying_page_tables.aquire_lock();
-	assert(isMapped(&kernel_start));
-	assert(isMapped(&kernel_end));
 	/* Actually set the registers */
 	uintptr_t ttbr0 = reinterpret_cast<uintptr_t>(first_level_table_system);
 	ttbr0 &= ~0b11111_uintptr_t;

@@ -1,3 +1,4 @@
+#include "kernel/phys_addr.h"
 #include <algorithm>
 #include <cstddef>
 #include <cstdlib>
@@ -13,7 +14,8 @@ inline uintptr_t offset(void const *const addr) {
 	return offset(reinterpret_cast<uintptr_t>(addr));
 }
 
-mem_results get_mem_from(void *phys_addr, void **new_virt_addr, size_t len) {
+mem_results get_mem_from(PhysAddr<void> phys_addr, void **new_virt_addr,
+                         size_t len) {
 	pmm_results phys_mem_results;
 	map_results virt_mem_results;
 
@@ -50,7 +52,7 @@ mem_results get_mem_from(void *phys_addr, void **new_virt_addr, size_t len) {
 }
 
 mem_results get_mem(void **new_virt_addr, size_t len) {
-	void *phys_addr;
+	PhysAddr<void const> phys_addr;
 	pmm_results phys_mem_results;
 	map_results virt_mem_results;
 

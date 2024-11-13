@@ -8,8 +8,10 @@
 extern vga_text_term term;
 
 static int term_putchar(char const c) { return term.putchar(c); }
+static int term_putstr(char const *s) { return term.putstr(s); }
 #else  // __i386__
 int term_putchar(char const) { return 0; }
+int term_putstr(char const *) { return 0; }
 #endif // __i386__ (else)
 
 int __internal_putchar(char const c) {
@@ -23,9 +25,7 @@ int __internal_putchar(char const c) {
 
 int __internal_writeStr(char const *const s) {
 	writestr_serial(s);
-	for (const char *c = s; *c != '\0'; c++) {
-		term_putchar(*c);
-	}
+	term_putstr(s);
 	return 0;
 }
 #else /* __is_libk */

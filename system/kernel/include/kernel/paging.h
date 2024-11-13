@@ -8,15 +8,18 @@
 #include <feline/fixed_width.h>
 #include <kernel/asm_compat.h>
 #include <kernel/mem.h>
+#include <kernel/phys_addr.h>
 
 /* Map len bytes from phys_addr to any free virtual address */
-map_results map_range(void const *const phys_addr, size_t len, void **virt_addr,
+map_results map_range(PhysAddr<void const> phys_addr, size_t len,
+                      void const **virt_addr, unsigned int opts);
+map_results map_range(PhysAddr<void> phys_addr, size_t len, void **virt_addr,
                       unsigned int opts);
 /* Map len bytes from anywhere to any free virtual address */
+map_results map_range(uintptr_t len, void const **virt_addr, size_t opts);
 map_results map_range(uintptr_t len, void **virt_addr, size_t opts);
 /* Unmap all the pages from virt_addr to virt_addr+len */
-map_results unmap_range(void const *const virt_addr, size_t len,
-                        unsigned int opts);
+map_results unmap_range(void const *virt_addr, size_t len, unsigned int opts);
 
 /* tells unmap_{page,range} to deallocate the memory from the pmm */
 /* TODO: get rid of this */

@@ -1,16 +1,16 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
 
-#include "feline/logger.h"
-#include "kernel/devicetree.h"
-#include "kernel/halt.h"
 #include "mem/mem.h"
 #include <cinttypes>
 #include <cstring>
 #include <drivers/framebuffer.h>
 #include <drivers/serial.h>
+#include <feline/logger.h>
 #include <feline/settings.h>
 #include <kernel/arch.h>
+#include <kernel/devicetree.h>
+#include <kernel/halt.h>
 #include <kernel/interrupts.h>
 #include <kernel/misc.h>
 #include <kernel/paging.h>
@@ -35,7 +35,7 @@ be able to log anything until the IDT is setup (attempts will triple-fault)
 Also note that the interrupts actually log stuff, so watch out!
 After this we should be good to go! */
 int early_boot_setup(uintptr_t devicetree_header_addr) {
-	PhysAddr<fdt_header> devicetree(devicetree_header_addr);
+	PhysAddr<fdt_header const> devicetree(devicetree_header_addr);
 	init_serial(); /* We can't do any logging before this gets setup */
 	Settings::Logging::critical.initialize(write_serial);
 	Settings::Logging::error.initialize(write_serial);

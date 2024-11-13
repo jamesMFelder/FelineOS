@@ -4,6 +4,7 @@
 #define _KERN_DRIVER_FB_H 1
 
 #include <cstdint>
+#include <kernel/phys_addr.h>
 
 typedef struct pixel {
 		uint8_t red;
@@ -41,7 +42,7 @@ class framebuffer {
 	public:
 		/* Actually setup the framebuffer (TODO: merge with the constructor) */
 		/* map_range must be functional, but paging doesn't need to be on */
-		int init(pixel_bgr_t *addr, uint16_t width, uint16_t height,
+		int init(PhysAddr<pixel_bgr_t> addr, uint16_t width, uint16_t height,
 		         uint16_t pitch, uint8_t bpp);
 		/* Put a pixel */
 		int putPixel(uint16_t x, uint16_t y, pixel_t p);

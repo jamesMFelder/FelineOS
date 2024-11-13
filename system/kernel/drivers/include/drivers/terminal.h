@@ -4,6 +4,7 @@
 #define _KERN_DRIVER_TERMINAL_H 1
 
 #include <cstdint>
+#include <kernel/phys_addr.h>
 
 /* Width and height */
 #define VGA_TEXT_HEIGHT 25
@@ -55,7 +56,7 @@ class vga_text_term {
 		~vga_text_term();
 
 		/* Initialize */
-		int init(vga_text_char *addr);
+		int init(PhysAddr<vga_text_char> addr);
 
 		/* utility functions */
 		void clear();
@@ -67,6 +68,7 @@ class vga_text_term {
 		/* Put them at the current cursor position with current color */
 		/* Updates the cursor position */
 		int putchar(char const c);
+		int putstr(char const *c);
 
 		/* Sets the color */
 		int setfg(uint8_t const fg);

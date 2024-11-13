@@ -4,11 +4,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <feline/logger.h>
 #include <feline/rounding.h>
 
 #if defined(__is_libk)
 #include <feline/spinlock.h>
-#include <kernel/log.h>
 #include <kernel/mem.h>
 #endif /* __is_libk */
 
@@ -63,6 +63,7 @@ static void split_header(Header *&current_header, size_t split) {
 		get_mem(reinterpret_cast<void **>(&hdr),
 	            round_to_multiple_of(needed, DEFAULT_MEMRESERVE_SIZE));
 	if (result != mem_success) {
+		kCriticalNoAlloc() << "Could not get memory!";
 		std::abort();
 	}
 #else  // __is_libk

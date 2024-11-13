@@ -2,12 +2,14 @@
 /* Copyright (c) 2023 James McNaughton Felder */
 #include <cassert>
 #include <cstddef>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <feline/spinlock.h>
 #include <kernel/log.h>
 #include <kernel/mem.h>
 #include <kernel/paging.h>
+#include <kernel/phys_addr.h>
 #include <kernel/vtopmem.h>
 
 /* Bits (MSB to LSB): addr: 20, unused: 4, mb_page: 1, written: 1, read: 1, */
@@ -93,9 +95,6 @@ inline void set_addr(page_table_entry *const p, void const *const addr) {
 	return set_addr(p, reinterpret_cast<uintptr_t>(addr));
 }
 
-/* Malloced array of 1024 elements */
-page_table_entry *create_new_page_table();
-
 /* Return the offset into the page table you need to go for addr */
 inline uintptr_t pte_offset(page const addr) {
 	return addr.getInt() >> 12 & 0x03ff_uint32_t;
@@ -155,8 +154,8 @@ void mark_notpresent(page_table_entry *pt);
 
 /* get the physical address virt_addr points to */
 /* for now returns a valid address even if the page table isn't "present" */
-inline void *virt_to_phys(void const *const virt_addr) {
-	return reinterpret_cast<void *>(addr(reinterpret_cast<page_table_entry *>(
+inline PhysAddr<void> virt_to_phys(void const *const virt_addr) {
+	return PhysAddr<void>(addr(reinterpret_cast<page_table_entry *>(
 		0xFFC00000 + (1024 * sizeof(page_table_entry) * pde_offset(virt_addr)) +
 		(sizeof(page_table_entry) * pte_offset(virt_addr)))));
 }
@@ -169,8 +168,6 @@ inline void *virt_to_phys(void const *const virt_addr) {
 Spinlock modifying_page_tables;
 
 /* Only take the address of these! */
-extern char const phys_kernel_start;
-extern char const phys_kernel_end;
 extern char const kernel_start;
 extern char const kernel_end;
 
@@ -196,14 +193,6 @@ bool page_tables_searchable[MAX_VIRT_MEM / PHYS_MEM_CHUNK_SIZE] = {false};
 bool isMapped(page const virt_addr) {
 	/* If the page table is present */
 	return page_tables_searchable[searchable_page_table_offset(virt_addr)];
-}
-
-/* Not used, but keep for when we are doing stuff dynamically */
-page_table_entry *create_new_page_table() {
-	void *marea;
-	get_mem_area(&marea, PHYS_MEM_CHUNK_SIZE);
-	std::memset(marea, 0, sizeof(page_table_entry) * 1024);
-	return static_cast<page_table_entry *>(marea);
 }
 
 /* Check if needed pages are free starting at virt_addr_base */
@@ -312,16 +301,16 @@ map_results map_page(page const phys_addr, page const virt_addr,
 
 /* Map len bytes from phys_addr to virt_addr (internal use only) */
 /* Don't call this function if you haven't locked `modifying_page_tables` */
-static map_results internal_map_range(void const *const phys_addr, size_t len,
-                                      void const *const virt_addr,
+static map_results internal_map_range(PhysAddr<void const> phys_addr,
+                                      size_t len, void const *const virt_addr,
                                       unsigned int opts) {
 	/* Verify correct alignment */
-	if (page_offset(phys_addr) != page_offset(virt_addr)) {
+	if (page_offset(phys_addr.as_int()) != page_offset(virt_addr)) {
 		return map_invalid_align;
 	}
 	/* Create the page objects for internal use */
 	page virt_to_map = virt_addr;
-	page phys_to_map = phys_addr;
+	page phys_to_map = phys_addr.as_int();
 	/* If we can map it */
 	if ((opts & MAP_OVERWRITE) != 0 || free_from_here(virt_to_map, len)) {
 		/* Figure out how many pages we need to map */
@@ -373,31 +362,39 @@ static map_results internal_map_range(void const *const phys_addr, size_t len,
 }
 
 /* Mapping a range with only phys_addr specified */
-map_results map_range(void const *const phys_addr, size_t len, void **virt_addr,
-                      unsigned int opts) {
+map_results map_range(PhysAddr<void const> phys_addr, size_t len,
+                      void const **virt_addr, unsigned int opts) {
 	modifying_page_tables.aquire_lock();
 	/* Round up, instead of down. */
-	len += page_offset(phys_addr);
+	len += page_offset(phys_addr.as_int());
 	*virt_addr = find_free_virtmem(len);
 	if (*virt_addr == nullptr) {
 		return map_no_virtmem;
 	}
 	/* Set it to the correct offset in the page */
-	*virt_addr = reinterpret_cast<void *>(
-		reinterpret_cast<uintptr_t>(*virt_addr) + page_offset(phys_addr));
+	*virt_addr =
+		reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(*virt_addr) +
+	                             page_offset(phys_addr.as_int()));
 	map_results temp = internal_map_range(phys_addr, len, *virt_addr, opts);
 	modifying_page_tables.release_lock();
 	return temp;
 }
 
+map_results map_range(PhysAddr<void> phys_addr, size_t len, void **virt_addr,
+                      unsigned int opts) {
+	// TODO: make mapped range read-only or writeable
+	return map_range(PhysAddr<void const>(phys_addr), len,
+	                 const_cast<void const **>(virt_addr), opts);
+}
+
 /* Mapping a range with nothing specified */
-map_results map_range(size_t len, void **virt_addr, unsigned int opts) {
+map_results map_range(size_t len, void const **virt_addr, unsigned int opts) {
 	modifying_page_tables.aquire_lock();
 	*virt_addr = find_free_virtmem(len);
 	if (*virt_addr == nullptr) {
 		return map_no_virtmem;
 	}
-	void *phys_addr;
+	PhysAddr<void const> phys_addr;
 	/* attempt to get the physical memory */
 	pmm_results attempt = get_mem_area(&phys_addr, len);
 	/* if we are out */
@@ -410,6 +407,10 @@ map_results map_range(size_t len, void **virt_addr, unsigned int opts) {
 	temp = internal_map_range(phys_addr, len, virt_addr, opts);
 	modifying_page_tables.release_lock();
 	return temp;
+}
+
+map_results map_range(size_t len, void **virt_addr, unsigned int opts) {
+	return map_range(len, const_cast<void const **>(virt_addr), opts);
 }
 
 /* TODO; add many checks to avoid unmapping or leaking info about the kernel */

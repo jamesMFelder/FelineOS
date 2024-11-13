@@ -15,16 +15,14 @@
 #include <kernel/vtopmem.h>
 
 /* Advance to the next multiboot memory map entry */
-inline multiboot_memory_map_t *
-next_mmap_entry(multiboot_memory_map_t *mmap_entry) {
+inline multiboot_memory_map_t const *
+next_mmap_entry(multiboot_memory_map_t const *mmap_entry) {
 	return reinterpret_cast<typeof(mmap_entry)>(
 		reinterpret_cast<uintptr_t>(mmap_entry) + mmap_entry->size +
 		sizeof(mmap_entry->size));
 }
 
 /* Setup by the linker to be at the start and end of the kernel. */
-extern const char phys_kernel_start;
-extern const char phys_kernel_end;
 extern const char kernel_start;
 extern const char kernel_end;
 const uintptr_t phys_uint_kernel_start =
@@ -44,10 +42,10 @@ int bootstrap_phys_mem_manager(PhysAddr<multiboot_info_t> phys_mbp) {
 	assert(mbp.flags & MULTIBOOT_INFO_MEM_MAP);
 
 	size_t mbmp_len = mbp.mmap_length;
-	multiboot_memory_map_t *mbmp;
+	multiboot_memory_map_t const *mbmp;
 	map_results mbmp_mapping =
-		map_range(reinterpret_cast<multiboot_memory_map_t *>(mbp.mmap_addr),
-	              mbmp_len, reinterpret_cast<void **>(&mbmp), 0);
+		map_range(PhysAddr<multiboot_memory_map_t const>(mbp.mmap_addr),
+	              mbmp_len, reinterpret_cast<void const **>(&mbmp), 0);
 	if (mbmp_mapping != map_success) {
 		kCriticalNoAlloc()
 			<< "Unable to map multiboot memory map: PMM cannot continue!";
@@ -73,7 +71,7 @@ int bootstrap_phys_mem_manager(PhysAddr<multiboot_info_t> phys_mbp) {
 	PhysAddr<bootloader_mem_region> found_space = in_use_location;
 	/* Search for a space large enough to sort them that isn't being used
 	 * already */
-	multiboot_memory_map_t *current_multiboot_memory = mbmp;
+	multiboot_memory_map_t const *current_multiboot_memory = mbmp;
 	while (current_multiboot_memory <
 	       mbmp + (mbmp_len / sizeof(multiboot_memory_map_t))) {
 		/* Check if it's available from the hardware/firmware (as reported by
@@ -123,7 +121,7 @@ int bootstrap_phys_mem_manager(PhysAddr<multiboot_info_t> phys_mbp) {
 	/* Actually map the found space. */
 	struct bootloader_mem_region *unavailable_memory;
 	enum map_results mapping =
-		map_range(found_space.unsafe_raw_get(), sorted_length,
+		map_range(found_space, sorted_length,
 	              reinterpret_cast<void **>(&unavailable_memory), 0);
 	if (mapping != map_success) {
 		kCriticalNoAlloc()

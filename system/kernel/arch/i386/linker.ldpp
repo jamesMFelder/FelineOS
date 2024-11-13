@@ -39,7 +39,7 @@ SECTIONS
 	/* Where we will think the kernel starts once paging is turned on. */
 	kernel_start = .;
 	/*Where the kernel starts (what we care abuot after turning paging on).*/
-	phys_kernel_start = . - VA_OFFSET;
+	_phys_kernel_start = . - VA_OFFSET;
 
 	.text ALIGN(4K) : AT (ADDR (.text) - VA_OFFSET)
 	{
@@ -68,7 +68,7 @@ SECTIONS
 
 	/*Where the kernel ends.*/
 	kernel_end = .;
-	phys_kernel_end = . - VA_OFFSET;
+	_phys_kernel_end = . - VA_OFFSET;
 
 	/* The compiler may produce other sections, put them in the proper place in
 	   in this file, if you'd like to include them in the final kernel. */
