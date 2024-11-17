@@ -9,6 +9,8 @@
 #include <cstdlib>
 #include <feline/cpp_only.h>
 #include <feline/shortcuts.h>
+#include <memory>
+#include <type_traits>
 
 void check_index(size_t index, size_t max);
 
@@ -26,6 +28,39 @@ template <typename T, typename Allocator> class KVector {
 			: items(nullptr), num_items(0), m_capacity(0), a() {}
 		constexpr KVector(pointer items, size_t size)
 			: items(items), num_items(size), m_capacity(size), a() {}
+		constexpr KVector(pointer items, size_t size)
+			requires(!std::is_const_v<T>)
+			: a() {
+			this->items = a.allocate(size);
+			this->num_items = size;
+			this->capacity = size;
+			std::uninitialized_copy_n(items, size, this->items);
+		}
+		constexpr KVector(KVector &&other) : KVector() { swap(*this, other); }
+		constexpr KVector(KVector const &other)
+			requires(std::is_const_v<T>)
+			: items(other.items()), num_items(other.size()),
+			  m_capacity(other.size()), a() {}
+		constexpr KVector(KVector const &other)
+			requires(!std::is_const_v<T>)
+			: num_items(other.size()), m_capacity(other.size()), a() {
+			this->items = a.allocate(m_capacity);
+			std::uninitialized_copy(begin(other), end(other), items);
+		}
+
+		constexpr ~KVector()
+			requires(std::is_const_v<T>)
+		{}
+		constexpr ~KVector()
+			requires(!std::is_const_v<T>)
+		{
+			a.deallocate(items, m_capacity);
+		}
+
+		constexpr KVector &operator=(KVector &&other) {
+			swap(*this, other);
+			return *this;
+		}
 
 		constexpr reference get(size_t index) {
 			check_index(index, num_items);
@@ -56,24 +91,22 @@ template <typename T, typename Allocator> class KVector {
 		constexpr const_pointer data() const { return items; }
 
 		void reserve(size_t num) {
-			if (num <= num_items) {
+			if (num <= m_capacity) {
 				return;
 			}
 			auto new_items = a.allocate(num);
-			items &&std::copy(begin(*this), end(*this), new_items);
+			items &&std::move(begin(*this), end(*this), new_items);
 			a.deallocate(items, m_capacity);
 			m_capacity = num;
 			items = new_items;
 		}
 
 		void push_back(value_type item) { append(item, 1); }
-		void append(value_type item) { append(item, 1); }
-		void append(value_type item, size_t count) {
-			if (m_capacity < (num_items + count) || !items) {
-				reserve(num_items + count);
-			}
+
+		void append(value_type item, size_t count = 1) {
+			reserve(num_items + count);
 			for (size_t i = 0; i < count; ++i) {
-				items[num_items + i] = item;
+				new (&items[num_items + i]) T(std::move(item));
 			}
 			num_items += count;
 		}
@@ -87,21 +120,22 @@ template <typename T, typename Allocator> class KVector {
 			if (m_capacity < (num_items + other.size()) || !items) {
 				reserve(num_items + other.size());
 			}
-			std::copy(begin(other), end(other), &items[num_items]);
+			std::uninitialized_copy(begin(other), end(other),
+			                        &items[num_items]);
 			num_items += other.size();
 		}
 		void append(KVector<T const, Allocator> other)
 			requires(std::is_same_v<std::remove_const_t<T>, T>)
 		{
-			if (m_capacity < (num_items + other.size()) || !items) {
-				reserve(num_items + other.size());
-			}
-			std::copy(begin(other), end(other), &items[num_items]);
+			reserve(num_items + other.size());
+			std::uninitialized_copy(begin(other), end(other),
+			                        &items[num_items]);
 			num_items += other.size();
 		}
+
 		void append(const_iterator first, const_iterator last) {
 			reserve(num_items + std::distance(first, last));
-			std::copy(first, last, &items[num_items]);
+			std::uninitialized_copy(first, last, &items[num_items]);
 			num_items += std::distance(first, last);
 		}
 
@@ -139,6 +173,13 @@ template <typename T, typename Allocator> class KVector {
 				}
 			}
 			num_items = 0;
+		}
+		friend void swap(KVector &first, KVector &second) {
+			using std::swap;
+			swap(first.items, second.items);
+			swap(first.num_items, second.num_items);
+			swap(first.m_capacity, second.m_capacity);
+			swap(first.a, second.a);
 		}
 
 	private:
