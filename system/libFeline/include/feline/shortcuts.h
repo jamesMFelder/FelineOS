@@ -21,25 +21,25 @@ concept has_begin_end =
 
 template <container T>
 	requires has_begin_end<T>
-T::iterator begin(T &c) {
+auto begin(T &c) -> decltype(c.begin()) {
 	return c.begin();
 }
 
 template <container T>
 	requires has_begin_end<T>
-T::iterator end(T &c) {
+auto end(T &c) -> decltype(c.end()) {
 	return c.end();
 }
 
 template <container T>
 	requires(!has_begin_end<T>)
-T::iterator begin(T &c) {
+auto begin(T &c) -> decltype(c.data()) {
 	return c.data();
 }
 
 template <container T>
 	requires(!has_begin_end<T>)
-T::iterator end(T &c) {
+auto end(T &c) -> decltype(c.data() + c.size()) {
 	return c.data() + c.size();
 }
 
