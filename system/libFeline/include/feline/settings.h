@@ -25,6 +25,16 @@ template <typename T, bool changeable> class Setting {
 					"Attempt to get value for uninitialized setting!"_kstr);
 			}
 		}
+		T &get()
+			requires(changeable)
+		{
+			if (initialized) {
+				return value;
+			} else {
+				report_fatal_error(
+					"Attempt to get value for uninitialized setting!"_kstr);
+			}
+		}
 		void set(T const &value)
 			requires(changeable)
 		{
