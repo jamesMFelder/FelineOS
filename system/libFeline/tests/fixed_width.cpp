@@ -9,7 +9,7 @@
 	type _test_##type = 0_##type;                                              \
 	(void)_test_##type;
 
-int main() {
+ADD_TEST(fixed_width) {
 	// Verify that _u?int(8|16|32|64)_t are all valid numeric literal suffixes
 	TEST_TYPE(int8_t)
 	TEST_TYPE(uint8_t)

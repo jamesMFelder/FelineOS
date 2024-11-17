@@ -32,8 +32,6 @@ endif()
 add_compile_options(-Werror -Wall -Wextra -fstack-protector -fno-omit-frame-pointer -fno-rtti)
 
 add_subdirectory(system/libFeline)
-add_library(feline STATIC ${FELINE_OBJS})
-target_include_directories(feline PUBLIC system/libFeline/include)
 
 # Stop before building the rest of the stuff
 if (${LIBFELINE_ONLY})
@@ -41,12 +39,12 @@ return()
 endif()
 
 # Only needs to be explicitly linked to libc when in freestanding
-target_link_libraries(feline PRIVATE c)
+target_link_libraries(feline PRIVATE c gcc supc++ -nostdlib)
 
 add_subdirectory(system/libc)
 add_library(c STATIC ${LIBC_OBJS})
 target_include_directories(c PUBLIC system/libc/include system/libc/include/c++)
-target_link_libraries(c PRIVATE feline k)
+target_link_libraries(c PRIVATE k)
 target_compile_definitions(c PRIVATE __is_libk)
 
 add_subdirectory(system/kernel)
@@ -75,7 +73,7 @@ endif()
 
 add_executable(FelineOS.kernel ${ARCHDIR}/boot/boot.S)
 target_compile_definitions(FelineOS.kernel PRIVATE __is_kernel)
-target_link_libraries(FelineOS.kernel c k feline gcc supc++ -nostdlib)
+target_link_libraries(FelineOS.kernel felineTest c k gcc supc++ -nostdlib)
 target_include_directories(FelineOS.kernel PRIVATE system/kernel/include ${ARCHDIR}/include)
 add_dependencies(FelineOS.kernel linkerscript crts)
 target_link_options(FelineOS.kernel PRIVATE -T ${ARCHDIR}/linker.ld)

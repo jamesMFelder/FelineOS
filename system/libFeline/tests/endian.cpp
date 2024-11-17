@@ -6,7 +6,7 @@
 #include <feline/fixed_width.h>
 #include <feline/tests.h>
 
-int main() {
+ADD_TEST(endian) {
 	const uint32_t value = 0x12345678;
 	const uint32_t reversed = 0x78563412;
 	// Check that reverse_endian works

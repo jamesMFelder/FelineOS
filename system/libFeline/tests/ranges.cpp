@@ -2,7 +2,7 @@
 #include <feline/ranges.h>
 #include <feline/tests.h>
 
-int main() {
+ADD_TEST(ranges) {
 	initialize_loggers();
 
 	range<size_t> test_range = range<size_t>{.start = 10, .end = 20};
@@ -34,4 +34,6 @@ int main() {
 			}
 		}
 	}
+
+	return 0;
 }

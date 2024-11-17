@@ -8,6 +8,7 @@
 #include <feline/logger.h>
 #include <feline/settings.h>
 #include <feline/str.h>
+#include <feline/tests.h>
 #include <kernel/arch.h>
 #include <kernel/asm_compat.h>
 #include <kernel/backtrace.h>
@@ -23,6 +24,9 @@
 /* Setup by the linker to be at the start and end of the kernel. */
 extern const char kernel_start;
 extern const char kernel_end;
+
+/* The libFeline tests */
+KVector<test_func, KGeneralAllocator<test_func>> test_functions;
 
 ASM void kernel_main();
 
@@ -62,6 +66,22 @@ void kernel_main() {
 		p = {0, 0, 255};                                    /* blue */
 		fb.putRect(maxX / 2, maxY / 2, maxX / 2 - 1, maxY / 2 - 1,
 		           p); /* lower right */
+	}
+
+	kLog() << "Running tests:";
+	for (auto &test : test_functions) {
+		int result;
+		kout output(log_level::log);
+		output << test.name << "… ";
+		result = (test.func)();
+		if (result == 0) {
+			output << "ok!";
+		} else {
+			output << "error!";
+			kError() << "Test " << test.name << " failed with error "
+					 << dec(result);
+			return;
+		}
 	}
 
 	kCritical() << "Nothing to do... Pausing now."; /* boot.S should hang if we

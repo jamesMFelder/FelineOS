@@ -1,9 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2024 James McNaughton Felder */
 
+#include "feline/tests.h"
 #include <feline/bool_int.h>
 
-int main() {
+ADD_TEST(bool_int) {
 	// Testing INT_FALSE, INT_TRUE, IS_FALSE and IS_TRUE
 	static_assert(INT_FALSE == 0, "False should be 0!");
 	static_assert(INT_TRUE != 0, "True should not be 0!");
