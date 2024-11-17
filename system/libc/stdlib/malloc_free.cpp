@@ -130,13 +130,16 @@ void free(void *ptr) {
 	}
 	// Couldn't find the pointer to free
 	if (hdr + 1 != ptr) {
+		kCriticalNoAlloc() << "Pointer was not malloc()ed!";
 		std::abort();
 	}
 	// It's already been freed!
 	if (!hdr->in_use) {
+		kCriticalNoAlloc() << "Pointer has already been free()d!";
 		std::abort();
 	}
 	hdr->in_use = false;
+	memset(hdr + 1, 0xDD, hdr->len);
 	if (hdr->next && !hdr->next->in_use && !hdr->next->start_of_allocation &&
 	    hdr->next ==
 	        reinterpret_cast<Header *>(reinterpret_cast<uintptr_t>(hdr) +
