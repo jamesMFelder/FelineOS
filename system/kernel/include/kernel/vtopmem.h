@@ -50,9 +50,8 @@ template <class T> T read_pmem(PhysAddr<T> const addr) {
 template <class T>
 void read_pmem(PhysAddr<T> const addr, size_t num, T *result) {
 	T *tmp_ptr;
-	map_results type_mapping =
-		map_range(addr.unsafe_raw_get(), sizeof(T) * num,
-	              reinterpret_cast<void **>(&tmp_ptr), 0);
+	map_results type_mapping = map_range(
+		addr, sizeof(T) * num, reinterpret_cast<void **>(&tmp_ptr), 0);
 	if (type_mapping != map_success) {
 		kerrorf("Cannot map physical memory %p. Error %d.",
 		        addr.unsafe_raw_get(), type_mapping);
@@ -67,8 +66,7 @@ void read_pmem(PhysAddr<T> const addr, size_t num, T *result) {
 template <class T> void write_pmem(PhysAddr<T> const addr, T value) {
 	T *tmp_ptr;
 	map_results type_mapping =
-		map_range(addr.unsafe_raw_get(), sizeof(T),
-	              reinterpret_cast<void **>(&tmp_ptr), 0);
+		map_range(addr, sizeof(T), reinterpret_cast<void **>(&tmp_ptr), 0);
 	if (type_mapping != map_success) {
 		kerrorf("Cannot map physical memory %p. Error %d.",
 		        addr.unsafe_raw_get(), type_mapping);
@@ -82,9 +80,8 @@ template <class T> void write_pmem(PhysAddr<T> const addr, T value) {
  * aborting if an error occurs */
 template <class T> void write_pmem(PhysAddr<T> addr, size_t num, T *value) {
 	T *tmp_ptr;
-	map_results type_mapping =
-		map_range(addr.unsafe_raw_get(), sizeof(T) * num,
-	              reinterpret_cast<void **>(&tmp_ptr), 0);
+	map_results type_mapping = map_range(
+		addr, sizeof(T) * num, reinterpret_cast<void **>(&tmp_ptr), 0);
 	if (type_mapping != map_success) {
 		kerrorf("Cannot map physical memory %p. Error %d.",
 		        addr.unsafe_raw_get(), type_mapping);
