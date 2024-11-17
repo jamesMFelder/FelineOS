@@ -4,6 +4,7 @@
 #include <cinttypes>
 #include <drivers/framebuffer.h>
 #include <drivers/serial.h>
+#include <drivers/timer.h>
 #include <fcntl.h>
 #include <feline/logger.h>
 #include <feline/settings.h>
@@ -12,6 +13,7 @@
 #include <kernel/arch.h>
 #include <kernel/asm_compat.h>
 #include <kernel/backtrace.h>
+#include <kernel/halt.h>
 #include <kernel/log.h>
 #include <kernel/mem.h>
 #include <kernel/misc.h>
@@ -84,7 +86,9 @@ void kernel_main() {
 		}
 	}
 
-	kCritical() << "Nothing to do... Pausing now."; /* boot.S should hang if we
-	                                                   return */
+	kLog() << "Starting the timer: kernel setup is done!"; /* boot.S should hang
+	                                                          if we return */
+	init_timers();
+	halt();
 	return;
 }

@@ -8,13 +8,16 @@ if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686")
 		system/kernel/arch/i386/io/io.cpp
 		system/kernel/drivers/uart/uart.cpp
 		system/kernel/drivers/vga/vga.cpp
+		system/kernel/drivers/PIT/pit.cpp
 		)
 elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm")
 	set(KERN_ARCH_OBJS
 		system/kernel/arch/arm/devicetree/devicetree.cpp
 		system/kernel/arch/arm/interrupts/idt.S
+		system/kernel/arch/arm/interrupts/irq.cpp
 		system/kernel/arch/arm/interrupts/isr.S
 		system/kernel/arch/arm/interrupts/handle_abort.cpp
+		system/kernel/drivers/systimer/systimer.cpp
 		system/kernel/drivers/pl011/pl011.cpp
 		)
 else()

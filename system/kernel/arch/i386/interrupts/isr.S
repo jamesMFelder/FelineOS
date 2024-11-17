@@ -214,11 +214,32 @@ isr_stub_31:
 
 	iret /* Return to the next instruction */
 
+/* PIC interrupt */
+isr_stub_32:
+	push %ebp /* Create a stack frame for debugging */
+	mov  %esp, %ebp
+
+    push %eax /* Save registers */
+	push %ecx
+	push %edx
+
+	call PIT_isr_handler
+
+    pop %edx /* Restore registers */
+	pop %ecx
+	pop %eax
+
+	mov %ebp, %esp /* Remove the stack frame */
+	pop %ebp
+
+    iret /* Return from the interrupt */
+
+
 /* Used for the lidt instruction */
 .section .data
 .global isr_stub_table
 isr_stub_table:
-.irp i,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
+.irp i,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32
 	.long isr_stub_\i /* use DQ instead if targeting 64-bit */
 .endr
 

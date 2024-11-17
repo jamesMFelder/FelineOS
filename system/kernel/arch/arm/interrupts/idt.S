@@ -11,4 +11,7 @@ idt_init:
 	ldr r0, =isr_start
 	mcr p15, 0, r0, c12, c0, 0
 
+	/* Also, enable IRQs */
+	cpsie i
+
 	bx lr

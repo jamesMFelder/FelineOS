@@ -59,7 +59,8 @@ typedef void (*output_func)(const char *, size_t);
 	_S(Settings::Logging::output_func, true, Logging, error)                   \
 	_S(Settings::Logging::output_func, true, Logging, warning)                 \
 	_S(Settings::Logging::output_func, true, Logging, log)                     \
-	_S(Settings::Logging::output_func, true, Logging, debug)
+	_S(Settings::Logging::output_func, true, Logging, debug)                   \
+	_S(unsigned long long, true, Time, ms_since_boot)
 
 #define _S(type, modifiable, ns, name)                                         \
 	namespace ns {                                                             \

@@ -5,7 +5,7 @@
 
 #include <cstdint>
 
-#define IDT_MAX_DESCRIPTORS 32
+#define IDT_MAX_DESCRIPTORS 33
 
 /* Disable interrupts */
 /* Save current instruction */
@@ -36,5 +36,17 @@ static idtr_t idtr
 	__attribute__((used)); /* For use with the lidt instruction */
 
 extern void *isr_stub_table[];
+
+// From https://wiki.osdev.org/PIC
+#define PIC1 0x20    /* IO base address for master PIC */
+#define PIC2 0xA0    /* IO base address for slave PIC */
+#define PIC_EOI 0x20 /* End of interrupt command code */
+#define PIC1_COMMAND PIC1
+#define PIC1_DATA (PIC1 + 1)
+#define PIC2_COMMAND PIC2
+#define PIC2_DATA (PIC2 + 1)
+void PIC_remap(int offset1, int offset2);
+void IRQ_add_mask(unsigned char IRQline);
+void IRQ_clear_mask(unsigned char IRQline);
 
 #endif /* _KERN_IDT_H */

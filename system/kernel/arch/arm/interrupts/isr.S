@@ -16,7 +16,7 @@ isr_stub_table:
 	ldr pc,=isr_handler
 	ldr pc,=data_abort_handler
 	ldr pc,=isr_handler
-	ldr pc,=isr_handler
+	ldr pc,=irq_handler
 	ldr pc,=isr_handler
 .global isr_end
 isr_end:
@@ -45,6 +45,27 @@ isr_handler:
 
 	//Print backtrace and hang
 	bl abort
+
+// Handle an external interrupt
+.global irq_handler
+irq_handler:
+	//Push lr and spsr to the stack
+	srsfd #sys_mode!
+	//Switch to system mode
+	cps #sys_mode
+	//Construct a stack frame for backtracing
+	push {fp, ip, lr}
+	add fp, sp, #0xc
+
+	//Call the c++ handler
+	bl interrupt_handler
+
+	//Remove the stack frame
+	sub sp, fp, #0xc
+	pop {fp, ip, lr}
+
+	//Return
+	rfefd sp!
 
 // Handle an undefined instruction
 .global undef_handler

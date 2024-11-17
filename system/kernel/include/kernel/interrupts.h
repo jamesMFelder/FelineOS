@@ -9,6 +9,8 @@
 void idt_set_descriptor(uint8_t vector, void *isr, uint8_t flags);
 
 /* Setup the IDT */
-ASM void idt_init(void);
+ASM void idt_init();
+ASM void setup_irqs();
+void systimer_irq_handler();
 
 #endif /* _KERN_INTERRUPTS_H */
