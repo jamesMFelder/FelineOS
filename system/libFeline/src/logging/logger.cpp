@@ -95,9 +95,16 @@ kout &kout::operator<<(KStringView const str) {
 }
 
 kout &kout::operator<<(KString const str) {
-	add_part(KStringView(str.data(), str.size()));
 	if (alloc) {
-		lifetime_extender.append(str);
+		lifetime_extender.append(std::move(str));
+		/* We need to use a reference to the data in lifetime_extender, since it
+		 * is moved from str (which otherwise gets destructed at the end of this
+		 * function)
+		 */
+		add_part(KStringView(end(lifetime_extender)[-1].data(),
+		                     end(lifetime_extender)[-1].size()));
+	} else {
+		add_part(KStringView(str.data(), str.size()));
 	}
 	return *this;
 }
