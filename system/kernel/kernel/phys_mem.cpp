@@ -260,8 +260,9 @@ int start_phys_mem_manager(
 	/* Avoid walking off the start of the chain */
 	first_header = &first_chunk->headers[0];
 	first_header[0].prev = nullptr;
-	/* And reserve the location the headers are currently at */
 	modifying_pmm.release_lock();
+	/* And reserve the location the headers are currently at */
+	get_mem_area(phys_hdr_ptr, headers_needed_size);
 	return 0;
 }
 
@@ -349,7 +350,7 @@ static void split_header_at_len(PhysMemHeader &header, page len) {
 			"Unable to get a new header for the PMM! Returning extra memory.");
 		return;
 	}
-	/* Intialize the new header */
+	/* Initialize the new header */
 	*temp = PhysMemHeader{.next = header.next,
 	                      .prev = &header,
 	                      .memory = header.memory + len,
