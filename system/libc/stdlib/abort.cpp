@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
-#include <cstdio>
 #include <cstdlib>
 
 #if defined(__is_libk)
