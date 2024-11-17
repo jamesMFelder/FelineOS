@@ -60,7 +60,7 @@ void kernel_main() {
 	if (maxX != 0 && maxY != 0) {
 		fb.putRect(0, 0, maxX / 2, maxY / 2, p);            /* upper left */
 		p = {255, 0, 0};                                    /* red */
-		fb.putRect(maxX / 2, 0, maxX / 2 - 1, maxY / 2, p); /* uppper right */
+		fb.putRect(maxX / 2, 0, maxX / 2 - 1, maxY / 2, p); /* upper right */
 		p = {0, 255, 0};                                    /* green */
 		fb.putRect(0, maxY / 2, maxX / 2, maxY / 2 - 1, p); /* lower left */
 		p = {0, 0, 255};                                    /* blue */

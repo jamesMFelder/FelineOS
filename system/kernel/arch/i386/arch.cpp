@@ -13,6 +13,7 @@
 #include <kernel/arch.h>
 #include <kernel/halt.h>
 #include <kernel/interrupts.h>
+#include <kernel/log.h>
 #include <kernel/misc.h>
 #include <kernel/paging.h>
 #include <kernel/phys_addr.h>
