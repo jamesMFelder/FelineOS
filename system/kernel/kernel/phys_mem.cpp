@@ -441,12 +441,13 @@ pmm_results free_mem_area(PhysAddr<void const> const addr, uintptr_t len) {
 			if (cur_header->memory.getInt() + cur_header->size.getInt() <
 			    end.as_int()) {
 				/* We only know about part of the area? */
-				kwarnf(
-					"Attempt to free area %p-%p, but header covers area %p-%p!",
-					addr.unsafe_raw_get(), end.unsafe_raw_get(),
-					cur_header->memory.get(),
-					(cur_header->memory + cur_header->size).get());
+				kwarnf("Attempt to free area %p-%p, but header only covers "
+				       "area %p-%p!",
+				       addr.unsafe_raw_get(), end.unsafe_raw_get(),
+				       cur_header->memory.get(),
+				       (cur_header->memory + cur_header->size).get());
 				/* TODO: should we abort? */
+				std::abort();
 			}
 			if (!cur_header->in_use) {
 				modifying_pmm.release_lock();
