@@ -365,7 +365,7 @@ map_results unmap_range(void const *virt_addr, size_t len, unsigned int opts) {
 			auto &first_level = first_level_table_system[offsets.first_level];
 			auto &second_level = reinterpret_cast<second_level_descriptor *>(
 				first_level & ~0x3ff_uint32_t)[offsets.second_level];
-			return PhysAddr<void const>(second_level & ~0x3ff_uint32_t);
+			return PhysAddr<void const>(second_level & ~0x8ff_uint32_t);
 		};
 		pmm_results attempt = free_mem_area(virt_to_phys(virt_addr), len);
 		/* If the attempt failed */
