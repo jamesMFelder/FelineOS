@@ -164,4 +164,5 @@ paged_start:
 
 	/* Hang if kernel_main unexpectedly returns. */
 .hang:
+	wfi
 	bl .hang
