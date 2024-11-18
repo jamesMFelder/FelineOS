@@ -5,6 +5,7 @@
 #include <climits>
 #include <cstdarg>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -241,6 +242,18 @@ int vprintf(const char *format, va_list parameters) {
 				itostr(std::abs(num), bufPtr);
 				break;
 			}
+			/* intmax_t */
+			case 'j': {
+				intmax_t num =
+					static_cast<intmax_t>(va_arg(parameters, intmax_t));
+				if (num < 0) {
+					*bufPtr++ = '-';
+				} else if (always_signed) {
+					*bufPtr++ = '+';
+				}
+				itostr(num, bufPtr);
+				break;
+			}
 			}
 			width = strlen(bufPtr);
 			bufPtr += width;
@@ -297,6 +310,13 @@ int vprintf(const char *format, va_list parameters) {
 			case 't': {
 				ptrdiff_t num =
 					static_cast<ptrdiff_t>(va_arg(parameters, ptrdiff_t));
+				otostr(num, bufPtr);
+				break;
+			}
+			/* uintmax_t */
+			case 'j': {
+				uintmax_t num =
+					static_cast<uintmax_t>(va_arg(parameters, uintmax_t));
 				otostr(num, bufPtr);
 				break;
 			}
@@ -376,6 +396,16 @@ int vprintf(const char *format, va_list parameters) {
 				itostr(num, bufPtr);
 				break;
 			}
+			/* uintmax_t */
+			case 'j': {
+				uintmax_t num =
+					static_cast<uintmax_t>(va_arg(parameters, uintmax_t));
+				if (always_signed) {
+					*bufPtr++ = '+';
+				}
+				itostr(num, bufPtr);
+				break;
+			}
 			}
 			width = strlen(bufPtr);
 			bufPtr += width;
@@ -434,6 +464,13 @@ int vprintf(const char *format, va_list parameters) {
 				ptrdiff_t num =
 					static_cast<ptrdiff_t>(va_arg(parameters, ptrdiff_t));
 				xtostr(num, bufPtr, false);
+				break;
+			}
+			/* uintmax_t */
+			case 'j': {
+				uintmax_t num =
+					static_cast<uintmax_t>(va_arg(parameters, uintmax_t));
+				xtostr(num, bufPtr);
 				break;
 			}
 			}
@@ -496,6 +533,13 @@ int vprintf(const char *format, va_list parameters) {
 				xtostr(num, bufPtr);
 				break;
 			}
+			/* uintmax_t */
+			case 'j': {
+				uintmax_t num =
+					static_cast<uintmax_t>(va_arg(parameters, uintmax_t));
+				xtostr(num, bufPtr);
+				break;
+			}
 			}
 			width = strlen(bufPtr);
 			bufPtr += width;
@@ -553,6 +597,13 @@ int vprintf(const char *format, va_list parameters) {
 			case 't': {
 				ptrdiff_t num =
 					static_cast<ptrdiff_t>(va_arg(parameters, ptrdiff_t));
+				btostr(num, bufPtr);
+				break;
+			}
+			/* uintmax_t */
+			case 'j': {
+				uintmax_t num =
+					static_cast<uintmax_t>(va_arg(parameters, uintmax_t));
 				btostr(num, bufPtr);
 				break;
 			}
