@@ -54,6 +54,9 @@ template <typename T, typename Allocator> class KVector {
 		constexpr ~KVector()
 			requires(!std::is_const_v<T>)
 		{
+			for (auto &item : *this) {
+				item.~T();
+			}
 			a.deallocate(items, m_capacity);
 		}
 
