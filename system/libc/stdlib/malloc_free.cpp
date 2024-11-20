@@ -30,6 +30,7 @@ static Header *first_header;
 // and the other containing all the remaining memory
 static void split_header(Header *&current_header, size_t split) {
 	if (current_header->in_use) {
+		kCriticalNoAlloc() << "Header in use! Should not be split!";
 		std::abort();
 	}
 	// FIXME: this makes the Header aligned, but just hopes that the allocation
@@ -38,6 +39,8 @@ static void split_header(Header *&current_header, size_t split) {
 	// This allows a 1-byte other allocation which feels wrong but keeps this
 	// generic and symmetric (split can be 1)
 	if (current_header->len < split + sizeof(Header)) {
+		kCriticalNoAlloc() << "Not enough space after the split for the "
+							  "header, let alone any data!";
 		std::abort();
 	}
 	auto *new_header = reinterpret_cast<Header *>(
@@ -59,11 +62,27 @@ static void split_header(Header *&current_header, size_t split) {
 [[nodiscard]] static Header *allocate_more_mem(size_t needed) {
 	Header *hdr;
 #ifdef __is_libk
-	auto result =
-		get_mem(reinterpret_cast<void **>(&hdr),
-	            round_to_multiple_of(needed, DEFAULT_MEMRESERVE_SIZE));
+	auto result = get_mem(
+		reinterpret_cast<void **>(&hdr),
+		round_to_multiple_of(needed + sizeof(Header), DEFAULT_MEMRESERVE_SIZE));
+	switch (result) {
+	case mem_success:
+		break;
+	case mem_perm_denied:
+		kCriticalNoAlloc() << "No permission to allocate memory?";
+		break;
+	case mem_invalid:
+		kCriticalNoAlloc() << "Invalid argument to allocate memory when we "
+							  "didn't specify anything! BUG?";
+		break;
+	case mem_no_virtmem:
+		kCriticalNoAlloc() << "Out of virtual memory!";
+		break;
+	case mem_no_physmem:
+		kCriticalNoAlloc() << "Out of physical memory!";
+		break;
+	}
 	if (result != mem_success) {
-		kCriticalNoAlloc() << "Could not get memory!";
 		std::abort();
 	}
 #else  // __is_libk
@@ -76,7 +95,7 @@ static void split_header(Header *&current_header, size_t split) {
 	hdr->len = DEFAULT_MEMRESERVE_SIZE - sizeof(Header);
 	hdr->in_use = false;
 	hdr->start_of_allocation = true;
-	if (needed < DEFAULT_MEMRESERVE_SIZE - sizeof(Header)) {
+	if (needed < hdr->len - sizeof(Header)) {
 		split_header(hdr, needed);
 	}
 	return hdr;
