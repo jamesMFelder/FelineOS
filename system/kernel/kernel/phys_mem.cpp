@@ -312,7 +312,6 @@ int start_phys_mem_manager(
 		klogf("Reserved space for the PMM at %p (mapped to %p)",
 		      phys_hdr_ptr.unsafe_raw_get(), first_chunk);
 	}
-	ensure_not_allocatable(PhysAddr<void>(0xA0000), 0x60000);
 	return 0;
 }
 

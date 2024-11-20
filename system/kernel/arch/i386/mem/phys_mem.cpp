@@ -53,8 +53,9 @@ int bootstrap_phys_mem_manager(PhysAddr<multiboot_info_t> phys_mbp) {
 	}
 	assert(mbmp_mapping == map_success);
 
-	/* Find the number of entries */
-	size_t num_entries = mbmp_len / sizeof(multiboot_memory_map_t);
+	/* Find the number of entries. Add additional space for the kernel, this
+	 * space and the memory hole (0xA0'000-0xFF'FFF) */
+	size_t num_entries = mbmp_len / sizeof(multiboot_memory_map_t) + 3;
 	size_t sorted_length = num_entries * sizeof(bootloader_mem_region);
 
 	/*
@@ -137,7 +138,9 @@ int bootstrap_phys_mem_manager(PhysAddr<multiboot_info_t> phys_mbp) {
 	unavailable_memory[1].addr =
 		reinterpret_cast<uintptr_t>(&phys_kernel_start);
 	unavailable_memory[1].len = phys_uint_kernel_end - phys_uint_kernel_start;
-	size_t num_unavailable_regions = 2;
+	unavailable_memory[2].addr = 0xA0'000;
+	unavailable_memory[2].len = 0x60'000;
+	size_t num_unavailable_regions = 3;
 
 	/* First, copy the number of unavailable entries over */
 	current_multiboot_memory = mbmp;
