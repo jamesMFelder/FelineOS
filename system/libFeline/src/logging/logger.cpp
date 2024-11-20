@@ -41,7 +41,7 @@ kout::kout(log_level level, std::source_location loc, bool alloc)
 		*this << dec(loc.line()) << ':' << dec(loc.column()) << '('
 			  << loc.function_name() << "): ";
 	} else {
-		char buf[9];
+		char buf[20];
 		itostr(loc.line(), buf);
 		*this << buf << ':';
 

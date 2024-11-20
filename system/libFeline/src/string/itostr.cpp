@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
+#include <cassert>
 #include <feline/str.h>
 
 /* Convert a number to a string */
@@ -39,7 +40,7 @@ KString ntostr(unsigned long long const num, unsigned const base) {
  */
 /* `if(c>'9') c+=39` for lowercase or `c+=7` for uppercase */
 /* TODO: dynamic str length */
-int ntostr(unsigned long long const num, char str[9], unsigned const base) {
+int ntostr(unsigned long long const num, char str[17], unsigned const base) {
 	/* Make sure we have a valid base */
 	if (base < 2 || base > 16) {
 		return -1;
@@ -47,7 +48,7 @@ int ntostr(unsigned long long const num, char str[9], unsigned const base) {
 	/* Start with the 1s digits */
 	unsigned long long todivby = 1;
 	/* Work right to left */
-	char *ptr = &str[8];
+	char *ptr = &str[16];
 	/* Add a null so it is a valid string */
 	*ptr = '\0';
 	/* Start by decrementing ptr because it just added a null */
