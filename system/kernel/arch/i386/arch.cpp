@@ -2,6 +2,7 @@
 /* Copyright (c) 2023 James McNaughton Felder */
 
 #include "gdt/gdt.h"
+#include "kernel/multiboot.h"
 #include "mem/mem.h"
 #include <cinttypes>
 #include <cstdlib>
@@ -30,6 +31,11 @@ void write_to_term(char const *str, size_t len) {
 }
 
 static void screen_init(multiboot_info_t mbp) {
+	if (!get_flag(mbp.flags, MULTIBOOT_INFO_FRAMEBUFFER_INFO)) {
+		/* TODO: actually do this */
+		kwarn("Not finding screen info from GRUB, using serial port only.");
+		return;
+	}
 	switch (mbp.framebuffer_type) {
 	case MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED:
 		break;
@@ -56,8 +62,7 @@ static void screen_init(multiboot_info_t mbp) {
 char grub_cmdline[4096] = "";
 multiboot_uint32_t grub_flags;
 
-static void save_grub_params(PhysAddr<multiboot_info_t> phys_mbp) {
-	multiboot_info_t mbp = read_pmem(phys_mbp);
+static void save_grub_params(multiboot_info_t mbp) {
 	grub_flags = mbp.flags;
 	if (get_flag(grub_flags, MULTIBOOT_INFO_CMDLINE)) {
 		char const *mapped_cmdline;
@@ -67,7 +72,7 @@ static void save_grub_params(PhysAddr<multiboot_info_t> phys_mbp) {
 		if (cmdline_mapping != map_success) {
 			kerrorf("Unable to map information from Grub. Error %d.",
 			        cmdline_mapping);
-			goto after_cmdline;
+			return;
 		}
 		size_t offset = 0;
 		for (offset = 0; offset < 4096; ++offset) {
@@ -85,13 +90,6 @@ static void save_grub_params(PhysAddr<multiboot_info_t> phys_mbp) {
 		unmap_range(mapped_cmdline, 4096, 0);
 		Settings::Misc::commandline.initialize(
 			KStringView(grub_cmdline, offset));
-	}
-after_cmdline: // Jump here if you need to abort processing the command line.
-	if (get_flag(grub_flags, MULTIBOOT_INFO_FRAMEBUFFER_INFO)) {
-		screen_init(mbp);
-	} else {
-		/* TODO: actually do this */
-		kwarn("Not finding screen info from GRUB, using serial port only.");
 	}
 	return;
 }
@@ -127,9 +125,11 @@ int early_boot_setup(uintptr_t raw_mbp) {
 	               triple fault */
 	setup_paging(); /* Take control of it from the assembly! */
 	PhysAddr<multiboot_info_t> mbp = PhysAddr<multiboot_info_t>(raw_mbp);
-	save_grub_params(mbp);
+	multiboot_info_t mbp_copy = read_pmem(mbp);
+	save_grub_params(mbp_copy);
 	bootstrap_phys_mem_manager(
 		mbp); /* Get the physical memory manager working */
+	screen_init(mbp_copy);
 	return 0;
 }
 

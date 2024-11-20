@@ -4,7 +4,9 @@
 #include <cassert>
 #include <drivers/framebuffer.h>
 #include <kernel/log.h>
+#include <kernel/mem.h>
 #include <kernel/paging.h>
+#include <kernel/phys_mem.h>
 
 int framebuffer::init(PhysAddr<pixel_bgr_t> addr, uint16_t width,
                       uint16_t height, uint16_t pitch, uint8_t bpp) {
@@ -15,6 +17,9 @@ int framebuffer::init(PhysAddr<pixel_bgr_t> addr, uint16_t width,
 	/* TODO: we should support other formats */
 	assert(bpp == 32);
 	fb.bpp = bpp;
+	/* It's fine if this doesn't succeed, as long as no-one else can allocate
+	 * the memory. */
+	ensure_not_allocatable(addr, fb.pitch * fb.height * sizeof(pixel_bgr_t));
 	/* Map as many pages as the framebuffer is */
 	return map_range(addr, fb.pitch * fb.height * sizeof(pixel_bgr_t),
 	                 reinterpret_cast<void **>(&fb.addr), 0);
