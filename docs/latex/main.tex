@@ -34,37 +34,55 @@
 \item \code{system/kernel/}: The kernel.
 \item \code{system/kernel/arch/}: Architecture dependent stuff in the kernel.
 \item \code{system/kernel/arch/i386/}: 32-bit PC stuff
+\item \code{system/kernel/arch/arm/}: ARM (specifically Raspberry Pi) stuff
 \item \code{system/kernel/arch/\$(ARCH)/}:
+\item \code{system/kernel/arch/\$(ARCH)/include}: Architecture-specific headers (mostly for drivers)
 \item \code{system/kernel/arch/\$(ARCH)/boot/}: the early boot process
 \item \code{system/kernel/arch/\$(ARCH)/gdt/}: dealing with the Global Descriptor Table \begin{small}(mostly creating the illusion of disabling it)\end{small}
 \item \code{system/kernel/arch/\$(ARCH)/interrupts/}: handling interrupts
-\item \code{system/kernel/arch/\$(ARCH)/mem/}: managing physical memory
+\item \code{system/kernel/arch/\$(ARCH)/mem/}: bootstrapping physical memory
+\item \code{system/kernel/arch/\$(ARCH)/stack/}: backtraces
+\item \code{system/kernel/arch/\$(ARCH)/virt_mem/}: managing paging
 \item \code{system/kernel/drivers/}: Stuff that one might or might not want
 \item \code{system/kernel/drivers/include/}: Header files for the drivers
 \item \code{system/kernel/drivers/include/drivers/}: \code{<drivers/header.h>} instead of \code{<header.h>}
-\item \code{system/kernel/drivers/serial/}: Code for the serial port.
+\item \code{system/kernel/drivers/framebuffer/}: Code for a framebuffer on x86.
+\item \code{system/kernel/drivers/PIT/}: Code for the x86 Programmable Interrupt Timer.
+\item \code{system/kernel/drivers/pl011/}: Code for UART-like pl011 on (at least) the Raspberry Pi.
+\item \code{system/kernel/drivers/systimer/}: Code for ARM system timer.
+\item \code{system/kernel/drivers/uart/}: Code for the UART serial port on x86.
+\item \code{system/kernel/drivers/vga/}: Code for the x86 text-based VGA
 \item \code{system/kernel/include/}: Kernel headers.
 \item \code{system/kernel/include/kernel/}: \code{<kernel/header.h>} instead of \code{<header.h>}
 \item \code{system/kernel/kernel/}: Generic kernel files.
 \item \code{system/libc/}: A minimal C library
-\item \code{system/libc/arch/}: Architecture dependent libc stuff (macros, …)
-\item \code{system/libc/arch/i386/}: 32-bit PC stuff
+\item \code{system/libc/arch/}: Architecture dependent libc stuff (system calls, …)
 \item \code{system/libc/arch/\$(ARCH)/syscall/}: system call functions
+\item \code{system/libc/assert/}: Internal functions for the assert macro.
 \item \code{system/libc/ctype/}: Character types
+\item \code{system/libc/errno/errno.cpp}: A c++ file to hold the declaration of errno.
+\item \code{system/libc/fcntl/}: open and close functions
+\item \code{system/libc/icxxabi/}: atexit ABI stuff that can't be in a header.
 \item \code{system/libc/include/}: Header files.
 \item \code{system/libc/include/bits/}: Internals
 \item \code{system/libc/include/c++/}: C++ header files
 \item \code{system/libc/include/sys/}: System header files.
-\item \code{system/libc/ctype/}: Detecting character types.
 \item \code{system/libc/ssp/}: What gcc needs to detect stack smashing.
 \item \code{system/libc/stdio/}: I/O programs.
 \item \code{system/libc/stdlib/}: Other C library programs.
 \item \code{system/libc/string/}: C String handling programs.
+\item \code{system/libc/unistd/}: read and write functions
 \item \code{system/libFeline/}: Functions and headers that aren't part of the C standard or the kernel.
-\item \code{system/libFeline/arch}: Architecture-dependent functions
-\item \code{system/libFeline/arch/i386}: 32-bit PC functions
+\item \code{system/libFeline/include/}: Header files (which is most of the code, due to how many templates there are)
 \item \code{system/libFeline/include/feline}: \code{<feline/header.h>} instead of \code{header.h}
-\item \code{system/libFeline/include/feline/asm}: Assembly headers (NASM ones end in \code{.inc}, haven't decided for GAS)
+\item \code{system/libFeline/src}: source files
+\item \code{system/libFeline/src/allocator}: tiny wrappers around malloc and free for KGeneralAllocator
+\item \code{system/libFeline/src/locking}: spinlock code
+\item \code{system/libFeline/src/logging}: kout class, and supporting functions
+\item \code{system/libFeline/src/settings}: a c++ file to instantiate the settings objects
+\item \code{system/libFeline/src/strings}: utilities for formatting numbers as strings
+\item \code{system/libFeline/src/vector}: an error function for out-of-bounds access, to prevent recursive inclusion of kout
+\item \code{system/libFeline/tests}: Tests for most of the classes
 \item \code{system/terminals/}: Terminal classes.
 \item \code{system/terminals/common}: A base class everything else comes from.
 \item \code{system/vga/}: VGA terminals (only text-mode supported now).
@@ -77,22 +95,11 @@
 \begin{list}{}{}
 \item \code{docs/latex} contains the latex documentation
 \item Running \code{./docs.sh} creates documentation in \code{docs/\{pdf,html\}} if you have \code{pdflatex} and \code{latex2html} installed.
+\item \code{docs/Architecture.{md,html} has more overview-focused documentation}
 \item I try to comment in the code, but I often forget.
 \end{list}
 
-\section{Usefull Commands}
-\begin{list}{}{}
-\item \code{./default-host.sh}: Echo the architecture we are building for.
-\item \code{./config.sh}: Define a bunch of variables.
-\item \code{./headers.sh}: Copy headers into their correct places.
-\item \code{./build.sh}: Compile FelineOS.\@
-\item \code{./iso.sh}: Create an iso.
-\item \code{./qemu.sh}: Run the iso in qemu.
-\item \code{./docs.sh}: Create the pdf and html documentation.
-\item \code{./clean.sh}: Clean up everything.
-\end{list}
-
-\section{Usefull Programs}
+\section{Useful Programs}
 \begin{list}{}{}
 \item \code{utils/gdt\_create.cpp}: The main function calls \code{create\_descriptor(base, limit, type)}. The only defined types (currently) are \code{\{code,data\}-ring\{0,3\}}.
 \item \code{utils/sizes.cpp}: Print the sizes of various types. Use \code{-{}-json} if wanted.
@@ -101,10 +108,9 @@
 
 \section{Memory management}
 \begin{list}{}{}
-\item The PMM has a bitmap that currently only tracks used/not used.
-\item Reserve memory with \code{pmm\_results get\_mem\_area(void **addr, uintptr\_t len, unsigned int opts)} or \code{pmm\_results get\_mem\_area(void const * const addr, uintptr\_t len, unsigned int opts);}
-\item Return it with \code{free\_mem\_area(void const * const addr, uintptr\_t len, unsigned int opts)}
-\item Note: opts does nothing, but is here for future-proofness.
+\item The PMM has a linked-list that currently only tracks used/not used.
+\item Reserve memory with \code{pmm\_results get\_mem\_area(void **addr, uintptr\_t len)} or \code{pmm\_results get\_mem\_area(void const * const addr, uintptr\_t len);}
+\item Return it with \code{free\_mem\_area(void const * const addr, uintptr\_t len)}
 \item The VMM keeps track of paging. It is currently only able to handle the main process.
 \item Map pages with \code{map\_range()} (various types of arguments)
 \item Unmap pages with \code{unmap\_range()}.
@@ -112,20 +118,27 @@
 
 \section{IO}
 \begin{list}{}{}
+\item libFeline has kout (a qDebug-style class), which use use with kDbg, kLog, kWarn, kCritical…
+\begin{list}{}{}
+\item Output numbers with the functions dec(), hex, ptr().
+\item This is generally the most convenient way, but it does dynamically allocate memory (to support future non-interleaving output).
+\item This is technically avoidable with the *NoDebug variants, but the number-formatting functions still allocate memory anyways, so unless you have a constant string, printf/klogf is a better bet.
+\end{list}
 \item Currently all standard output functions (\code{printf()}, \code{puts()}, \code{putchar()}, \ldots) all output to the serial port (\code{serial\_writestring()}, \code{serial\_write()}, \code{serial\_putchar()}).\linebreak
 \begin{list}{}{}
-\item Please only use standard output functions (\code{printf}, \code{puts}, \code{putchar}, \ldots). I make no garantees about supporting any other functions.
+\item Please only use standard output functions (\code{printf}, \code{puts}, \code{putchar}, \ldots) or libFeline functions. I make no guarantees about supporting any other functions.
 \end{list}
 \item There is no input (yet).
 \end{list}
 
 \section{Syscalls}
 \begin{list}{}{}
-\item Call using \code{int 31}/\code{int 0x1F} (NASM) or \code{int \$31}/\code{int \$0x1f} (GAS)
-\item The syscall number is in \code{eax}.
-\item The arguments are in \code{ecx} and \code{edx} (any further are pushed onto the stack)
-\item If they don't fit in a register (\code{32} bits on \code{i686}), they are pointers.
-\item C(++) code can use the \code{syscall} wrapper function in \code{<sys/syscall.h>}
-\item Currently return \code{-1} because none are supported.
+\item Call using \code{int 31}/\code{int 0x1F} (NASM) or \code{int \$31}/\code{int \$0x1f} (GAS) for x86
+\item On ARM, use \code{svc #0}
+\item The syscall number is in \code{eax}/\code{r0}.
+\item The pointer to the argument structure is in \code{ebx}/\code{r1}.
+\item The pointer to the result structure is in \code{ecx}/\code{r2}.
+\item C(++) code should use the \code{raw_syscall} wrapper function in \code{<sys/syscall.h>}, if it can't use the wrapper functions.
+\item See Architecture.md for more details on how the mechanism works.
 \end{list}
 \end{document}
