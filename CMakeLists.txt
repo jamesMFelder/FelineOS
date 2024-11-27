@@ -54,6 +54,8 @@ target_include_directories(k PRIVATE ${ARCHDIR}/include)
 target_compile_definitions(k PRIVATE __is_kernel)
 target_link_libraries(k c feline)
 
+set_target_properties(feline c k PROPERTIES SYSTEM TRUE)
+
 add_custom_command(OUTPUT ${ARCHDIR}/linker.ld
 	COMMAND mkdir -p ${ARCHDIR}
 	COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS} -CC -E -x c++
