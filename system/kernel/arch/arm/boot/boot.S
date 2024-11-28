@@ -51,8 +51,8 @@ _start:
 	reset svc
 	cps #sys_mode
 
-	/* Map everything, which means starting at 0x0 */
-	mov r7, #0
+	/* Map from phys_kernel_start to phys_kernel_end */
+	ldr r7, =_phys_kernel_start
 	/* Set options */
 	bic r7, #0b10000000000000000000 // should be zero
 	bic r7,  #0b1000000000000000000 // regular section, not supersection
@@ -61,7 +61,7 @@ _start:
 	bic r7,     #0b1000000000000000 // allow full access/maintain backwards compatibility
 	bic r7,      #0b111000000000000 // TEX bits (combine with caching and bufferable for memory type)
 	orr r7,         #0b110000000000 // full access
-	bic r7,           #0b1000000000 // implimentation-defined (ARM1176JZF-S: no ECC)
+	bic r7,           #0b1000000000 // implementation-defined (ARM1176JZF-S: no ECC)
 	bic r7,            #0b111100000 // domain
 	bic r7,                #0b10000 // allow execution
 	orr r7,                 #0b1000 // cached (write-through)
@@ -69,9 +69,12 @@ _start:
 	orr r7,                   #0b10 // section (use this, not a further page table)
 
 	/* Setup a loop to map everything */
-	mov r5, #0
+	ldr r5, =_phys_kernel_start
+	ldr r4, =_phys_kernel_end
 	/* translation_table_0 should already be aligned */
-	ldr r8, =translation_table_0
+	ldr r8, =translation_table_0 - VA_OFFSET
+	/* Map from VA_OFFSET */
+	add r8, #VA_OFFSET / 0x40000
 
 	.fld_loop:
 	/* Store the section */
@@ -81,12 +84,30 @@ _start:
 	/* The section will be stored 4 bytes (1 word) later */
 	add r8, #4
 
-	/* Do this until we've covered the entire address space */
-	add r5, #0x1
-	cmp r5, #4096
-	bne .fld_loop
+	/* Do this until we've covered the entire kernel */
+	add r5, #0x100000
+	cmp r5, r4
+	ble .fld_loop
 
-	ldr r8, =translation_table_0
+	/* And identity map to here */
+	ldr r8, =translation_table_0 - VA_OFFSET
+	/* Clear the address bits, but not the options */
+	ldr r3, =0xfffff
+	and r7, r3
+	/* Setup the start and end */
+	mov  r5, #0
+	ldr r4, =paged_start - VA_OFFSET
+
+	.idm_loop:
+	str r7, [r8]
+	add r7, #0x100000
+	add r8, #4
+
+	add r5, #0x100000
+	cmp r5, r4
+	ble .idm_loop
+
+	ldr r8, =translation_table_0 - VA_OFFSET
 	// ttbr0
 	bic r8, #0b11111
 	//         ┃┃┃┃┗ inner-noncacheable
@@ -101,7 +122,7 @@ _start:
 	mov r8, #0 // always use ttbr0
 	mcr p15, 0, r8, c2, c0, 2
 
-	/* Enable acces to domain 0 as a "client" (use access permissions) */
+	/* Enable access to domain 0 as a "client" (use access permissions) */
 	mov   r8, #1
 	mcr   p15, 0, r8, c3, c0, 0
 

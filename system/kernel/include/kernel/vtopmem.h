@@ -9,7 +9,7 @@
 #if defined(__i386__)
 #define VA_OFFSET 0xf0000000
 #elif defined(__arm__)
-#define VA_OFFSET 0x00000000
+#define VA_OFFSET 0xf0000000
 #else
 #error "Unknown architecture! Can't figure out where to put the kernel!"
 #endif

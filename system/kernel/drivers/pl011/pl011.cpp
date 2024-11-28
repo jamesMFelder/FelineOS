@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
+#include "kernel/halt.h"
 #include "kernel/mem.h"
 #include "kernel/paging.h"
 #include "kernel/phys_addr.h"
@@ -61,11 +62,10 @@ map_results map_serial() {
 		map_range(serial_port_phys_addr, sizeof(pl011),
 	              reinterpret_cast<void **>(&serial_port), MAP_DEVICE);
 	if (result != map_success) {
-		/* If the mapping failed, make sure the serial port is pointing to the
-		 * physical address This is safe because we *will* be halting without
-		 * enabling paging if we get here
+		/* We can no-longer log anything, and screen output is not being added
+		 * soon.
 		 */
-		serial_port = &_serial_port_physical_address;
+		halt();
 	}
 	return result;
 }
@@ -111,7 +111,7 @@ constexpr uint32_t WORD_LEN = (std::numeric_limits<char>::digits - 5) << 5;
 } // namespace magic_numbers
 
 int init_serial() {
-	serial_port = &_serial_port_physical_address;
+	map_serial();
 	/* Disable the mini UART */
 	set(serial_port->cr, magic_numbers::disable_all);
 	/* Disable all interrupts */

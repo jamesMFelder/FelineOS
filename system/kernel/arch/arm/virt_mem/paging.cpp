@@ -176,9 +176,10 @@ set_second_level_page_table(largePage const addr,
 	static const uint32_t domain = 0x0;
 	first_level_descriptor &first_level =
 		first_level_table_system[section_table_offset(addr)];
-	first_level =
-		reinterpret_cast<uintptr_t>(&second_level[section_table_offset(addr)]) |
-		domain | page_table;
+	first_level = (reinterpret_cast<uintptr_t>(
+					   &second_level[section_table_offset(addr)]) -
+	               VA_OFFSET) |
+	              domain | page_table;
 }
 
 /* Map virt_addr to phys_addr (rounding both down to multiple of 4KiB) */
@@ -207,8 +208,8 @@ map_results map_page(page const phys_addr, page const virt_addr,
 		// TODO: allocate a new table
 	}
 	second_level_descriptor *second_level =
-		reinterpret_cast<second_level_descriptor *>(first_level &
-	                                                ~0x3ff_uint32_t);
+		reinterpret_cast<second_level_descriptor *>(
+			(first_level & ~0x3ff_uint32_t) + VA_OFFSET);
 	offset = page_table_offset(virt_addr).second_level;
 	second_level_descriptor &real_pt = second_level[offset];
 	real_pt = phys_addr.getInt() | default_opts | attributes;
@@ -335,8 +336,8 @@ map_results unmap_page(page const virt_addr,
 		/* Clear it in the table */
 		auto offset = page_table_offset(virt_addr);
 		reinterpret_cast<second_level_descriptor *>(
-			first_level_table_system[offset.first_level])[offset.second_level] =
-			0;
+			first_level_table_system[offset.first_level] +
+			VA_OFFSET)[offset.second_level] = 0;
 		/* Invalidate the cpu's cache */
 		invlpg(virt_addr);
 		return map_success;
@@ -364,7 +365,8 @@ map_results unmap_range(void const *virt_addr, size_t len, unsigned int opts) {
 			auto offsets = page_table_offset(virt);
 			auto &first_level = first_level_table_system[offsets.first_level];
 			auto &second_level = reinterpret_cast<second_level_descriptor *>(
-				first_level & ~0x3ff_uint32_t)[offsets.second_level];
+				(first_level & ~0x3ff_uint32_t) +
+				VA_OFFSET)[offsets.second_level];
 			return PhysAddr<void const>(second_level & ~0x8ff_uint32_t);
 		};
 		pmm_results attempt = free_mem_area(virt_to_phys(virt_addr), len);
@@ -393,7 +395,7 @@ int setup_paging() {
 			addr,
 			second_level_table_system[section_table_offset(addr.getInt())]);
 	}
-	/* Map the kernel and serial port */
+	/* Map the kernel */
 	/* Since phys_kernel_start and phys_kernel_end are setup in the linker file,
 	 * parsing the c++ code makes them look unrelated */
 	/* cppcheck-suppress subtractPointers */
@@ -402,6 +404,8 @@ int setup_paging() {
 		static_cast<size_t>(phys_kernel_end - phys_kernel_start), &kernel_start,
 		MAP_OVERWRITE);
 	if (kernel_mapping != map_success) {
+		/* TODO: the serial port isn't enabled here, when screen output is
+		 * added, do something */
 		kcriticalf("Unable to map kernel! Error %d.", kernel_mapping);
 		std::abort();
 	}
@@ -410,19 +414,9 @@ int setup_paging() {
 	 * paging */
 	assert(isMapped(&kernel_start));
 	assert(isMapped(&kernel_end));
-	modifying_page_tables.release_lock();
-
-	map_results serial_mapping = map_serial();
-	if (serial_mapping != map_success) {
-		kcriticalf("Mapping the serial port failed with error %d. Not enabling "
-		           "paging!",
-		           serial_mapping);
-		return 1;
-	}
-
-	modifying_page_tables.aquire_lock();
 	/* Actually set the registers */
-	uintptr_t ttbr0 = reinterpret_cast<uintptr_t>(first_level_table_system);
+	uintptr_t ttbr0 =
+		reinterpret_cast<uintptr_t>(first_level_table_system) - VA_OFFSET;
 	ttbr0 &= ~0b11111_uintptr_t;
 	ttbr0 |= 0b00000_uintptr_t;
 	uintptr_t ttbr1 = 0;
@@ -449,10 +443,10 @@ void dump_pagetables() {
 		if (!(first_level & page_table)) {
 			continue;
 		}
-		page phys_addr =
-			reinterpret_cast<second_level_descriptor *>(
-				first_level & ~0x3ff_uint32_t)[offsets.second_level] &
-			~0x3ff_uint32_t;
+		page phys_addr = reinterpret_cast<second_level_descriptor *>(
+							 (first_level & ~0x3ff_uint32_t) +
+							 VA_OFFSET)[offsets.second_level] &
+		                 ~0x3ff_uint32_t;
 		bool is_jump = !isMapped(virt_addr) || !isMapped(prev_virt_addr) ||
 		               prev_phys_addr + page{PHYS_MEM_CHUNK_SIZE} != phys_addr;
 		if (is_jump) {

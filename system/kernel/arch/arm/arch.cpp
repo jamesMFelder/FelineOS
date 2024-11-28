@@ -22,10 +22,9 @@ framebuffer fb;
 static void screen_init() {}
 
 /* Dependencies:
-   Turn on the serial port before we log anything
    Setup the IDT before any errors can occur
    Take control of paging (start the VMM) before the PMM or devicetree need it
-   Re-enable the serial port ASAP once the physical address will no-longer work
+   Turn on the serial port as soon as we can map it
    Setup the device tree before the PMM
    Initialize the framebuffer
 Flexibility:
@@ -36,18 +35,17 @@ Also note that the interrupts actually log stuff, so watch out!
 After this we should be good to go! */
 int early_boot_setup(uintptr_t devicetree_header_addr) {
 	PhysAddr<fdt_header const> devicetree(devicetree_header_addr);
+	idt_init(); /* Actually display an error if we have a problem: don't just
+	               triple fault */
+	if (setup_paging() != 0) {
+		halt();
+	} /* Take control of it from the assembly! */
 	init_serial(); /* We can't do any logging before this gets setup */
 	Settings::Logging::critical.initialize(write_serial);
 	Settings::Logging::error.initialize(write_serial);
 	Settings::Logging::warning.initialize(write_serial);
 	Settings::Logging::log.initialize(write_serial);
 	Settings::Logging::debug.initialize(write_serial);
-	idt_init(); /* Actually display an error if we have a problem: don't just
-	               triple fault */
-	if (setup_paging() != 0) {
-		kCriticalNoAlloc() << "Error enabling paging! Halting now!";
-		halt();
-	} /* Take control of it from the assembly! */
 	bootstrap_phys_mem_manager(
 		devicetree); /* Get the physical memory manager working */
 	screen_init();   /* Initialize the framebuffer */
