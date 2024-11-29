@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
+#include "kernel/vtopmem.h"
 #include <cinttypes>
 #include <cstdlib>
 #include <kernel/asm_compat.h>
@@ -79,18 +80,19 @@ void handle_abort(void *executing_address, uint32_t fault_status,
 		/* External Abort on Translation on first level */
 	case translation_second_level:
 		/* External Abort on Translation on second level */
-		kcriticalf("External abort attempting to access %p (reason = %#" PRIb32
-		           "). Halting!",
-		           fault_address, cause);
+		kcriticalf(
+			"External abort with %p attempting to access %p (reason = %#" PRIb32
+			"). Halting!",
+			executing_address, fault_address, cause);
 		halt();
 	case fault_causes::translation_fault_section:
 		/* Translation Fault on section */
 	case fault_causes::translation_fault_page:
 		/* Translation Fault on page */
-		kcriticalf(
-			"Translation fault attempting to access %p (reason = %#" PRIb32
-			"). Halting!",
-			fault_address, cause);
+		kcriticalf("Translation fault by %p attempting to access %p (reason = "
+		           "%#" PRIb32 "). Halting!",
+		           executing_address, fault_address, cause);
+		dump_pagetables();
 		std::abort();
 	case fault_causes::access_bit_section:
 		/* Access Bit Fault, Force AP Only (permission denied?) on section
@@ -98,16 +100,15 @@ void handle_abort(void *executing_address, uint32_t fault_status,
 	case fault_causes::access_bit_page:
 		/* Access Bit Fault, Force AP Only (permission denied?) on page (TODO:
 		 * what?) */
-		kcriticalf(
-			"Permission denied attempting to access %p (reason = %#" PRIb32
-			"). Halting!",
-			fault_address, cause);
+		kcriticalf("Permission denied to %p attempting to access %p (reason = "
+		           "%#" PRIb32 "). Halting!",
+		           executing_address, fault_address, cause);
 		halt();
 	case fault_causes::domain_fault_section:
 		/* Domain Fault on section */
 	case fault_causes::domain_fault_page:
 		/* Domain Fault on page */
-		kcriticalf("Domains not yet implimented, so abort status %#" PRIb32
+		kcriticalf("Domains not yet implemented, so abort status %#" PRIb32
 		           " should not be possible. Halting!",
 		           cause);
 		halt();
@@ -115,9 +116,10 @@ void handle_abort(void *executing_address, uint32_t fault_status,
 		/* Permission Error on section */
 	case permission_error_page:
 		/* Permission Error on page */
-		kcriticalf("Permission error: abort status %#" PRIb32
-		           " with DFSR[10]=0. Halting!",
-		           cause);
+		kcriticalf(
+			"Permission error: instruction %p caused abort status %#" PRIb32
+			" with DFSR[10]=0. Halting!",
+			executing_address, cause);
 		halt();
 
 	case fault_causes::precise_external_abort:
@@ -135,8 +137,8 @@ void handle_abort(void *executing_address, uint32_t fault_status,
 
 	case reserved:
 		kcriticalf("Reserved abort status %#" PRIb32
-		           " with DFSR[10]=0 occured, halting!",
-		           cause);
+		           " with DFSR[10]=0 occurred at %p, halting!",
+		           cause, executing_address);
 		halt();
 	}
 	__builtin_unreachable();
