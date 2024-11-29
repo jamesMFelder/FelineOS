@@ -121,23 +121,23 @@ kout &kout::operator<<(char c) {
 	return *this;
 }
 
-KString hex(uintmax_t n) {
+KString hex(uintmax_t n, unsigned min_width) {
 	KString str;
 	str.append('0');
 	str.append('x');
-	str.append(xtostr(n));
+	str.append(xtostr(n, false, min_width));
 	return str;
 }
 
-KString bin(uintmax_t n) {
+KString bin(uintmax_t n, unsigned min_width) {
 	KString str;
 	str.append('0');
 	str.append('b');
-	str.append(btostr(n));
+	str.append(btostr(n, min_width));
 	return str;
 }
 
-KString dec(uintmax_t n) { return itostr(n); }
+KString dec(uintmax_t n, unsigned min_width) { return itostr(n, min_width); }
 
 KString strDebug(KStringView str) {
 	KString output;

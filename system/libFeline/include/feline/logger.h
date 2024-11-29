@@ -42,14 +42,14 @@ class kout {
 };
 
 /* Helper formatting functions intended to be used with kout */
-KString hex(uintmax_t);
-KString bin(uintmax_t);
-KString dec(uintmax_t);
+KString hex(uintmax_t n, unsigned min_width = 1);
+KString bin(uintmax_t n, unsigned min_width = 1);
+KString dec(uintmax_t n, unsigned min_width = 1);
 
 /* There is an operator<<(kout&, void*),
  * but it can be verbose with non-void pointers (especially char*) */
-inline KString ptr(void const *ptr) {
-	return hex(reinterpret_cast<uintptr_t>(ptr));
+inline KString ptr(void const *ptr, unsigned min_width = 1) {
+	return hex(reinterpret_cast<uintptr_t>(ptr), min_width);
 }
 
 /* A macro for generating templates for formatting signed numbers

@@ -7,19 +7,24 @@
 /* By assuming that base<=10, we force the caller to deal with higher bases with
  */
 /* `if(c>'9') c+=39` for lowercase or `c+=7` for uppercase */
-KString ntostr(unsigned long long const num, unsigned const base) {
+KString ntostr(unsigned long long const num, unsigned const base,
+               unsigned const min_width) {
 	KString str;
+	str.reserve(min_width);
 	/* Make sure we have a valid base */
 	if (base < 2 || base > 16) {
 		return str;
 	}
 	if (num == 0) {
-		str.append('0');
+		str.append('0', min_width);
 		return str;
 	}
 	size_t str_len = 0;
 	for (unsigned long long n = 1; n <= num; n *= base) {
 		++str_len;
+	}
+	if (str_len < min_width) {
+		str_len = min_width;
 	}
 	str.append('\0', str_len);
 	/* Start with the 1s digits */
