@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
+#include <cstring>
 #include <kernel/cpuid.h>
 
 static bool cpuid_is_supported = false;
@@ -20,7 +21,7 @@ unsigned int cpuid_max() {
 	return __get_cpuid_max(0x80000000, nullptr);
 }
 
-unsigned int cpuid_vendor(unsigned char regs[13]) {
+unsigned int cpuid_vendor(char regs[13]) {
 	if (!cpuid_is_supported) {
 		memset(regs, 0, 13);
 		return 0;

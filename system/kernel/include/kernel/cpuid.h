@@ -4,8 +4,6 @@
 #define _KERN_CPUID_H 1
 
 #include <cpuid.h>
-#include <cstddef>
-#include <cstring>
 
 /* Returns true if cpuid is int cpuid_supported */
 /* Always call before any other calls as it sets an internal variable allowing
@@ -18,6 +16,6 @@ unsigned int cpuid_max();
 /* Return the vendor of the cpu in vendor */
 /* Overwrites all 13 bytes with the string */
 /* Returns the max EAX value supported */
-unsigned int cpuid_vendor(unsigned char vendor[13]);
+unsigned int cpuid_vendor(char vendor[13]);
 
 #endif /* _KERN_CPUID_H */

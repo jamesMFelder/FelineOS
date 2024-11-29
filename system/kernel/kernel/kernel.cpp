@@ -44,9 +44,9 @@ void kernel_main() {
 
 #ifdef __i386__
 	if (cpuid_supported()) {
-		unsigned char vendor[13];
+		char vendor[13];
 		cpuid_vendor(vendor);
-		kLog() << "Your cpu is " << vendor;
+		kLog() << "Your cpu is " << KStringView(vendor, 12);
 	}
 #endif
 
