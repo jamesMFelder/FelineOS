@@ -4,6 +4,7 @@
 #define _UNISTD_H 1
 
 #include <bits/c_compat.h>
+#include <bits/pid_t.h> // IWYU pragma: export (type required by POSIX: https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/unistd.h.html)
 #include <bits/ssize_t.h>
 #include <stddef.h>
 #include <sys/cdefs.h>
