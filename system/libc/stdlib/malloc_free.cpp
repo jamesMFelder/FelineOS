@@ -113,7 +113,7 @@ static void return_mem(Header *hdr) {
 }
 
 void *malloc(size_t size) {
-	allocation_lock.aquire_lock();
+	allocation_lock.acquire_lock();
 	if (first_header == nullptr) {
 		first_header = allocate_more_mem(size);
 	}
@@ -138,7 +138,7 @@ void free(void *ptr) {
 	if (ptr == nullptr) {
 		return;
 	}
-	allocation_lock.aquire_lock();
+	allocation_lock.acquire_lock();
 	// Nothing has been allocated or everything has been freed!
 	if (first_header == nullptr) {
 		std::abort();

@@ -364,7 +364,7 @@ static map_results internal_map_range(PhysAddr<void const> phys_addr,
 /* Mapping a range with only phys_addr specified */
 map_results map_range(PhysAddr<void const> phys_addr, size_t len,
                       void const **virt_addr, unsigned int opts) {
-	modifying_page_tables.aquire_lock();
+	modifying_page_tables.acquire_lock();
 	/* Round up, instead of down. */
 	len += page_offset(phys_addr.as_int());
 	*virt_addr = find_free_virtmem(len);
@@ -389,7 +389,7 @@ map_results map_range(PhysAddr<void> phys_addr, size_t len, void **virt_addr,
 
 /* Mapping a range with nothing specified */
 map_results map_range(size_t len, void const **virt_addr, unsigned int opts) {
-	modifying_page_tables.aquire_lock();
+	modifying_page_tables.acquire_lock();
 	*virt_addr = find_free_virtmem(len);
 	if (*virt_addr == nullptr) {
 		return map_no_virtmem;
@@ -434,7 +434,7 @@ map_results unmap_page(page const virt_addr,
 
 map_results unmap_range(void const *const virt_addr, size_t len,
                         unsigned int opts [[maybe_unused]]) {
-	modifying_page_tables.aquire_lock();
+	modifying_page_tables.acquire_lock();
 	/* Loop through */
 	page to_unmap = virt_addr;
 	for (size_t count = 0; count < bytes_to_pages(len); count++, to_unmap++) {
@@ -515,7 +515,7 @@ int setup_paging() {
 
 	/* Map the kernel and page directory */
 	/* This makes sure that they haven't been unmapped */
-	modifying_page_tables.aquire_lock();
+	modifying_page_tables.acquire_lock();
 	for (page where = &kernel_start; where <= &kernel_end; ++where) {
 		page phys_where = where.getInt() - VA_OFFSET;
 		page_table_entry *cur_pte =

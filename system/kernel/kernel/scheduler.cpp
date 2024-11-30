@@ -44,7 +44,7 @@ void init_scheduler() {
 }
 
 void sched() {
-	editing_task_list.aquire_lock();
+	editing_task_list.acquire_lock();
 	auto next_task = find_next_task();
 	if (!next_task) {
 		/* If there is no other task to run, keep running this one. */
@@ -61,7 +61,7 @@ void sched() {
 }
 
 void add_new_task(init_task start_func) {
-	editing_task_list.aquire_lock();
+	editing_task_list.acquire_lock();
 	all_tasks.push_back(create_new_task(start_func));
 	editing_task_list.release_lock();
 }
@@ -69,7 +69,7 @@ void add_new_task(init_task start_func) {
 [[noreturn]] void end_cur_task() {
 	/* NOTE: this lock is released by whatever task we switch to, so it's
 	 * correct for it to look unlocked in this function. */
-	editing_task_list.aquire_lock();
+	editing_task_list.acquire_lock();
 	auto next_task = find_next_task();
 	if (!next_task) {
 		/* TODO: support power-saving or something instead of running as an idle
@@ -89,7 +89,7 @@ void add_new_task(init_task start_func) {
 }
 
 void cleanup_finished_tasks() {
-	editing_task_list.aquire_lock();
+	editing_task_list.acquire_lock();
 	for (auto task = begin(all_tasks); task != end(all_tasks);) {
 		if (task->state == finished) {
 			for (auto &allocation : task->allocations) {

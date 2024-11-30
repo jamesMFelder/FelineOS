@@ -84,7 +84,7 @@ int start_phys_mem_manager(
 	size_t num_unavailable_memory_regions,
 	struct bootloader_mem_region *available_memory_regions,
 	size_t num_available_memory_regions) {
-	modifying_pmm.aquire_lock();
+	modifying_pmm.acquire_lock();
 	/* +2 if we go in the middle of a memory region, +1 so we can bootstrap
 	 * adding more */
 	size_t num_headers_needed = num_available_memory_regions + 3;
@@ -494,7 +494,7 @@ static PhysMemHeaderList *get_header_chunk() {
 
 /* Reserve len unused bytes from addr (if available) */
 pmm_results get_mem_area(PhysAddr<void const> const addr, uintptr_t len) {
-	modifying_pmm.aquire_lock();
+	modifying_pmm.acquire_lock();
 	PhysMemHeader *header = find_header_for_page(addr, len);
 	if (!header) {
 		modifying_pmm.release_lock();
@@ -518,7 +518,7 @@ pmm_results get_mem_area(PhysAddr<void const> const addr, uintptr_t len) {
 
 /* Acquire len unused bytes */
 pmm_results get_mem_area(PhysAddr<void const> *addr, uintptr_t len) {
-	modifying_pmm.aquire_lock();
+	modifying_pmm.acquire_lock();
 	auto *header = find_free_pages(round_up_to_page(len), first_fit);
 	if (header == nullptr) {
 		modifying_pmm.release_lock();
@@ -559,7 +559,7 @@ static void merge_adjacent_headers(PhysMemHeader &header) {
 
 /* Free len bytes from addr */
 pmm_results free_mem_area(PhysAddr<void const> const addr, uintptr_t len) {
-	modifying_pmm.aquire_lock();
+	modifying_pmm.acquire_lock();
 	for (PhysMemHeader *cur_header = first_header; cur_header != nullptr;
 	     cur_header = cur_header->next) {
 		assert(cur_header->header_in_use);

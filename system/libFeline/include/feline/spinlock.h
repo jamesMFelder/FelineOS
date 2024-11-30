@@ -7,11 +7,11 @@
 
 #include <atomic>
 
-/* A basic spinlock implimentation */
+/* A basic spinlock implementation */
 class Spinlock {
 	public:
-		/* Wait to aquire the lock */
-		void aquire_lock();
+		/* Wait to acquire the lock */
+		void acquire_lock();
 		/* Release the lock */
 		void release_lock();
 
