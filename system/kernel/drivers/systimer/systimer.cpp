@@ -1,10 +1,12 @@
 #include <cstdint>
 #include <drivers/timer.h>
+#include <feline/logger.h>
 #include <feline/settings.h>
 #include <kernel/interrupts.h>
 #include <kernel/io.h>
 #include <kernel/log.h>
 #include <kernel/mem.h>
+#include <kernel/scheduler.h>
 #include <kernel/vtopmem.h>
 #include <stdint.h>
 
@@ -46,13 +48,10 @@ void init_timers() {
 }
 
 void systimer_irq_handler() {
-	static uint64_t seconds_since_boot;
-	Settings::Time::ms_since_boot.set(
-		(static_cast<uint64_t>(timer->counter_high) << 32) |
-		timer->counter_low);
-	if (Settings::Time::ms_since_boot.get() / 1'000'000 > seconds_since_boot) {
-		seconds_since_boot = Settings::Time::ms_since_boot.get() / 1'000'000;
-		kDbg() << dec(seconds_since_boot) << " seconds since boot(ish)";
-	}
 	reload_timer();
+	Settings::Time::ms_since_boot.set(
+		((static_cast<uint64_t>(timer->counter_high) << 32) |
+	     timer->counter_low) /
+		1'000);
+	scheduler_handle_tick();
 }

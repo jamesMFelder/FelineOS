@@ -30,6 +30,7 @@ set(KERNEL_OBJS
 	${ARCHDIR}/arch.cpp
 	${ARCHDIR}/boot/boot.S
 	${ARCHDIR}/mem/phys_mem.cpp
+	${ARCHDIR}/task/task.S
 	${ARCHDIR}/stack/walk_stack.S
 	${ARCHDIR}/virt_mem/paging.cpp
 	${ARCHDIR}/virt_mem/enable_paging.S
@@ -42,5 +43,7 @@ set(KERNEL_OBJS
 	system/kernel/kernel/mem.cpp
 	system/kernel/kernel/page.cpp
 	system/kernel/kernel/phys_mem.cpp
+	system/kernel/kernel/task.cpp
+	system/kernel/kernel/scheduler.cpp
 	system/kernel/kernel/syscall.cpp
 	PARENT_SCOPE)

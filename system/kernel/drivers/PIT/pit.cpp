@@ -3,6 +3,7 @@
 #include <feline/settings.h>
 #include <kernel/arch/i386/idt.h>
 #include <kernel/io.h>
+#include <kernel/scheduler.h>
 #include <kernel/vtopmem.h>
 
 // From https://wiki.osdev.org/PIT
@@ -29,14 +30,10 @@ void init_timers() {
 }
 
 ASM void PIT_isr_handler() {
-	static unsigned num_ticks = 0;
-	++num_ticks;
 	++Settings::Time::ms_since_boot.get();
-
-	if (num_ticks % 1'000 == 0) {
-		kDbg() << dec(num_ticks / 1'000) << " seconds since boot(ish)";
-	}
 
 	// Acknowledge the interrupt
 	outb(PIC1_COMMAND, PIC_EOI);
+
+	scheduler_handle_tick();
 }

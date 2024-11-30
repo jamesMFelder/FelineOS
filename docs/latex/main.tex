@@ -42,7 +42,8 @@
 \item \code{system/kernel/arch/\$(ARCH)/interrupts/}: handling interrupts
 \item \code{system/kernel/arch/\$(ARCH)/mem/}: bootstrapping physical memory
 \item \code{system/kernel/arch/\$(ARCH)/stack/}: backtraces
-\item \code{system/kernel/arch/\$(ARCH)/virt_mem/}: managing paging
+\item \code{system/kernel/arch/\$(ARCH)/task/}: low-level switching between tasks (processes, threads)
+\item \code{system/kernel/arch/\$(ARCH)/virt\_mem/}: managing paging
 \item \code{system/kernel/drivers/}: Stuff that one might or might not want
 \item \code{system/kernel/drivers/include/}: Header files for the drivers
 \item \code{system/kernel/drivers/include/drivers/}: \code{<drivers/header.h>} instead of \code{<header.h>}
@@ -131,14 +132,24 @@
 \item There is no input (yet).
 \end{list}
 
+\section{Tasks}
+This does not cover user-space anything yet!
+\begin{list}{}{}
+\item \code{add\_new\_task} takes as an argument a function (or lambda) to execute that will never return
+\item \code{sched} \textit{can} be called manually, however it might just return instantly if no other processes are ready to run, so it's most useful for pre-emption.
+\item \code{end\_cur\_task} just marks the current task as finished, and attempts to switch to a different one. Note that if there is no other task, it currently makes the current task a permanent idle task, but that is considered a bug. Also, the actual resource reclamation (including allocations such as the stack) are saved for later, by a different process.
+\item \code{cleanup\_finished\_tasks} goes over every completed task and does the actual freeing of resources. This is important to avoid freeing the stack currently in use!
+\end{list}
+Note that currently there is no process separation: everything is in one global address space.
+
 \section{Syscalls}
 \begin{list}{}{}
 \item Call using \code{int 31}/\code{int 0x1F} (NASM) or \code{int \$31}/\code{int \$0x1f} (GAS) for x86
-\item On ARM, use \code{svc #0}
+\item On ARM, use \code{svc \#0}
 \item The syscall number is in \code{eax}/\code{r0}.
 \item The pointer to the argument structure is in \code{ebx}/\code{r1}.
 \item The pointer to the result structure is in \code{ecx}/\code{r2}.
-\item C(++) code should use the \code{raw_syscall} wrapper function in \code{<sys/syscall.h>}, if it can't use the wrapper functions.
+\item C(++) code should use the \code{raw\_syscall} wrapper function in \code{<sys/syscall.h>}, if it can't use the wrapper functions.
 \item See Architecture.md for more details on how the mechanism works.
 \end{list}
 \end{document}

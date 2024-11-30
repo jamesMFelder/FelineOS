@@ -17,6 +17,7 @@
 #include <kernel/log.h>
 #include <kernel/mem.h>
 #include <kernel/misc.h>
+#include <kernel/scheduler.h>
 #include <sys/syscall.h>
 #include <unistd.h>
 #ifdef __i386__
@@ -32,10 +33,11 @@ KVector<test_func, KGeneralAllocator<test_func>> test_functions;
 
 ASM void kernel_main();
 
-#include <kernel/vtopmem.h>
-
 void kernel_main() {
 	boot_setup();
+
+	init_scheduler();
+	init_timers();
 
 	if (Settings::Misc::commandline) {
 		kLog() << "Commandline: "
@@ -50,45 +52,52 @@ void kernel_main() {
 	}
 #endif
 
-	kLog() << "Kernel starts at " << ptr(&kernel_start);
-	kLog() << "Kernel ends at " << ptr(&kernel_end);
-
-	extern framebuffer fb; /* the framebuffer is setup */
-	/* Fill each corner with a color */
-	pixel_t p = {255, 255, 255}; /* white */
-	uint16_t maxX, maxY;
-	fb.getMax(&maxX, &maxY); /* get the maximum sizes */
-	/* If it exists */
-	if (maxX != 0 && maxY != 0) {
-		fb.putRect(0, 0, maxX / 2, maxY / 2, p);            /* upper left */
-		p = {255, 0, 0};                                    /* red */
-		fb.putRect(maxX / 2, 0, maxX / 2 - 1, maxY / 2, p); /* upper right */
-		p = {0, 255, 0};                                    /* green */
-		fb.putRect(0, maxY / 2, maxX / 2, maxY / 2 - 1, p); /* lower left */
-		p = {0, 0, 255};                                    /* blue */
-		fb.putRect(maxX / 2, maxY / 2, maxX / 2 - 1, maxY / 2 - 1,
-		           p); /* lower right */
-	}
-
-	kLog() << "Running tests:";
-	for (auto &test : test_functions) {
-		int result;
-		kout output(log_level::log);
-		output << test.name << "… ";
-		result = (test.func)();
-		if (result == 0) {
-			output << "ok!";
-		} else {
-			output << "error!";
-			kError() << "Test " << test.name << " failed with error "
-					 << dec(result);
-			return;
+	add_new_task([]() __attribute__((noreturn)) {
+		extern framebuffer fb; /* the framebuffer is setup */
+		/* Fill each corner with a color */
+		uint16_t maxX, maxY;
+		fb.getMax(&maxX, &maxY); /* get the maximum sizes */
+		/* If it exists */
+		if (maxX != 0 && maxY != 0) {
+			pixel_t p = {255, 255, 255};             /* white */
+			fb.putRect(0, 0, maxX / 2, maxY / 2, p); /* upper left */
+			sched();
+			p = {255, 0, 0}; /* red */
+			fb.putRect(maxX / 2, 0, maxX / 2 - 1, maxY / 2,
+			           p); /* upper right */
+			sched();
+			p = {0, 255, 0};                                    /* green */
+			fb.putRect(0, maxY / 2, maxX / 2, maxY / 2 - 1, p); /* lower left */
+			sched();
+			p = {0, 0, 255}; /* blue */
+			fb.putRect(maxX / 2, maxY / 2, maxX / 2 - 1, maxY / 2 - 1,
+			           p); /* lower right */
 		}
-	}
+		end_cur_task();
+	});
 
-	kLog() << "Starting the timer: kernel setup is done!"; /* boot.S should hang
-	                                                          if we return */
-	init_timers();
-	halt();
-	return;
+	add_new_task([]() __attribute__((noreturn)) {
+		kLog() << "Running tests:";
+		for (auto &test : test_functions) {
+			{
+				int result;
+				kout output(log_level::log);
+				output << test.name << "… ";
+				result = (test.func)();
+				if (result == 0) {
+					output << "ok!";
+				} else {
+					output << "error!";
+					kError() << "Test " << test.name << " failed with error "
+							 << dec(result);
+					break;
+				}
+			}
+			sched();
+		}
+		end_cur_task();
+	});
+
+	// halt();
+	end_cur_task();
 }
