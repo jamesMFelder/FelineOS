@@ -21,7 +21,7 @@ void reload_pit() {
 }
 
 void init_timers() {
-	Settings::Time::ms_since_boot.initialize(0);
+	Settings::Time::ns_since_boot.initialize(0);
 	// Enable channel 0, both bytes readable, interrupt on terminal count,
 	// binary mode
 	outb(0x43, 0b00'11'011'0);
@@ -30,7 +30,8 @@ void init_timers() {
 }
 
 ASM void PIT_isr_handler() {
-	++Settings::Time::ms_since_boot.get();
+	/* Since we tick once a millisecond, add 1,000,000ns (=1ms) */
+	Settings::Time::ns_since_boot.get() += 1'000'000;
 
 	// Acknowledge the interrupt
 	outb(PIC1_COMMAND, PIC_EOI);

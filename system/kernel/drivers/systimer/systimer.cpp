@@ -30,7 +30,7 @@ void reload_timer() {
 }
 
 void init_timers() {
-	Settings::Time::ms_since_boot.initialize(0);
+	Settings::Time::ns_since_boot.initialize(0);
 	/* Map the timer */
 	PhysAddr<SystemTimer> timer_addr(0x2000'3000);
 	auto result = map_range(timer_addr, sizeof(SystemTimer),
@@ -49,9 +49,9 @@ void init_timers() {
 
 void systimer_irq_handler() {
 	reload_timer();
-	Settings::Time::ms_since_boot.set(
+	Settings::Time::ns_since_boot.set(
 		((static_cast<uint64_t>(timer->counter_high) << 32) |
-	     timer->counter_low) /
+	     timer->counter_low) *
 		1'000);
 	scheduler_handle_tick();
 }

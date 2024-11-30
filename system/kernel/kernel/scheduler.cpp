@@ -127,14 +127,15 @@ void scheduler_handle_tick() {
 
 	/* If it is a new second, print the time */
 	static size_t second_since_boot = 0;
-	if (Settings::Time::ms_since_boot.get() / 1'000 > second_since_boot) {
+	if (Settings::Time::ns_since_boot.get() / 1'000'000'000 >
+	    second_since_boot) {
 		add_new_task([]() __attribute__((noreturn)) {
 			kLog() << "It has been "
-				   << dec(Settings::Time::ms_since_boot.get() / 1'000)
+				   << dec(Settings::Time::ns_since_boot.get() / 1'000'000'000)
 				   << " seconds since boot.";
 			end_cur_task();
 		});
-		second_since_boot = Settings::Time::ms_since_boot.get() / 1'000;
+		second_since_boot = Settings::Time::ns_since_boot.get() / 1'000'000'000;
 	}
 
 	/* Run a different process (possibly) */
