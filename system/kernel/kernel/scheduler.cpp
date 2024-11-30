@@ -122,11 +122,12 @@ void exit_scheduler_stub(init_task start_executing) {
 /* This happens every time a timer interrupt occurs. TODO: should it just be run
  * on every interrupt? */
 void scheduler_handle_tick() {
+	/* TODO: only do when computer is idle or low on resources? */
+	cleanup_finished_tasks();
+
 	/* If it is a new second, print the time */
 	static size_t second_since_boot = 0;
 	if (Settings::Time::ms_since_boot.get() / 1'000 > second_since_boot) {
-		/* TODO: only do when computer is idle or low on resources? */
-		cleanup_finished_tasks();
 		add_new_task([]() __attribute__((noreturn)) {
 			kLog() << "It has been "
 				   << dec(Settings::Time::ms_since_boot.get() / 1'000)
@@ -134,7 +135,8 @@ void scheduler_handle_tick() {
 			end_cur_task();
 		});
 		second_since_boot = Settings::Time::ms_since_boot.get() / 1'000;
-		/* Run a different process (possibly) */
-		sched();
 	}
+
+	/* Run a different process (possibly) */
+	sched();
 }
