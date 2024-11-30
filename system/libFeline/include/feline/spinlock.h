@@ -3,15 +3,16 @@
 #ifndef _HEADER_H
 #define _HEADER_H 1
 
-#include <feline/cpp_only.h>
-
 #include <atomic>
+#include <feline/cpp_only.h>
 
 /* A basic spinlock implementation */
 class Spinlock {
 	public:
 		/* Wait to acquire the lock */
 		void acquire_lock();
+		/* Try to acquire it, but just return if it is already in use */
+		[[nodiscard("Did you mean acquire_lock?")]] bool try_acquire_lock();
 		/* Release the lock */
 		void release_lock();
 

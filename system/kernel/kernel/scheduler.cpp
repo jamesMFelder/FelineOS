@@ -44,7 +44,13 @@ void init_scheduler() {
 }
 
 void sched() {
-	editing_task_list.acquire_lock();
+	/* If the scheduler was running when this interrupted it, don't do anything
+	 * and just return so we can keep doing the task switch we were already
+	 * doing. TODO: spin if another processor has the lock, instead of it being
+	 * recursively taken. */
+	if (!editing_task_list.try_acquire_lock()) {
+		return;
+	}
 	auto next_task = find_next_task();
 	if (!next_task) {
 		/* If there is no other task to run, keep running this one. */
@@ -89,7 +95,11 @@ void add_new_task(init_task start_func) {
 }
 
 void cleanup_finished_tasks() {
-	editing_task_list.acquire_lock();
+	/* Cleanup isn't (always) super important, so don't bother waiting if
+	 * someone else has the lock. */
+	if (!editing_task_list.try_acquire_lock()) {
+		return;
+	}
 	for (auto task = begin(all_tasks); task != end(all_tasks);) {
 		if (task->state == finished) {
 			for (auto &allocation : task->allocations) {

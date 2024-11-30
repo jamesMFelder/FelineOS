@@ -15,6 +15,11 @@ void Spinlock::acquire_lock() {
 	return;
 }
 
+bool Spinlock::try_acquire_lock() {
+	bool temp = false;
+	return lock.compare_exchange_weak(temp, true, std::memory_order_seq_cst);
+}
+
 void Spinlock::release_lock() {
 	/* Release the lock */
 	lock.store(false);
