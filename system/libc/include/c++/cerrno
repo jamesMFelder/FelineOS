@@ -1,0 +1,9 @@
+/* SPDX-License-Identifier: MIT */
+/* Copyright (c) 2024 James McNaughton Felder */
+#ifndef _CERRNO_H
+#define _CERRNO_H 1
+
+/* Only macros here, so no need to re-declare anything. */
+#include "errno.h"
+
+#endif // _CERRNO_H
