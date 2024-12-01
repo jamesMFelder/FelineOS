@@ -8,5 +8,6 @@
 C_LINKAGE int isdigit(int c);
 C_LINKAGE int iscntrl(int c);
 C_LINKAGE int isprint(int c);
+C_LINKAGE int isspace(int c);
 
 #endif /* _CTYPE_H */

@@ -12,6 +12,7 @@ namespace std {
 using ::iscntrl;
 using ::isdigit;
 using ::isprint;
+using ::isspace;
 
 } /* namespace std */
 
