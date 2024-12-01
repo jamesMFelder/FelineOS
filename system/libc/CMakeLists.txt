@@ -29,6 +29,7 @@ set(LIBC_OBJS
 	system/libc/stdlib/abort.cpp
 	system/libc/stdlib/abs.cpp
 	system/libc/stdlib/malloc_free.cpp
+	system/libc/stdlib/strto.cpp
 
 	system/libc/stdio/io_common.cpp
 	system/libc/stdio/printf.cpp

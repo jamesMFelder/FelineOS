@@ -13,6 +13,8 @@ C_LINKAGE int abs(int j);
 C_LINKAGE long labs(long j);
 C_LINKAGE long long llabs(long long j);
 
+C_LINKAGE unsigned long strtoul(const char *nptr, char **endptr, int base);
+
 C_LINKAGE void *malloc(size_t size);
 C_LINKAGE void free(void *ptr);
 

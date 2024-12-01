@@ -18,6 +18,8 @@ using ::llabs;
 long int abs(long int n);
 long long int abs(long long int n);
 
+using ::strtoul;
+
 using ::free;
 using ::malloc;
 
