@@ -25,4 +25,6 @@ C_LINKAGE size_t strlcat(char *, const char *, size_t);
 C_LINKAGE int strcmp(const char *, const char *);
 C_LINKAGE int strncmp(const char *, const char *, size_t count);
 
+C_LINKAGE char *strstr(const char *haystack, const char *needle);
+
 #endif /* _STRING_H */

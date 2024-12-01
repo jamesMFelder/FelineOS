@@ -41,6 +41,7 @@ set(LIBC_OBJS
 	system/libc/string/strcmp.cpp
 	system/libc/string/strcpy.cpp
 	system/libc/string/strlen.cpp
+	system/libc/string/strstr.cpp
 
 	system/libc/unistd/read.cpp
 	system/libc/unistd/write.cpp

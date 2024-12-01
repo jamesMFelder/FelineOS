@@ -28,6 +28,8 @@ using ::strncat;
 using ::strcmp;
 using ::strncmp;
 
+using ::strstr;
+
 } /* namespace std */
 
 #endif /* _CSTRING */
