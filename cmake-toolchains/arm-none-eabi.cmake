@@ -7,7 +7,7 @@ set(CMAKE_C_COMPILER   arm-none-eabi-gcc)
 add_compile_options(-mcpu=arm1176jzf-s -mfloat-abi=soft -mapcs-frame -mno-unaligned-access)
 
 # where is the target environment located
-set(CMAKE_FIND_ROOT_PATH  /usr/arm-none-eabi /usr/lib/gcc/arm-none-eabi)
+set(CMAKE_FIND_ROOT_PATH  /home/james/src/FelineOS/cross/arm-none-eabi /home/james/src/FelineOS/cross/lib/gcc/arm-none-eabi)
 
 # don't try to compile a test program because the kernel isn't built yet
 # instead, just assume it works

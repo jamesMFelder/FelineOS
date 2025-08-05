@@ -1,0 +1,111 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 27,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "libFeline-hosted",
+            "displayName": "libFeline Hosted",
+            "description": "Build libFeline targeting the host system for testing",
+            "binaryDir": "${sourceDir}/build/feline",
+            "cacheVariables": {
+                "LIBFELINE_ONLY": true,
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true
+            }
+        },
+        {
+            "name": "i686-base",
+            "description": "Base for all i686 cross compiler builds",
+            "hidden": true,
+            "toolchainFile": "${sourceDir}/cmake-toolchains/i686-elf.cmake",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true
+            }
+        },
+        {
+            "name": "i686-debug",
+            "displayName": "i686 Debug",
+            "description": "i686 cross compilation with debug info",
+            "inherits": "i686-base",
+            "binaryDir": "${sourceDir}/build/i686-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "i686-release",
+            "displayName": "i686 Release",
+            "description": "i686 cross compilation with optimizations enabled",
+            "inherits": "i686-base",
+            "binaryDir": "${sourceDir}/build/i686-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "arm-base",
+            "description": "Base for all ARM cross compiler builds",
+            "hidden": true,
+            "toolchainFile": "${sourceDir}/cmake-toolchains/arm-none-eabi.cmake",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true
+            }
+        },
+        {
+            "name": "arm-debug",
+            "displayName": "ARM Debug",
+            "description": "ARM cross compilation with debug info",
+            "inherits": "arm-base",
+            "binaryDir": "${sourceDir}/build/arm-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "arm-release",
+            "displayName": "ARM Release",
+            "description": "ARM cross compilation with optimizations enabled",
+            "inherits": "arm-base",
+            "binaryDir": "${sourceDir}/build/arm-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "libFeline-hosted",
+            "displayName": "libFeline-hosted",
+            "configurePreset": "libFeline-hosted"
+        },
+        {
+            "name": "i686-debug",
+            "configurePreset": "i686-debug"
+        },
+        {
+            "name": "i686-release",
+            "configurePreset": "i686-release"
+        },
+        {
+            "name": "arm-debug",
+            "configurePreset": "arm-debug"
+        },
+        {
+            "name": "arm-release",
+            "configurePreset": "arm-release"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "libFeline-hosted",
+            "displayName": "libFeline Hosted Tests",
+            "configurePreset": "libFeline-hosted",
+            "output": {
+                "outputOnFailure": true
+            }
+        }
+    ]
+}

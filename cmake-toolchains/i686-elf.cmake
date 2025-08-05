@@ -7,7 +7,7 @@ set(CMAKE_C_COMPILER   i686-elf-gcc)
 add_compile_options(-mno-sse)
 
 # where is the target environment located
-set(CMAKE_FIND_ROOT_PATH  /usr/i686-elf /usr/lib/gcc/i686-elf)
+set(CMAKE_FIND_ROOT_PATH  /home/james/src/FelineOS/cross/i686-elf /home/james/src/FelineOS/cross/lib/gcc/i686-elf)
 
 # don't try to compile a test program because the kernel isn't built yet
 # instead, just assume it works
