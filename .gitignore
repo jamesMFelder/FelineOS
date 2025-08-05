@@ -1,9 +1,13 @@
 #Build directories
-build/
+/build/
+/build
 #Bochs logging
-bochslog.txt
-serial.txt
+/bochslog.txt
+/serial.txt
 #Bochs symbol tables
-kernel.sym
+/kernel.sym
 #Anything you compiled from the utils/ directory
-utils/a.out
+/utils/a.out
+#Cross-compilers
+/ports/
+/cross/
