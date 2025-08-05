@@ -2,7 +2,6 @@
 /* Copyright (c) 2023 James McNaughton Felder */
 
 #include "gdt/gdt.h"
-#include "kernel/multiboot.h"
 #include "mem/mem.h"
 #include <cinttypes>
 #include <cstdlib>
@@ -15,7 +14,10 @@
 #include <kernel/halt.h>
 #include <kernel/interrupts.h>
 #include <kernel/log.h>
+#include <kernel/mem.h>
 #include <kernel/misc.h>
+#include <kernel/modules.h>
+#include <kernel/multiboot.h>
 #include <kernel/paging.h>
 #include <kernel/phys_addr.h>
 #include <kernel/vtopmem.h>
@@ -59,10 +61,32 @@ static void screen_init(multiboot_info_t mbp) {
 	}
 }
 
+extern KVector<Module, KGeneralAllocator<Module>> modules;
+
+static void save_modules(multiboot_info_t mbp) {
+	if (!get_flag(mbp.flags, MULTIBOOT_INFO_MODS)) {
+		klog("No modules loaded.");
+		return;
+	}
+	multiboot_module_t *mods;
+	map_results mod_mapping = map_range(PhysAddr<multiboot_module_t>(mbp.mods_addr), sizeof(multiboot_module_t)*mbp.mods_count, reinterpret_cast<void **>(&mods), 0);
+	if (mod_mapping != map_success) {
+		kerrorf("Unable to map modules. Error %d.", mod_mapping);
+		return;
+	}
+	for (size_t i = 0; i < mbp.mods_count; ++i) {
+		modules.append(Module(mods[i]));
+	}
+	unmap_range(mods, sizeof(multiboot_module_t)*mbp.mods_count, 0);
+	return;
+}
+
 char grub_cmdline[4096] = "";
 multiboot_uint32_t grub_flags;
+multiboot_info_t multiboot_saved_info;
 
 static void save_grub_params(multiboot_info_t mbp) {
+	multiboot_saved_info = mbp;
 	grub_flags = mbp.flags;
 	if (get_flag(grub_flags, MULTIBOOT_INFO_CMDLINE)) {
 		char const *mapped_cmdline;
@@ -147,6 +171,7 @@ int boot_setup() {
 	if (grub_cmdline[0] != '\0') {
 		Settings::Misc::commandline.initialize(KStringView(grub_cmdline));
 	}
+	save_modules(multiboot_saved_info);
 	Settings::Logging::output_func write_both = [](char const *str,
 	                                               size_t len) -> void {
 		write_serial(str, len);

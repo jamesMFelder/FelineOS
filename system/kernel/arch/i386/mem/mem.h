@@ -3,7 +3,6 @@
 #ifndef _KERN_ARCH_MEM_H
 #define _KERN_ARCH_MEM_H 1
 
-#include <kernel/mem.h>
 #include <kernel/multiboot.h>
 #include <kernel/phys_mem.h>
 

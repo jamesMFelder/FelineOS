@@ -6,6 +6,8 @@
 #include <drivers/serial.h>
 #include <drivers/timer.h>
 #include <fcntl.h>
+#include <feline/kallocator.h>
+#include <feline/kvector.h>
 #include <feline/logger.h>
 #include <feline/settings.h>
 #include <feline/str.h>
@@ -17,6 +19,7 @@
 #include <kernel/log.h>
 #include <kernel/mem.h>
 #include <kernel/misc.h>
+#include <kernel/modules.h>
 #include <kernel/scheduler.h>
 #include <sys/syscall.h>
 #include <unistd.h>
@@ -30,6 +33,7 @@ extern const char kernel_end;
 
 /* The libFeline tests */
 KVector<test_func, KGeneralAllocator<test_func>> test_functions;
+KVector<Module, KGeneralAllocator<Module>> modules;
 
 ASM void kernel_main();
 
@@ -42,6 +46,9 @@ void kernel_main() {
 	if (Settings::Misc::commandline) {
 		kLog() << "Commandline: "
 			   << strDebug(Settings::Misc::commandline.get());
+	}
+	for (Module &mod : modules) {
+		kLog() << "Module " << strDebug(mod.cmdline);
 	}
 
 #ifdef __i386__
