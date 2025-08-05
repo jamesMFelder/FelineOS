@@ -13,6 +13,7 @@ C_LINKAGE void *memmove(void *, const void *, size_t);
 C_LINKAGE void *memset(void *, int, size_t);
 
 C_LINKAGE size_t strlen(const char *);
+C_LINKAGE size_t strnlen(const char *, size_t);
 
 C_LINKAGE char *strcpy(char *, const char *);
 C_LINKAGE char *strncpy(char *, const char *, size_t);
