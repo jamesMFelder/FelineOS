@@ -11,6 +11,14 @@
 #include <feline/kallocator.h>
 #include <feline/kvector.h>
 
+using KString = KVector<char, KGeneralAllocator<char>>;
+using KConstString = KVector<char const, KGeneralAllocator<char>>;
+
+inline consteval KConstString operator""_kstr_vec(char const *characters,
+                                                  size_t len) {
+	return KConstString(characters, len);
+};
+
 class KStringView {
 	public:
 		using value_type = char;
@@ -31,6 +39,16 @@ class KStringView {
 			characters = other.data();
 			len = other.length();
 			return *this;
+		}
+
+		constexpr KStringView(KConstString const &other) {
+			characters = other.data();
+			len = other.size();
+		}
+
+		constexpr KStringView(KString const &other) {
+			characters = other.data();
+			len = other.size();
 		}
 
 		constexpr const_reference get(size_t index) const {
@@ -55,14 +73,6 @@ class KStringView {
 inline consteval KStringView operator""_kstr(char const *characters,
                                              size_t len) {
 	return KStringView(characters, len);
-};
-
-using KString = KVector<char, KGeneralAllocator<char>>;
-using KConstString = KVector<char const, KGeneralAllocator<char>>;
-
-inline consteval KConstString operator""_kstr_vec(char const *characters,
-                                                  size_t len) {
-	return KConstString(characters, len);
 };
 
 #endif /* _FELINE_KSTRING_H */
