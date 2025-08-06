@@ -19,6 +19,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install Nix
-      uses: nixbuild/nix-quick-install-action@v31
+      uses: cachix/install-nix-action@v31
+        with:
+          nix_path: nixpkgs=channel:nixos-25.05
     - name: generate-release
       run: nix-shell --command "cmake --preset ${{ matrix.arch }}-release && cmake --build --preset ${{ matrix.arch }}-release"
