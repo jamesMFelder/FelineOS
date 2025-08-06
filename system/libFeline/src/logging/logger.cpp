@@ -14,23 +14,23 @@ static inline KStringView relative_path(std::source_location loc) {
 kout::kout(log_level level, std::source_location loc, bool alloc)
 	: alloc(alloc) {
 	switch (level) {
-	case critical:
+	case log_level::critical:
 		func = Settings::Logging::critical.get();
 		add_part("FOS Critical ");
 		break;
-	case error:
+	case log_level::error:
 		func = Settings::Logging::error.get();
 		add_part("FOS Error ");
 		break;
-	case warning:
+	case log_level::warning:
 		func = Settings::Logging::warning.get();
 		add_part("FOS Warning ");
 		break;
-	case log:
+	case log_level::log:
 		func = Settings::Logging::log.get();
 		add_part("FOS Log ");
 		break;
-	case debug:
+	case log_level::debug:
 		func = Settings::Logging::debug.get();
 		add_part("FOS Debug ");
 		break;
