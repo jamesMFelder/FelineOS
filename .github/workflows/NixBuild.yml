@@ -1,0 +1,25 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        arch: [i686, arm]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Nix
+      uses: nixbuild/nix-quick-install-action@v31
+    - name: generate-release
+      run: nix-shell --command "cmake --preset ${{ matrix.arch }}-release"
+      run: nix-shell --command "cmake --build --preset ${{ matrix.arch }}-release"

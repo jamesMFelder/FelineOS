@@ -1,0 +1,109 @@
+James Felder james.m.felder@gmail.com
+Tue Aug 5 00:00:00 UTC 2025
+
+This patch adds some missing function declarations for i386.
+
+diff --git a/libgloss/i386/cygmon-gmon.c b/libgloss/i386/cygmon-gmon.c
+index 8d195424e..d8f4c50d8 100644
+--- a/libgloss/i386/cygmon-gmon.c
++++ b/libgloss/i386/cygmon-gmon.c
+@@ -60,8 +60,10 @@
+ #define DEBUG
+ #ifdef DEBUG
+ #include <stdio.h>
++#include <stdlib.h>
+ #endif
+ 
++#include "cygmon-salib.h"
+ #include "cygmon-gmon.h"
+ 
+ /*
+@@ -84,12 +86,11 @@
+ #define	MSG "No space for profiling buffer(s)\n"
+ 
+ extern int errno;
+ 
+-int
+-monstartup(lowpc, highpc)
++void monstartup(lowpc, highpc)
+      char	*lowpc;
+      char	*highpc;
+ {
+-  int		monsize;
++  size_t	monsize;
+   char		*buffer;
+   register int	o;
+@@ -187,15 +188,15 @@
+ 	  rawarc.raw_frompc = (unsigned long) frompc;
+ 	  rawarc.raw_selfpc = (unsigned long) tos[toindex].selfpc;
+ 	  rawarc.raw_count = tos[toindex].count;
+-	  profil_write (2, &rawarc, sizeof (rawarc));
++	  profil_write (2, (char*)&rawarc, sizeof (rawarc));
+ 	}
+     }
+   profil_write (3, 0, 0);
+ }
+ 
+ static char already_setup = 0;
+ 
+-_mcount()
++void _mcount()
+ {
+   register char			*selfpc;
+   register unsigned short	*frompcindex;
+@@ -216,10 +217,10 @@
+   frompcindex = (void *) __builtin_return_address (1);
+ 
+   if (! already_setup) 
+     {
+-      extern _etext();
+-      extern _ftext();
++      extern char _etext;
++      extern char _ftext;
+       already_setup = 1;
+-      monstartup(_ftext, _etext);
++      monstartup(&_ftext, &_etext);
+       atexit(_mcleanup);
+     }
+@@ -335,9 +336,9 @@
+ /*
+  * Control profiling
+  *	profiling is what mcount checks to see if
+  *	all the data structures are ready.
+  */
+-moncontrol(mode)
++void moncontrol(mode)
+     int mode;
+ {
+   if (mode)
+ 
+diff --git a/libgloss/i386/cygmon-salib.c b/libgloss/i386/cygmon-salib.c
+index 8d195424e..d8f4c50d8 100644
+--- a/libgloss/i386/cygmon-salib.c
++++ b/libgloss/i386/cygmon-salib.c
+@@ -17,4 +17,5 @@
+ #include <fcntl.h>
+ #include <stdlib.h>
++#include "cygmon-salib.h"
+ #include "cygmon-syscall.h"
+ #include <sys/time.h>
+ 
+diff --git a/libgloss/i386/cygmon-salib.h b/libgloss/i386/cygmon-salib.h
+new file mode 100644
+index 8d195424e..d8f4c50d8 100644
+--- /dev/null
++++ b/libgloss/i386/cygmon-salib.h
+@@ -0,0 +0,12 @@
++#ifndef _CYGMON_SALIB_H_
++#define _CYGMON_SALIB_H_
++#include <stdint.h>
++char* sbrk(int increment);
++int write(int fd, char *buf, int count);
++void profil(unsigned short *buff, unsigned int bufsiz, unsigned int offset, unsigned int scale);
++void profil_write(int, char *buf, int count);
++void bzero(void *s, size_t n);
++void monstartup(char *lowpc, char *highpc);
++void moncontrol(int);
++void _mcount();
++#endif /* _CYGMON_SALIB_H_ */
+

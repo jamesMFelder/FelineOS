@@ -1,0 +1,42 @@
+From 79303c7532e84307c59e1fef2c89e844b2b0a580 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Radim=20Kr=C4=8Dm=C3=A1=C5=99?= <radim@krcmar.dev>
+Date: Tue, 24 Jun 2025 19:07:58 +0200
+Subject: [PATCH] gcc15: fix cross compiler builds
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Building cross compilers fails because libstdc++-target.patch does not
+apply:
+
+  > Running phase: patchPhase
+  > applying patch /nix/store/m65mm399kh8q6h8k836hln3h0y8k7lw7-libstdc++-target.patch
+  > patching file Makefile.in
+  > Hunk #1 succeeded at 303 (offset 37 lines).
+  > Hunk #2 FAILED at 292.
+  > 1 out of 2 hunks FAILED -- saving rejects to file Makefile.in.rej
+
+As I understand the patch, it was supposed to fix GCC cross compiler for
+mingw32.  I built mingw32/mingwW64/aarch64-multiplatform/riscv64 cross
+compilers on x86_64-linux without applying the patch, and it does not
+seem necessary anymore.  It's possible we didn't need this patch for
+quite a while, but I haven't tested that.
+
+Do not apply libstdc++-target.patch starting with gcc15.
+
+Signed-off-by: Radim Krčmář <radim@krcmar.dev>
+---
+ pkgs/development/compilers/gcc/patches/default.nix | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pkgs/development/compilers/gcc/patches/default.nix b/pkgs/development/compilers/gcc/patches/default.nix
+index 9a55332ade9ba6..f4f06bb4e23eed 100644
+--- a/pkgs/development/compilers/gcc/patches/default.nix
++++ b/pkgs/development/compilers/gcc/patches/default.nix
+@@ -65,4 +65,5 @@ in
+ [ ]
+-++ optional (!lib.systems.equals targetPlatform hostPlatform) ./libstdc++-target.patch
++++ optional (!atLeast12) ./fix-bug-80431.patch
++++ optional (!lib.systems.equals targetPlatform hostPlatform && !atLeast15) ./libstdc++-target.patch
+ ++ optionals (noSysDirs) (
+   [
