@@ -21,5 +21,4 @@ jobs:
     - name: Install Nix
       uses: nixbuild/nix-quick-install-action@v31
     - name: generate-release
-      run: nix-shell --command "cmake --preset ${{ matrix.arch }}-release"
-      run: nix-shell --command "cmake --build --preset ${{ matrix.arch }}-release"
+      run: nix-shell --command "cmake --preset ${{ matrix.arch }}-release && cmake --build --preset ${{ matrix.arch }}-release"
