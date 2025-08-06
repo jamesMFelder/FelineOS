@@ -29,7 +29,9 @@ else()
 	add_compile_options(-ffreestanding -fno-exceptions)
 endif()
 
-add_compile_options(-Werror -Wall -Wextra -fstack-protector -fno-omit-frame-pointer -fno-rtti)
+if (!CMAKE_HOST_WIN32)
+	add_compile_options(-Werror -Wall -Wextra -fstack-protector -fno-omit-frame-pointer -fno-rtti)
+endif()
 
 add_subdirectory(system/libFeline)
 
