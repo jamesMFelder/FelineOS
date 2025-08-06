@@ -4,10 +4,9 @@ set(CMAKE_SYSTEM_PROCESSOR i686)
 
 # which compilers to use for C and C++
 set(CMAKE_C_COMPILER   i686-elf-gcc)
+set(CMAKE_CXX_COMPILER   i686-elf-g++)
+set(CMAKE_ASM_COMPILER   i686-elf-g++)
 add_compile_options(-mno-sse)
-
-# where is the target environment located
-set(CMAKE_FIND_ROOT_PATH  /home/james/src/FelineOS/cross/i686-elf /home/james/src/FelineOS/cross/lib/gcc/i686-elf)
 
 # don't try to compile a test program because the kernel isn't built yet
 # instead, just assume it works
