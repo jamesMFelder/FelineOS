@@ -4,7 +4,7 @@ project(FelineOS)
 
 enable_language(ASM)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 26)
 
 SET(LOG_PATH_PREFIX_TRUNCATE_LEN 0 CACHE STRING "How many characters from the full path should be truncated in log messages")
 add_definitions(-DLOG_PATH_PREFIX_TRUNCATE_LEN=${LOG_PATH_PREFIX_TRUNCATE_LEN})
@@ -125,10 +125,10 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm")
 		DEPENDS FelineOS.kernel)
 	# Add targets for running and debugging the os directly from qemu
 	add_custom_target(run_qemu
-		COMMAND qemu-system-arm -M raspi1ap -serial stdio -dtb ../../bcm2708-rpi-b.dtb -device loader,file=kernel.bin,addr=0x8000,cpu-num=0
+		COMMAND qemu-system-arm -M raspi1ap -serial stdio -dtb ${CMAKE_CURRENT_SOURCE_DIR}/bcm2708-rpi-b.dtb -device loader,file=kernel.bin,addr=0x8000,cpu-num=0
 		DEPENDS kernel.bin)
 	add_custom_target(debug_qemu
-		COMMAND qemu-system-arm -M raspi1ap -serial stdio -dtb ../../bcm2708-rpi-b.dtb -device loader,file=kernel.bin,addr=0x8000,cpu-num=0 -S -s
+		COMMAND qemu-system-arm -M raspi1ap -serial stdio -dtb ${CMAKE_CURRENT_SOURCE_DIR}/bcm2708-rpi-b.dtb -device loader,file=kernel.bin,addr=0x8000,cpu-num=0 -S -s
 		DEPENDS kernel.bin)
 
 	# Objects 'crti.o' and 'crtbegin.o' will be linked before all other objects and libraries.
