@@ -10,7 +10,7 @@
 #include <source_location>
 #include <type_traits>
 
-enum log_level {
+enum class log_level {
 	critical,
 	error,
 	warning,
