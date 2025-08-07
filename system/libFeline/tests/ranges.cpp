@@ -15,22 +15,22 @@ ADD_TEST(ranges) {
 				// … and ends before the second: they don't overlap
 				if (end < test_range.start) {
 					REQUIRE_NOT(
-						overlap(range{.start = a, .end = b}, test_range));
+						overlap(range<size_t>{.start = a, .end = b}, test_range));
 				}
 				// … and ends after the second range starts: they do overlap
 				else {
-					REQUIRE(overlap(range{.start = a, .end = b}, test_range));
+					REQUIRE(overlap(range<size_t>{.start = a, .end = b}, test_range));
 				}
 			}
 			// If the first range starts in the middle of the second range: they
 			// overlap
 			else if (start <= test_range.end) {
-				REQUIRE(overlap(range{.start = a, .end = b}, test_range));
+				REQUIRE(overlap(range<size_t>{.start = a, .end = b}, test_range));
 			}
 			// If the first range starts after the second range: they do not
 			// overlap
 			else {
-				REQUIRE_NOT(overlap(range{.start = a, .end = b}, test_range));
+				REQUIRE_NOT(overlap(range<size_t>{.start = a, .end = b}, test_range));
 			}
 		}
 	}
