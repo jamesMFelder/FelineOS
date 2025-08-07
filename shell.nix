@@ -14,6 +14,9 @@ let
     newlib = prev.newlib.overrideAttrs(nfinal: nprev: {
       patches = nprev.patches ++ [ nix-patches/newlib-fix-gloss.patch ];
     });
+    grub2 = prev.grub2.overrideAttrs(gfinal: gprev: {
+      platforms = gprev.meta.platforms ++ [ "arm64-apple-darwin" ];
+    });
   })];});
 in
 pkgs.mkShell {
