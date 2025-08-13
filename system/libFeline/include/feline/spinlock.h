@@ -18,7 +18,11 @@ class Spinlock {
 
 	private:
 		/* The actual lock */
-		std::atomic<bool> lock{false};
+		std::atomic_flag lock{false};
+		/* For not having interrupts occur when we are locked, only applies to freestanding. */
+		uint32_t stored_flags;
+		uint32_t disable_interrupts();
+		void restore_interrupts(uint32_t flags);
 };
 
 #endif /* _HEADER_H */
