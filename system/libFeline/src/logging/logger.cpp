@@ -5,7 +5,10 @@
 #include <feline/logger.h>
 #include <feline/settings.h>
 #include <feline/shortcuts.h>
+#include <feline/spinlock.h>
 #include <feline/str.h>
+
+Spinlock output_lock;
 
 static inline KStringView relative_path(std::source_location loc) {
 	return &loc.file_name()[LOG_PATH_PREFIX_TRUNCATE_LEN];
@@ -77,7 +80,6 @@ void kout::do_write() {
 	for (auto &str : strings) {
 		total_length += str.length();
 	}
-	// char full_string[total_length];
 	KString full_string;
 	full_string.append('\0', total_length);
 	size_t current_index = 0;
@@ -85,7 +87,9 @@ void kout::do_write() {
 		std::copy(begin(str), end(str), &full_string[current_index]);
 		current_index += str.length();
 	}
+	output_lock.acquire_lock();
 	func(full_string.data(), full_string.size());
+	output_lock.release_lock();
 	return;
 }
 

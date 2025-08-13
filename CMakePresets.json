@@ -17,6 +17,16 @@
             }
         },
         {
+            "name": "libFeline-debug",
+            "displayName": "libFeline Debug",
+            "description": "Build libFeline targeting the host system, but with debug info",
+            "inherits": "libFeline-hosted",
+            "binaryDir": "${sourceDir}/build/feline-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
             "name": "i686-base",
             "description": "Base for all i686 cross compiler builds",
             "hidden": true,
@@ -78,7 +88,6 @@
     "buildPresets": [
         {
             "name": "libFeline-hosted",
-            "displayName": "libFeline-hosted",
             "configurePreset": "libFeline-hosted"
         },
         {

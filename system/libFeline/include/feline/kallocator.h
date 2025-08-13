@@ -14,12 +14,6 @@ void return_memory(void *addr, size_t len);
 template <typename T> struct KGeneralAllocator {
 		typedef T value_type;
 
-		constexpr KGeneralAllocator() {}
-
-		constexpr KGeneralAllocator(const KGeneralAllocator &other) = default;
-
-		constexpr ~KGeneralAllocator() {}
-
 		[[nodiscard]] T *allocate(std::size_t count) {
 			if (std::numeric_limits<size_t>::max() / sizeof(value_type) <
 			    count) {

@@ -392,6 +392,7 @@ map_results map_range(size_t len, void const **virt_addr, unsigned int opts) {
 	modifying_page_tables.acquire_lock();
 	*virt_addr = find_free_virtmem(len);
 	if (*virt_addr == nullptr) {
+		modifying_page_tables.release_lock();
 		return map_no_virtmem;
 	}
 	PhysAddr<void const> phys_addr;
@@ -453,6 +454,7 @@ map_results unmap_range(void const *const virt_addr, size_t len,
 		if (attempt == pmm_invalid || attempt == pmm_null) {
 			/* Call it an invalid option because we shouldn't have been managing
 			 * it(TODO: better description) */
+			modifying_page_tables.release_lock();
 			return map_invalid_option;
 		}
 	}

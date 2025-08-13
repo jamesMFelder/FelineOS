@@ -13,7 +13,6 @@
 #ifdef LIBFELINE_ONLY
 #include <feline/settings.h>
 #include <iostream>
-#include <vector>
 
 #define ADD_TEST(TESTNAME) int main()
 
