@@ -105,14 +105,14 @@ template <typename T> class KVector {
 			items = new_items;
 		}
 
-		void push_back(value_type item) {
+		void push_back(T item) {
 			reserve(num_items+1);
 			new(&items[num_items]) T;
 			items[num_items] = std::move(item);
 			num_items += 1;
 		}
 
-		void append(value_type item, size_t count = 1) {
+		void append(T item, size_t count = 1) {
 			reserve(num_items + count);
 			for (size_t i = 0; i < count; ++i) {
 				new (&items[num_items + i]) T(std::move(item));
