@@ -33,8 +33,8 @@ class kout {
 		kout &operator<<(char c);
 
 	private:
-		KVector<KStringView, KGeneralAllocator<KStringView>> strings;
-		KVector<KString, KGeneralAllocator<KString>> lifetime_extender;
+		KVector<KStringView> strings;
+		KVector<KString> lifetime_extender;
 		void add_part(KStringView const str);
 		void do_write();
 		void (*func)(const char *, size_t);

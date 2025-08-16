@@ -50,7 +50,7 @@ struct test_func {
 		int (*func)();
 };
 
-extern KVector<test_func, KGeneralAllocator<test_func>> test_functions;
+extern KVector<test_func> test_functions;
 
 #endif // LIBFELINE_ONLY (else)
 

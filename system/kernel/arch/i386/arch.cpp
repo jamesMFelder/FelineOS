@@ -61,7 +61,7 @@ static void screen_init(multiboot_info_t mbp) {
 	}
 }
 
-extern KVector<Module, KGeneralAllocator<Module>> modules;
+extern KVector<Module> modules;
 
 static void save_modules(multiboot_info_t mbp) {
 	if (!get_flag(mbp.flags, MULTIBOOT_INFO_MODS)) {

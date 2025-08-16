@@ -16,7 +16,7 @@
 
 struct Module {
 		KConstString cmdline;
-		KVector<std::byte, KGeneralAllocator<std::byte>> data;
+		KVector<std::byte> data;
 
 		Module(multiboot_module_t grub_mod) {
 			char const *mapped_cmdline;
@@ -41,7 +41,7 @@ struct Module {
 				kError() << "Unable to map module. Error "
 						 << dec(cmdline_mapping);
 			} else {
-				data = KVector<std::byte, KGeneralAllocator<std::byte>>(
+				data = KVector<std::byte>(
 					mod, grub_mod.mod_end - grub_mod.mod_start);
 				/* Use PHYS_ADDR_AUTO, because this memory was marked as
 				 * reserved by Grub but since we have copied the module out of

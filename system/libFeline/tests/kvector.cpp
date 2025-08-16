@@ -5,7 +5,7 @@
 
 ADD_TEST(kvector) {
 	initialize_loggers();
-	KVector<uint8_t, KGeneralAllocator<uint8_t>> vec;
+	KVector<uint8_t> vec;
 	REQUIRE_EQ(vec.capacity(), 0uz);
 	REQUIRE_EQ(vec.size(), 0uz);
 	vec.reserve(8);

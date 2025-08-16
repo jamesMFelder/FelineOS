@@ -19,7 +19,7 @@ Spinlock editing_task_list;
 /* TODO: make cpu-local */
 static Task current_task;
 
-KVector<Task, KGeneralAllocator<Task>> all_tasks;
+KVector<Task> all_tasks;
 
 /* Returns the next process to run, or nullptr if no other processes are
  * runnable. TODO: do this faster and support priorities. */

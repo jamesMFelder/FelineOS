@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
 
+#include <feline/kallocator.h>
 #ifndef _FELINE_KVECTOR_H
 #define _FELINE_KVECTOR_H 1
 
@@ -14,7 +15,7 @@
 
 void check_index(size_t index, size_t max);
 
-template <typename T, typename Allocator> class KVector {
+template <typename T> class KVector {
 	public:
 		using value_type = T;
 		using pointer = T *;
@@ -121,9 +122,9 @@ template <typename T, typename Allocator> class KVector {
 			return append(KVector(other, N));
 		}
 		void append(const_pointer other, size_t len) {
-			append(KVector<T const, Allocator>(other, len));
+			append(KVector<T const>(other, len));
 		}
-		void append(KVector<T, Allocator> other)
+		void append(KVector<T> other)
 			requires(!std::is_const_v<T>)
 		{
 			if (m_capacity < (num_items + other.size()) || !items) {
@@ -133,7 +134,7 @@ template <typename T, typename Allocator> class KVector {
 			                        &items[num_items]);
 			num_items += other.size();
 		}
-		void append(KVector<T const, Allocator> other)
+		void append(KVector<T const> other)
 			requires(std::is_same_v<std::remove_const_t<T>, T>)
 		{
 			reserve(num_items + other.size());
@@ -151,10 +152,10 @@ template <typename T, typename Allocator> class KVector {
 		template <size_t N> void operator+=(T (&other)[N]) {
 			return append(other);
 		}
-		void operator+=(KVector<T, Allocator> other)
+		void operator+=(KVector<T> other)
 			requires(!std::is_const_v<T>)
 		{ return append(other); }
-		void operator+=(KVector<T const, Allocator> other)
+		void operator+=(KVector<T const> other)
 			requires(std::is_same_v<std::remove_const_t<T>, T>)
 		{
 			return append(other);
@@ -197,7 +198,7 @@ template <typename T, typename Allocator> class KVector {
 		pointer items;
 		size_t num_items;
 		size_t m_capacity;
-		Allocator a;
+		KGeneralAllocator<T> a;
 };
 
 #endif /* _FELINE_KVECTOR_H */

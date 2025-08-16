@@ -11,8 +11,8 @@
 #include <feline/kallocator.h>
 #include <feline/kvector.h>
 
-using KString = KVector<char, KGeneralAllocator<char>>;
-using KConstString = KVector<char const, KGeneralAllocator<char>>;
+using KString = KVector<char>;
+using KConstString = KVector<char const>;
 
 inline consteval KConstString operator""_kstr_vec(char const *characters,
                                                   size_t len) {

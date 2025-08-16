@@ -32,8 +32,8 @@ extern const char kernel_start;
 extern const char kernel_end;
 
 /* The libFeline tests */
-KVector<test_func, KGeneralAllocator<test_func>> test_functions;
-KVector<Module, KGeneralAllocator<Module>> modules;
+KVector<test_func> test_functions;
+KVector<Module> modules;
 
 ASM void kernel_main();
 

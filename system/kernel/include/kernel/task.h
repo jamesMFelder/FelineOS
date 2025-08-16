@@ -87,7 +87,7 @@ struct Task {
 		Registers registers;
 		task_state state;
 		size_t num_times_scheduled;
-		KVector<TaskAllocation, KGeneralAllocator<TaskAllocation>> allocations;
+		KVector<TaskAllocation> allocations;
 		// TODO: add threads
 };
 
