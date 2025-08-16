@@ -107,7 +107,8 @@ template <typename T> class KVector {
 
 		void push_back(value_type item) {
 			reserve(num_items+1);
-			new(&items[num_items]) T(std::move(item));
+			new(&items[num_items]) T;
+			items[num_items] = std::move(item);
 			num_items += 1;
 		}
 
