@@ -1,13 +1,13 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2023 James McNaughton Felder */
 
-#include <feline/kallocator.h>
 #ifndef _FELINE_KVECTOR_H
 #define _FELINE_KVECTOR_H 1
 
 #include <algorithm>
 #include <cstddef>
 #include <cstdlib>
+#include <feline/kallocator.h>
 #include <feline/cpp_only.h>
 #include <feline/shortcuts.h>
 #include <memory>
@@ -107,10 +107,10 @@ template <typename T> class KVector {
 
 		void push_back(T item) {
 			if (num_items+1 > m_capacity) {
-				pointer new_items = static_cast<pointer>(get_memory((num_items+1)*sizeof(T)));
+				pointer new_items = static_cast<pointer>(malloc((num_items+1)*sizeof(T)));
 				// auto new_items = a.allocate(num_items+1);
 				items && std::move(begin(*this), end(*this), new_items);
-				return_memory(items, m_capacity*sizeof(T));
+				free(items);
 				// a.deallocate(items, m_capacity);
 				m_capacity = num_items+1;
 				items = new_items;
