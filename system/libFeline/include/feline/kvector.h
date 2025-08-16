@@ -104,7 +104,11 @@ template <typename T, typename Allocator> class KVector {
 			items = new_items;
 		}
 
-		void push_back(value_type item) { append(item, 1); }
+		void push_back(value_type item) {
+			reserve(num_items+1);
+			new(&items[num_items]) T(std::move(item));
+			num_items += 1;
+		}
 
 		void append(value_type item, size_t count = 1) {
 			reserve(num_items + count);
