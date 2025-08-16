@@ -107,7 +107,7 @@ template <typename T> class KVector {
 
 		void push_back(T item) {
 			if (num_items+1 > m_capacity) {
-				pointer new_items = static_cast<pointer>(malloc((num_items+1)*sizeof(T)));
+				T *new_items = static_cast<T *>(malloc((num_items+1)*sizeof(T)));
 				// auto new_items = a.allocate(num_items+1);
 				items && std::move(begin(*this), end(*this), new_items);
 				free(items);
