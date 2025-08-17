@@ -29,7 +29,7 @@ template <typename T, typename Allocator> class KVector {
 		constexpr KVector(pointer items, size_t size)
 			: items(items), num_items(size), m_capacity(size), a() {}
 		constexpr KVector(pointer items, size_t size)
-			requires(!std::is_const_v<T>)
+			requires(!std::is_const_v<value_type>)
 			: a() {
 			this->items = a.allocate(size);
 			this->num_items = size;
@@ -38,25 +38,23 @@ template <typename T, typename Allocator> class KVector {
 		}
 		constexpr KVector(KVector &&other) : KVector() { swap(*this, other); }
 		constexpr KVector(KVector const &other)
-			requires(std::is_const_v<T>)
+			requires(std::is_const_v<value_type>)
 			: items(other.items()), num_items(other.size()),
 			  m_capacity(other.size()), a() {}
 		constexpr KVector(KVector const &other)
-			requires(!std::is_const_v<T>)
+			requires(!std::is_const_v<value_type>)
 			: num_items(other.size()), m_capacity(other.size()), a() {
 			this->items = a.allocate(m_capacity);
 			std::uninitialized_copy(begin(other), end(other), items);
 		}
 
 		constexpr ~KVector()
-			requires(std::is_const_v<T>)
+			requires(std::is_const_v<value_type>)
 		{}
 		constexpr ~KVector()
-			requires(!std::is_const_v<T>)
+			requires(!std::is_const_v<value_type>)
 		{
-			for (auto &item : *this) {
-				item.~T();
-			}
+			std::destroy_n(items, num_items);
 			a.deallocate(items, m_capacity);
 		}
 
@@ -78,7 +76,7 @@ template <typename T, typename Allocator> class KVector {
 			check_index(index, num_items);
 			return items[index];
 		};
-		constexpr T const &operator[](size_t index) const {
+		constexpr const_reference &operator[](size_t index) const {
 			check_index(index, num_items);
 			return items[index];
 		};
@@ -98,7 +96,8 @@ template <typename T, typename Allocator> class KVector {
 				return;
 			}
 			auto new_items = a.allocate(num);
-			items &&std::move(begin(*this), end(*this), new_items);
+			std::uninitialized_move(begin(*this), end(*this), new_items);
+			std::destroy_n(items, num_items);
 			a.deallocate(items, m_capacity);
 			m_capacity = num;
 			items = new_items;
@@ -106,25 +105,25 @@ template <typename T, typename Allocator> class KVector {
 
 		void push_back(value_type item) {
 			reserve(num_items+1);
-			new(&items[num_items]) T(std::move(item));
+			new(&items[num_items]) value_type(std::move(item));
 			num_items += 1;
 		}
 
 		void append(value_type item, size_t count = 1) {
 			reserve(num_items + count);
 			for (size_t i = 0; i < count; ++i) {
-				new (&items[num_items + i]) T(std::move(item));
+				new (&items[num_items + i]) value_type(std::move(item));
 			}
 			num_items += count;
 		}
-		template <size_t N> void append(T (&other)[N]) {
+		template <size_t N> void append(value_type (&other)[N]) {
 			return append(KVector(other, N));
 		}
 		void append(const_pointer other, size_t len) {
-			append(KVector<T const, Allocator>(other, len));
+			append(KVector<value_type const, Allocator>(other, len));
 		}
-		void append(KVector<T, Allocator> other)
-			requires(!std::is_const_v<T>)
+		void append(KVector<value_type, Allocator> other)
+			requires(!std::is_const_v<value_type>)
 		{
 			if (m_capacity < (num_items + other.size()) || !items) {
 				reserve(num_items + other.size());
@@ -133,8 +132,8 @@ template <typename T, typename Allocator> class KVector {
 			                        &items[num_items]);
 			num_items += other.size();
 		}
-		void append(KVector<T const, Allocator> other)
-			requires(std::is_same_v<std::remove_const_t<T>, T>)
+		void append(KVector<value_type const, Allocator> other)
+			requires(std::is_same_v<std::remove_const_t<value_type>, value_type>)
 		{
 			reserve(num_items + other.size());
 			std::uninitialized_copy(begin(other), end(other),
@@ -148,14 +147,14 @@ template <typename T, typename Allocator> class KVector {
 			num_items += std::distance(first, last);
 		}
 
-		template <size_t N> void operator+=(T (&other)[N]) {
+		template <size_t N> void operator+=(value_type (&other)[N]) {
 			return append(other);
 		}
-		void operator+=(KVector<T, Allocator> other)
-			requires(!std::is_const_v<T>)
+		void operator+=(KVector<value_type, Allocator> other)
+			requires(!std::is_const_v<value_type>)
 		{ return append(other); }
 		void operator+=(KVector<T const, Allocator> other)
-			requires(std::is_same_v<std::remove_const_t<T>, T>)
+			requires(std::is_same_v<std::remove_const_t<value_type>, value_type>)
 		{
 			return append(other);
 		}
@@ -164,6 +163,7 @@ template <typename T, typename Allocator> class KVector {
 			if (pos == end(*this)) {
 				return pos;
 			}
+			std::destroy(pos);
 			std::move(pos + 1, end(*this), pos);
 			--num_items;
 			return pos;
@@ -172,17 +172,14 @@ template <typename T, typename Allocator> class KVector {
 			if (first == last) {
 				return last;
 			}
+			std::destroy(first, last);
 			std::move(last, end(*this), first);
 			num_items -= std::distance(first, last);
 			return last;
 		}
 
 		constexpr void clear() {
-			if constexpr (requires { items->~value_type; }) {
-				for (auto *elem : this) {
-					elem->~value_type();
-				}
-			}
+			std::destroy_n(items, num_items);
 			num_items = 0;
 		}
 		friend void swap(KVector &first, KVector &second) {
