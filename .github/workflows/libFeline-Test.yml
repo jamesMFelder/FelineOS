@@ -18,8 +18,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: build-libfeline
-      run: cmake -B build/feline -DLIBFELINE_ONLY=YES -DCMAKE_BUILD_TYPE=Release && cmake --build build/feline
+      run: cmake -B build/feline -DLIBFELINE_ONLY=YES -DCMAKE_BUILD_TYPE=Release && cmake --build build/feline --config Release
 
     - name: test-libfeline
-      run: ctest --output-on-failure
+      run: ctest --output-on-failure -C Release
       working-directory: ./build/feline
