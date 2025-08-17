@@ -163,7 +163,7 @@ template <typename T, typename Allocator> class KVector {
 			if (pos == end(*this)) {
 				return pos;
 			}
-			std::destroy(pos);
+			std::destroy_at(pos);
 			std::move(pos + 1, end(*this), pos);
 			--num_items;
 			return pos;
